@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Sanal ortam
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_convert/
+
+# Testler & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Veri (scraping'ten yüklenir, repo'da tutulmaz)
+data/
+!data/README.md
+
+# Model artifact'ları (büyük dosyalar — Git LFS veya harici storage)
+artifacts/
+checkpoints/
+*.pt
+*.pth
+*.h5
+*.keras
+*.ckpt
+*.onnx
+*.pkl
+*.joblib
+*.safetensors
+
+# Experiment tracking
+runs/
+wandb/
+mlruns/
+lightning_logs/
+tb_logs/
+outputs/
+logs/
+
+# Optuna
+*.db
+optuna.sqlite3
+
+# Ortam
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

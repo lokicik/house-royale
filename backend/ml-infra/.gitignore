@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Sanal ortam
+.venv/
+venv/
+env/
+
+# Testler & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Model artifact'ları (deploy sırasında yüklenir)
+models/
+*.pt
+*.pth
+*.h5
+*.keras
+*.ckpt
+*.onnx
+*.pkl
+
+# FastAPI / Uvicorn
+*.log
+logs/
+
+# Ortam
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

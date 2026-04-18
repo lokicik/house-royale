@@ -1,0 +1,27 @@
+# İşletim sistemi
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+ehthumbs.db
+
+# IDE / editör
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+
+# Ortam değişkenleri (sır içerebilir)
+.env
+.env.local
+.env.*.local
+
+# Log ve geçici dosyalar
+*.log
+*.tmp
+.cache/

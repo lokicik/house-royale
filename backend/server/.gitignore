@@ -1,0 +1,39 @@
+# Go derleme çıktıları
+bin/
+build/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go coverage
+coverage.out
+coverage.html
+*.prof
+
+# Go modül cache (opsiyonel — çoğu ekip vendor'ı repo dışında tutar)
+vendor/
+
+# Ortam & sırlar
+.env
+.env.*
+!.env.example
+firebase-credentials.json
+*-credentials.json
+serviceAccount*.json
+
+# Loglar
+*.log
+logs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

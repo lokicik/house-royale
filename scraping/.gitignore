@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Sanal ortam
+.venv/
+venv/
+env/
+ENV/
+
+# Testler & coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# Scrapy
+.scrapy/
+httpcache/
+
+# Selenium profilleri / çerezler
+cookies/
+profiles/
+chromedriver*
+geckodriver*
+
+# Toplanan veri (sürüm kontrolü dışı — boyut ve hassasiyet)
+data/raw/
+data/processed/
+data/interim/
+*.csv
+*.jsonl
+*.json
+!schema.json
+!package.json
+
+# Loglar
+*.log
+logs/
+
+# Ortam
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
