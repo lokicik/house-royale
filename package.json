@@ -1,0 +1,18 @@
+{
+  "name": "ysa-scraping-projesi",
+  "version": "1.0.0",
+  "description": "Türkiye emlak verisi scraper - sahibinden.com & hepsiemlak.com",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "login": "node index.js --login",
+    "scrape": "node index.js --scrape",
+    "export": "node index.js --export"
+  },
+  "dependencies": {
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "playwright": "^1.42.0",
+    "better-sqlite3": "^9.4.3"
+  }
+}
