@@ -1,5 +1,6 @@
 node_modules/
 browser-profile/
+browser-profile-ej/
 browser-profile-he/
 cookies/
 *.html

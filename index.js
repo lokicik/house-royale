@@ -11,6 +11,15 @@ async function main() {
     const { runScraper } = require('./scrapers/hepsiemlak/scraper');
     await runScraper();
 
+  } else if (args.includes('--inspect-ej')) {
+    const { inspectPage } = require('./scrapers/emlakjet/scraper');
+    const slug = args[args.indexOf('--inspect-ej') + 1] || 'adana';
+    await inspectPage(slug);
+
+  } else if (args.includes('--scrape-ej')) {
+    const { runScraper } = require('./scrapers/emlakjet/scraper');
+    await runScraper();
+
   } else if (args.includes('--scrape-details')) {
     const { runDetailScraper } = require('./scrapers/sahibinden/detail-scraper');
     await runDetailScraper();
@@ -47,9 +56,12 @@ async function main() {
     console.log(`
 YSA Scraping Projesi - Kullanım:
 
-  node index.js --login    Sahibinden.com oturumu aç ve cookie kaydet
-  node index.js --scrape   Tüm Türkiye verilerini çek (kaldığı yerden devam eder)
-  node index.js --export   Veriyi CSV olarak dışa aktar
+  node index.js --login         Sahibinden.com oturumu aç ve cookie kaydet
+  node index.js --scrape        Sahibinden - tüm Türkiye verilerini çek
+  node index.js --scrape-he     Hepsiemlak - tüm Türkiye verilerini çek
+  node index.js --inspect-ej [slug]  Emlakjet selector testi (örn: adana)
+  node index.js --scrape-ej     Emlakjet - tüm Türkiye verilerini çek
+  node index.js --export        Veriyi CSV olarak dışa aktar
 
 Python ile veri okuma:
   import sqlite3, pandas as pd
