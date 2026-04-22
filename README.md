@@ -92,7 +92,7 @@ node index.js --scrape-he
 ```
 
 ### Python ile Veri Okuma
-```python
+```pythonö
 import sqlite3
 import pandas as pd
 

@@ -18,8 +18,8 @@ function randomDelay(min, max) {
 }
 
 function buildUrl(slug, page) {
-  const base = `${BASE_URL}/satilik-daire/${slug}/`;
-  return page > 1 ? `${base}?page=${page}` : base;
+  const base = `${BASE_URL}/satilik-daire/${slug}`;
+  return page > 1 ? `${base}?sayfa=${page}` : base + '/';
 }
 
 function initDb() {

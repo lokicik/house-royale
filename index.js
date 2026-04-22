@@ -11,6 +11,16 @@ async function main() {
     const { runScraper } = require('./scrapers/hepsiemlak/scraper');
     await runScraper();
 
+  } else if (args.includes('--inspect-he-detail')) {
+    const { inspectApiRequests } = require('./scrapers/hepsiemlak/detail-scraper');
+    const url = args[args.indexOf('--inspect-he-detail') + 1];
+    if (!url) { console.error('URL gerekli: node index.js --inspect-he-detail <url>'); process.exit(1); }
+    await inspectApiRequests(url);
+
+  } else if (args.includes('--scrape-he-detail')) {
+    const { runDetailScraper } = require('./scrapers/hepsiemlak/detail-scraper');
+    await runDetailScraper();
+
   } else if (args.includes('--inspect-ej')) {
     const { inspectPage } = require('./scrapers/emlakjet/scraper');
     const slug = args[args.indexOf('--inspect-ej') + 1] || 'adana';
@@ -19,6 +29,20 @@ async function main() {
   } else if (args.includes('--scrape-ej')) {
     const { runScraper } = require('./scrapers/emlakjet/scraper');
     await runScraper();
+
+  } else if (args.includes('--inspect-ej-detail')) {
+    const { inspectDetailPage } = require('./scrapers/emlakjet/detail-scraper');
+    const url = args[args.indexOf('--inspect-ej-detail') + 1];
+    if (!url) { console.error('URL gerekli: node index.js --inspect-ej-detail <url>'); process.exit(1); }
+    await inspectDetailPage(url);
+
+  } else if (args.includes('--scrape-ej-detail')) {
+    const { runDetailScraper } = require('./scrapers/emlakjet/detail-scraper');
+    await runDetailScraper();
+
+  } else if (args.includes('--scrape-ej-r2')) {
+    const { runRound2 } = require('./scrapers/emlakjet/round2-scraper');
+    await runRound2();
 
   } else if (args.includes('--scrape-details')) {
     const { runDetailScraper } = require('./scrapers/sahibinden/detail-scraper');
@@ -59,8 +83,10 @@ YSA Scraping Projesi - Kullanım:
   node index.js --login         Sahibinden.com oturumu aç ve cookie kaydet
   node index.js --scrape        Sahibinden - tüm Türkiye verilerini çek
   node index.js --scrape-he     Hepsiemlak - tüm Türkiye verilerini çek
-  node index.js --inspect-ej [slug]  Emlakjet selector testi (örn: adana)
-  node index.js --scrape-ej     Emlakjet - tüm Türkiye verilerini çek
+  node index.js --inspect-ej [slug]       Emlakjet liste selector testi
+  node index.js --scrape-ej               Emlakjet - tüm Türkiye listelerini çek
+  node index.js --inspect-ej-detail <url> Emlakjet detay sayfa selector testi
+  node index.js --scrape-ej-detail        Emlakjet - tüm ilan detaylarını çek
   node index.js --export        Veriyi CSV olarak dışa aktar
 
 Python ile veri okuma:
