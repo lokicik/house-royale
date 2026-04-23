@@ -6,11 +6,12 @@ Bu proje, Türkiye genelindeki satılık konut ilanlarını otomatik olarak topl
 
 ## Veri Kaynakları
 
-| Site | Kayıt | İl Sayısı | Yöntem |
-|------|-------|-----------|--------|
-| hepsiemlak.com | 3.553 | 81 | Playwright (liste + detay sayfası) |
-| emlakjet.com | 5.170 | 81 | Playwright (liste + detay sayfası) |
-| sahibinden.com | devam ediyor | 81 | Playwright + Stealth |
+| Site | Kayıt | Kapsam | Yöntem |
+|------|-------|--------|--------|
+| hepsiemlak.com | 3.553 | 81 il | Playwright (liste + detay sayfası) |
+| emlakjet.com | 5.170 | 81 il | Playwright (liste + detay sayfası) |
+| emlakjet.com (büyükşehir) | 3.991 | İstanbul / Ankara / İzmir | Playwright (liste + detay sayfası) |
+| sahibinden.com | devam ediyor | 81 il | Playwright + Stealth |
 
 ---
 
@@ -68,9 +69,10 @@ scrapers/
 │   ├── scraper.js        # Liste sayfası scraper
 │   └── detail-scraper.js # Detay sayfası scraper
 └── emlakjet/
-    ├── scraper.js        # Liste sayfası scraper (sayfa 1)
-    ├── round2-scraper.js # Liste sayfası scraper (sayfa 2–50)
-    └── detail-scraper.js # Detay sayfası scraper
+    ├── scraper.js           # Liste sayfası scraper (sayfa 1)
+    ├── round2-scraper.js    # Liste sayfası scraper (sayfa 2–50)
+    ├── detail-scraper.js    # Detay sayfası scraper
+    └── buyuksehir-scraper.js # İstanbul/Ankara/İzmir odaklı scraper (ayrı DB)
 config.js                 # 81 il listesi ve ayarlar
 index.js                  # Komut satırı arayüzü
 ```
@@ -115,9 +117,10 @@ node index.js --scrape-he          # Liste verilerini çek
 node index.js --scrape-he-detail   # Detay sayfalarını çek
 
 # emlakjet.com
-node index.js --scrape-ej          # Liste verilerini çek (sayfa 1)
-node index.js --scrape-ej-r2       # Liste verilerini çek (sayfa 2–50)
-node index.js --scrape-ej-detail   # Detay sayfalarını çek
+node index.js --scrape-ej              # Liste verilerini çek (sayfa 1)
+node index.js --scrape-ej-r2           # Liste verilerini çek (sayfa 2–50)
+node index.js --scrape-ej-detail       # Detay sayfalarını çek
+node index.js --scrape-ej-buyuksehir   # İstanbul/Ankara/İzmir ~4000 ilan (ayrı DB)
 
 # Geliştirme / inceleme
 node index.js --inspect-ej [slug]          # Emlakjet liste selector testi
@@ -143,8 +146,9 @@ print(df.head())
 
 ## Veri Dosyaları
 
-| Dosya | Boyut | İçerik |
-|-------|-------|--------|
-| `data/hepsiemlak.db` | ~3 MB | 3.553 satılık daire ilanı (liste + detay) |
-| `data/emlakjet.db` | ~4 MB | 5.170 satılık daire ilanı (liste + detay) |
-| `data/sahibinden.db` | devam ediyor | Tüm Türkiye satılık daire |
+| Dosya | İçerik |
+|-------|--------|
+| `data/hepsiemlak.db` | 3.553 satılık daire ilanı — 81 il (liste + detay) |
+| `data/emlakjet.db` | 5.170 satılık daire ilanı — 81 il (liste + detay) |
+| `data/emlakjet_buyuksehir.db` | 3.991 satılık daire ilanı — İstanbul (1.323) / Ankara (1.334) / İzmir (1.334) |
+| `data/sahibinden.db` | devam ediyor — Tüm Türkiye satılık daire |

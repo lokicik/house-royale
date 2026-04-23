@@ -44,6 +44,10 @@ async function main() {
     const { runRound2 } = require('./scrapers/emlakjet/round2-scraper');
     await runRound2();
 
+  } else if (args.includes('--scrape-ej-buyuksehir')) {
+    const { runBuyuksehirScraper } = require('./scrapers/emlakjet/buyuksehir-scraper');
+    await runBuyuksehirScraper();
+
   } else if (args.includes('--scrape-details')) {
     const { runDetailScraper } = require('./scrapers/sahibinden/detail-scraper');
     await runDetailScraper();
@@ -87,6 +91,7 @@ YSA Scraping Projesi - Kullanım:
   node index.js --scrape-ej               Emlakjet - tüm Türkiye listelerini çek
   node index.js --inspect-ej-detail <url> Emlakjet detay sayfa selector testi
   node index.js --scrape-ej-detail        Emlakjet - tüm ilan detaylarını çek
+  node index.js --scrape-ej-buyuksehir    Emlakjet - İstanbul/Ankara/İzmir ~2000 ilan
   node index.js --export        Veriyi CSV olarak dışa aktar
 
 Python ile veri okuma:
