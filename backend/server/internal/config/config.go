@@ -3,9 +3,10 @@ package config
 import "os"
 
 type Config struct {
-	Port       string
-	MLInfraURL string
-	AppEnv     string
+	Port              string
+	MLInfraURL        string
+	AppEnv            string
+	FirebaseProjectID string
 }
 
 func Load() *Config {
@@ -21,5 +22,10 @@ func Load() *Config {
 	if appEnv == "" {
 		appEnv = "development"
 	}
-	return &Config{Port: port, MLInfraURL: mlURL, AppEnv: appEnv}
+	return &Config{
+		Port:              port,
+		MLInfraURL:        mlURL,
+		AppEnv:            appEnv,
+		FirebaseProjectID: os.Getenv("FIREBASE_PROJECT_ID"),
+	}
 }

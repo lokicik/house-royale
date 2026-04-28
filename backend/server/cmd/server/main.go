@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"log"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/lokicik/house-royale/backend/server/internal/config"
+	firebasepkg "github.com/lokicik/house-royale/backend/server/internal/firebase"
 	"github.com/lokicik/house-royale/backend/server/internal/handlers"
 	"github.com/lokicik/house-royale/backend/server/internal/hub"
 	"github.com/lokicik/house-royale/backend/server/internal/middleware"
@@ -17,6 +20,9 @@ func main() {
 
 	if cfg.AppEnv == "production" {
 		gin.SetMode(gin.ReleaseMode)
+		if err := firebasepkg.Init(context.Background(), cfg.FirebaseProjectID); err != nil {
+			log.Fatalf("firebase init: %v", err)
+		}
 	}
 
 	h := hub.New()
@@ -28,7 +34,15 @@ func main() {
 
 	r := gin.Default()
 
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-Player-ID"},
+		AllowCredentials: true,
+	}))
+
 	r.GET("/health", handlers.Health)
+	r.POST("/auth/verify", handlers.VerifyToken)
 
 	auth := middleware.Auth()
 	r.POST("/lobbies", auth, lobbyHandler.Create)
