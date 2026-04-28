@@ -11,6 +11,7 @@ import (
 	"github.com/lokicik/house-royale/backend/server/internal/game"
 	"github.com/lokicik/house-royale/backend/server/internal/hub"
 	"github.com/lokicik/house-royale/backend/server/internal/middleware"
+	"github.com/lokicik/house-royale/backend/server/internal/mlclient"
 )
 
 const (
@@ -27,12 +28,14 @@ var upgrader = websocket.Upgrader{
 }
 
 type WSHandler struct {
-	Hub   *hub.Hub
-	Store *LobbyStore
+	Hub       *hub.Hub
+	Store     *LobbyStore
+	Sessions  *SessionStore
+	Predictor mlclient.Predictor
 }
 
-func NewWSHandler(h *hub.Hub, store *LobbyStore) *WSHandler {
-	return &WSHandler{Hub: h, Store: store}
+func NewWSHandler(h *hub.Hub, store *LobbyStore, sessions *SessionStore, predictor mlclient.Predictor) *WSHandler {
+	return &WSHandler{Hub: h, Store: store, Sessions: sessions, Predictor: predictor}
 }
 
 func (h *WSHandler) ServeWS(c *gin.Context) {
@@ -100,11 +103,37 @@ func (h *WSHandler) readPump(c *hub.Client) {
 				h.broadcastPlayerJoined(c, p.Nickname)
 			}
 
-		case game.MsgSubmitGuess:
-			// round orchestration sonraki iterasyonda
-
 		case game.MsgReady:
-			// oyun başlatma sonraki iterasyonda
+			lobby, ok := h.Store.Get(c.LobbyID)
+			if !ok {
+				h.sendError(c, "lobby not found")
+				continue
+			}
+			// only the host can start the game
+			if c.PlayerID != lobby.HostID {
+				h.sendError(c, "only the host can start the game")
+				continue
+			}
+			if lobby.Status != game.StatusWaiting {
+				h.sendError(c, "game already started")
+				continue
+			}
+			if h.Sessions.Has(c.LobbyID) {
+				continue
+			}
+			session := game.NewSession(c.LobbyID, lobby, h.Hub, h.Predictor, game.DefaultConfig)
+			h.Sessions.Set(c.LobbyID, session)
+			go session.Run()
+
+		case game.MsgSubmitGuess:
+			var p game.GuessPayload
+			if err := json.Unmarshal(msg.Payload, &p); err != nil {
+				h.sendError(c, "invalid SUBMIT_GUESS payload")
+				continue
+			}
+			if session, ok := h.Sessions.Get(c.LobbyID); ok {
+				session.SubmitGuess(c.PlayerID, p.PriceTRY)
+			}
 
 		default:
 			h.sendError(c, "unknown message type")

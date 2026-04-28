@@ -63,3 +63,36 @@ func ByID(id string) (Property, bool) {
 func Random() Property {
 	return fixtures[randomIndex(len(fixtures))]
 }
+
+// PublicView is the property data sent to players during a round — actual price is omitted.
+type PublicView struct {
+	ID            string   `json:"id"`
+	Il            string   `json:"il"`
+	Ilce          string   `json:"ilce"`
+	Mahalle       string   `json:"mahalle"`
+	MetrekareBrut float64  `json:"metrekare_brut"`
+	OdaSalon      string   `json:"oda_salon"`
+	BinaYasi      string   `json:"bina_yasi"`
+	Kat           string   `json:"kat"`
+	KatSayisi     string   `json:"kat_sayisi"`
+	Isitma        string   `json:"isitma"`
+	Balkon        string   `json:"balkon"`
+	Asansor       string   `json:"asansor"`
+	Otopark       string   `json:"otopark"`
+	ImageURLs     []string `json:"image_urls"`
+}
+
+// Public returns the property without its actual price.
+func (p Property) Public() PublicView {
+	urls := p.ImageURLs
+	if urls == nil {
+		urls = []string{}
+	}
+	return PublicView{
+		ID: p.ID, Il: p.Il, Ilce: p.Ilce, Mahalle: p.Mahalle,
+		MetrekareBrut: p.MetrekareBrut, OdaSalon: p.OdaSalon,
+		BinaYasi: p.BinaYasi, Kat: p.Kat, KatSayisi: p.KatSayisi,
+		Isitma: p.Isitma, Balkon: p.Balkon, Asansor: p.Asansor, Otopark: p.Otopark,
+		ImageURLs: urls,
+	}
+}

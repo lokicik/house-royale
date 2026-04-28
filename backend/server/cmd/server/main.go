@@ -12,6 +12,7 @@ import (
 	"github.com/lokicik/house-royale/backend/server/internal/handlers"
 	"github.com/lokicik/house-royale/backend/server/internal/hub"
 	"github.com/lokicik/house-royale/backend/server/internal/middleware"
+	"github.com/lokicik/house-royale/backend/server/internal/mlclient"
 )
 
 func main() {
@@ -29,8 +30,11 @@ func main() {
 	go h.Run()
 
 	store := handlers.NewLobbyStore()
+	sessions := handlers.NewSessionStore()
+	predictor := mlclient.NewMockPredictor()
+
 	lobbyHandler := handlers.NewLobbyHandler(store)
-	wsHandler := handlers.NewWSHandler(h, store)
+	wsHandler := handlers.NewWSHandler(h, store, sessions, predictor)
 
 	r := gin.Default()
 
