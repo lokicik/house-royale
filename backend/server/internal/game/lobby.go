@@ -56,6 +56,13 @@ func (l *Lobby) PlayerCount() int {
 	return len(l.Players)
 }
 
+func (l *Lobby) GetPlayer(playerID string) (*Player, bool) {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	p, ok := l.Players[playerID]
+	return p, ok
+}
+
 func (l *Lobby) Snapshot() map[string]*Player {
 	l.mu.RLock()
 	defer l.mu.RUnlock()

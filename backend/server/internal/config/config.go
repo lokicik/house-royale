@@ -7,6 +7,7 @@ type Config struct {
 	MLInfraURL        string
 	AppEnv            string
 	FirebaseProjectID string
+	CORSOrigin        string
 }
 
 func Load() *Config {
@@ -22,10 +23,15 @@ func Load() *Config {
 	if appEnv == "" {
 		appEnv = "development"
 	}
+	corsOrigin := os.Getenv("CORS_ORIGIN")
+	if corsOrigin == "" {
+		corsOrigin = "http://localhost:5173"
+	}
 	return &Config{
 		Port:              port,
 		MLInfraURL:        mlURL,
 		AppEnv:            appEnv,
 		FirebaseProjectID: os.Getenv("FIREBASE_PROJECT_ID"),
+		CORSOrigin:        corsOrigin,
 	}
 }

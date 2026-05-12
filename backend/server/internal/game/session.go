@@ -89,6 +89,11 @@ func (s *Session) Run() {
 			aiResp = &mlclient.PredictResponse{Predictions: map[string]mlclient.ModelPrediction{}}
 		}
 
+		// Discard any stale guesses that arrived during the inter-round pause.
+		for len(s.GuessCh) > 0 {
+			<-s.GuessCh
+		}
+
 		s.broadcast(MsgRoundStart, roundStartPayload{
 			Round:        round,
 			TotalRounds:  s.cfg.RoundCount,
@@ -131,18 +136,16 @@ func (s *Session) Run() {
 
 func (s *Session) collectGuesses() map[string]float64 {
 	guesses := make(map[string]float64)
-	players := s.lobby.Snapshot()
 	deadline := time.After(s.cfg.RoundDuration)
 
 	for {
-		if len(guesses) >= len(players) {
+		// Re-snapshot on every iteration so disconnected players are excluded.
+		if allSubmitted(guesses, s.lobby.Snapshot()) {
 			return guesses
 		}
 		select {
 		case g := <-s.GuessCh:
-			if _, ok := players[g.PlayerID]; ok {
-				guesses[g.PlayerID] = g.Price
-			}
+			guesses[g.PlayerID] = g.Price
 		case <-deadline:
 			return guesses
 		}

@@ -32,7 +32,7 @@ func New() *Hub {
 	return &Hub{
 		lobbies:    make(map[string]map[*Client]bool),
 		Register:   make(chan *Client),
-		Unregister: make(chan *Client),
+		Unregister: make(chan *Client, 64),
 		Broadcast:  make(chan BroadcastMsg, 64),
 	}
 }

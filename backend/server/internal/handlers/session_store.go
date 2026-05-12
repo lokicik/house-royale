@@ -34,3 +34,9 @@ func (s *SessionStore) Has(lobbyID string) bool {
 	_, ok := s.sessions[lobbyID]
 	return ok
 }
+
+func (s *SessionStore) Delete(lobbyID string) {
+	s.mu.Lock()
+	delete(s.sessions, lobbyID)
+	s.mu.Unlock()
+}
