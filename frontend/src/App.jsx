@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Lobby from './pages/Lobby'
+import LobbyRoom from './pages/LobbyRoom'
 import Game from './pages/Game'
 import RoundResult from './pages/RoundResult'
 import Leaderboard from './pages/Leaderboard'
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/lobby" element={<ProtectedRoute><Lobby /></ProtectedRoute>} />
+          <Route path="/lobby/:id" element={<ProtectedRoute><LobbyRoom /></ProtectedRoute>} />
           <Route path="/game/:id" element={<ProtectedRoute><Game /></ProtectedRoute>} />
           <Route path="/round-result" element={<ProtectedRoute><RoundResult /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
