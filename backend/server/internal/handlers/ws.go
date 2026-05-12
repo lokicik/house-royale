@@ -116,6 +116,23 @@ func (h *WSHandler) readPump(c *hub.Client) {
 			if lobby, ok := h.Store.Get(c.LobbyID); ok {
 				lobby.AddPlayer(&game.Player{ID: c.PlayerID, Nickname: p.Nickname})
 				h.broadcastPlayerJoined(c, p.Nickname)
+
+				// Send each existing player to the newly joined client so their
+				// waiting-room list is complete regardless of join order.
+				for _, existing := range lobby.Snapshot() {
+					if existing.ID == c.PlayerID {
+						continue
+					}
+					payload, _ := json.Marshal(map[string]string{
+						"player_id": existing.ID,
+						"nickname":  existing.Nickname,
+					})
+					out, _ := json.Marshal(game.Message{Type: game.MsgPlayerJoined, Payload: payload})
+					select {
+					case c.Send <- out:
+					default:
+					}
+				}
 			}
 
 		case game.MsgReady:

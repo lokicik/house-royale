@@ -89,6 +89,11 @@ func (s *Session) Run() {
 			aiResp = &mlclient.PredictResponse{Predictions: map[string]mlclient.ModelPrediction{}}
 		}
 
+		// Discard any stale guesses that arrived during the inter-round pause.
+		for len(s.GuessCh) > 0 {
+			<-s.GuessCh
+		}
+
 		s.broadcast(MsgRoundStart, roundStartPayload{
 			Round:        round,
 			TotalRounds:  s.cfg.RoundCount,
