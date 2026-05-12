@@ -62,6 +62,20 @@ func scoreRound(players map[string]*Player, guesses map[string]float64, actualPr
 	return results
 }
 
+// allSubmitted returns true when every current player has a non-zero guess,
+// or when no players remain in the lobby (all disconnected).
+func allSubmitted(guesses map[string]float64, current map[string]*Player) bool {
+	if len(current) == 0 {
+		return true
+	}
+	for id := range current {
+		if guesses[id] == 0 {
+			return false
+		}
+	}
+	return true
+}
+
 // buildAIResults converts raw model predictions to AIResult with deviation %.
 func buildAIResults(predictions map[string]mlclient.ModelPrediction, actualPrice float64) map[string]AIResult {
 	out := make(map[string]AIResult, len(predictions))

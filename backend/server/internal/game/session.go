@@ -131,18 +131,16 @@ func (s *Session) Run() {
 
 func (s *Session) collectGuesses() map[string]float64 {
 	guesses := make(map[string]float64)
-	players := s.lobby.Snapshot()
 	deadline := time.After(s.cfg.RoundDuration)
 
 	for {
-		if len(guesses) >= len(players) {
+		// Re-snapshot on every iteration so disconnected players are excluded.
+		if allSubmitted(guesses, s.lobby.Snapshot()) {
 			return guesses
 		}
 		select {
 		case g := <-s.GuessCh:
-			if _, ok := players[g.PlayerID]; ok {
-				guesses[g.PlayerID] = g.Price
-			}
+			guesses[g.PlayerID] = g.Price
 		case <-deadline:
 			return guesses
 		}

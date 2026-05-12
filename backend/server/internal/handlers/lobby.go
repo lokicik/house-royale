@@ -36,6 +36,12 @@ func (s *LobbyStore) Get(id string) (*game.Lobby, bool) {
 	return l, ok
 }
 
+func (s *LobbyStore) Delete(id string) {
+	s.mu.Lock()
+	delete(s.lobbies, id)
+	s.mu.Unlock()
+}
+
 func newID() string {
 	b := make([]byte, 8)
 	rand.Read(b)

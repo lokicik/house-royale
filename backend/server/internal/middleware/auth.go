@@ -16,6 +16,11 @@ func Auth() gin.HandlerFunc {
 		if os.Getenv("APP_ENV") != "production" {
 			playerID := c.GetHeader("X-Player-ID")
 			if playerID == "" {
+				// WebSocket connections from the browser cannot set custom headers;
+				// fall back to the query parameter used by the WS client.
+				playerID = c.Query("player_id")
+			}
+			if playerID == "" {
 				playerID = "anonymous"
 			}
 			c.Set(PlayerIDKey, playerID)
