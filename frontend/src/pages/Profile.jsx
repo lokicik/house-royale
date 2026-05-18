@@ -41,24 +41,38 @@ export default function Profile() {
   const [myStats, setMyStats] = useState(null)
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'Misafir'
 
   useEffect(() => {
     if (!user) return
     setLoading(true)
+    setError(null)
     user.getIdToken().then(idToken => {
       Promise.all([
-        getLeaderboard().catch(() => null),
-        getMyHistory(user, idToken).catch(() => null),
-      ]).then(([lbData, histData]) => {
-        if (lbData?.entries) {
-          const me = lbData.entries.find(e => !e.is_ai && e.id === user.uid)
-          setMyStats(me ? { ...me, total: lbData.entries.length } : null)
+        getLeaderboard().then(d => ({ ok: true, d })).catch(e => ({ ok: false, e })),
+        getMyHistory(user, idToken).then(d => ({ ok: true, d })).catch(e => ({ ok: false, e })),
+      ]).then(([lbRes, histRes]) => {
+        if (lbRes.ok && lbRes.d?.entries) {
+          const me = lbRes.d.entries.find(e => !e.is_ai && e.id === user.uid)
+          setMyStats(me ? { ...me, total: lbRes.d.entries.length } : null)
         }
-        setHistory(histData?.records ?? [])
+        if (histRes.ok) {
+          setHistory(histRes.d?.records ?? [])
+        }
+        const failures = [
+          !lbRes.ok && (lbRes.e?.message || 'leaderboard'),
+          !histRes.ok && (histRes.e?.message || 'history'),
+        ].filter(Boolean)
+        if (failures.length) {
+          setError(`Veriler yüklenemedi: ${failures.join(' · ')}`)
+        }
         setLoading(false)
       })
+    }).catch(e => {
+      setError(`Oturum doğrulanamadı: ${e?.message ?? e}`)
+      setLoading(false)
     })
   }, [user])
 
@@ -191,11 +205,13 @@ export default function Profile() {
           <div className="pf-section-card">
             <div className="pf-section-header">
               <h3>Oyun Geçmişi</h3>
-              {!loading && <span className="pf-count">{history.length} oyun</span>}
+              {!loading && !error && <span className="pf-count">{history.length} oyun</span>}
             </div>
 
             {loading ? (
               <div className="pf-empty">Yükleniyor…</div>
+            ) : error ? (
+              <div className="pf-empty" style={{ color: 'var(--hr-danger)' }}>{error}</div>
             ) : history.length === 0 ? (
               <div className="pf-empty">Henüz tamamlanmış oyunun yok. Bir oda oluştur ve oynamaya başla!</div>
             ) : (

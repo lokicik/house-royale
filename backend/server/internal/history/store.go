@@ -2,10 +2,13 @@ package history
 
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const maxRecordsPerUser = 20
@@ -75,9 +78,11 @@ func (fs *FirestoreStore) Record(userID string, r GameRecord) {
 	ctx := context.Background()
 	docRef := fs.client.Collection("user_history").Doc(userID)
 
-	fs.client.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
+	err := fs.client.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
 		doc, err := tx.Get(docRef)
-		if err != nil && err.Error() != "document not found" {
+		// First-ever write for a user surfaces as gRPC NotFound — treat as empty,
+		// not as an error.
+		if err != nil && status.Code(err) != codes.NotFound {
 			return err
 		}
 
@@ -85,20 +90,25 @@ func (fs *FirestoreStore) Record(userID string, r GameRecord) {
 			Records []GameRecord `firestore:"records"`
 		}
 
-		if doc.Exists() {
-			doc.DataTo(&userHistory)
+		if doc != nil && doc.Exists() {
+			if err := doc.DataTo(&userHistory); err != nil {
+				return err
+			}
 		}
 
-		// Prepend new record (newest first)
 		userHistory.Records = append([]GameRecord{r}, userHistory.Records...)
 
-		// Cap at maxRecordsPerUser
 		if len(userHistory.Records) > maxRecordsPerUser {
 			userHistory.Records = userHistory.Records[:maxRecordsPerUser]
 		}
 
 		return tx.Set(docRef, userHistory)
 	})
+	if err != nil {
+		log.Printf("history.Record firestore tx failed user=%s lobby=%s err=%v", userID, r.LobbyID, err)
+		return
+	}
+	log.Printf("history.Record success user=%s lobby=%s rank=%d score=%d", userID, r.LobbyID, r.Rank, r.Score)
 }
 
 // Get retrieves all game records for a user from Firestore.
@@ -106,6 +116,11 @@ func (fs *FirestoreStore) Get(userID string) []GameRecord {
 	ctx := context.Background()
 	doc, err := fs.client.Collection("user_history").Doc(userID).Get(ctx)
 	if err != nil {
+		// A brand-new user with no history is the expected NotFound case — don't
+		// spam logs with it. Anything else is real and worth surfacing.
+		if status.Code(err) != codes.NotFound {
+			log.Printf("history.Get firestore read failed user=%s err=%v", userID, err)
+		}
 		return []GameRecord{}
 	}
 
@@ -114,6 +129,7 @@ func (fs *FirestoreStore) Get(userID string) []GameRecord {
 	}
 
 	if err := doc.DataTo(&userHistory); err != nil {
+		log.Printf("history.Get firestore decode failed user=%s err=%v", userID, err)
 		return []GameRecord{}
 	}
 

@@ -2,6 +2,7 @@ package leaderboard
 
 import (
 	"context"
+	"log"
 	"math"
 	"sort"
 	"sync"
@@ -31,14 +32,44 @@ type stat struct {
 
 // EntryView is the JSON-serialisable leaderboard row.
 type EntryView struct {
-	ID      string  `json:"id"`
-	Name    string  `json:"name"`
-	IsAI    bool    `json:"is_ai"`
-	Rank    int     `json:"rank"`
-	Rounds  int     `json:"rounds"`
-	AvgErr  float64 `json:"avg_err"`   // average deviation %
-	WinRate float64 `json:"win_rate"`  // % of rounds finished 1st
-	Score   int     `json:"score"`
+	ID      string  `json:"id" firestore:"id"`
+	Name    string  `json:"name" firestore:"name"`
+	IsAI    bool    `json:"is_ai" firestore:"is_ai"`
+	Rank    int     `json:"rank" firestore:"-"`
+	Rounds  int     `json:"rounds" firestore:"rounds"`
+	AvgErr  float64 `json:"avg_err" firestore:"-"`   // average deviation %
+	WinRate float64 `json:"win_rate" firestore:"-"`  // % of rounds finished 1st
+	Score   int     `json:"score" firestore:"score"`
+}
+
+// asInt64 reads a numeric value out of a map[string]interface{} decoded from
+// Firestore, tolerating both int64 (the expected case) and float64 (which can
+// happen if a field was written as a float, e.g. by an older code version or a
+// manual Firestore console edit).
+func asInt64(v interface{}) int64 {
+	switch n := v.(type) {
+	case int64:
+		return n
+	case float64:
+		return int64(n)
+	case int:
+		return int64(n)
+	default:
+		return 0
+	}
+}
+
+func asFloat64(v interface{}) float64 {
+	switch n := v.(type) {
+	case float64:
+		return n
+	case int64:
+		return float64(n)
+	case int:
+		return float64(n)
+	default:
+		return 0
+	}
 }
 
 // Storer defines the interface for leaderboard storage backends.
@@ -120,6 +151,8 @@ func NewFirestoreStore(client *firestore.Client) *FirestoreStore {
 // Record updates stats in Firestore for each participant across all rounds.
 func (fs *FirestoreStore) Record(rounds [][]RoundEntry) {
 	ctx := context.Background()
+	writes := 0
+	failures := 0
 	for _, round := range rounds {
 		for _, r := range round {
 			docRef := fs.client.Collection("leaderboard_stats").Doc(r.ID)
@@ -127,7 +160,7 @@ func (fs *FirestoreStore) Record(rounds [][]RoundEntry) {
 			if r.PointsEarned == 3 {
 				wins = 1
 			}
-			docRef.Set(ctx, map[string]interface{}{
+			if _, err := docRef.Set(ctx, map[string]interface{}{
 				"id":        r.ID,
 				"name":      r.Name,
 				"is_ai":     r.IsAI,
@@ -135,9 +168,15 @@ func (fs *FirestoreStore) Record(rounds [][]RoundEntry) {
 				"rounds":    firestore.Increment(1),
 				"total_dev": firestore.Increment(r.DeviationPct),
 				"wins":      firestore.Increment(wins),
-			}, firestore.MergeAll)
+			}, firestore.MergeAll); err != nil {
+				failures++
+				log.Printf("leaderboard.Record firestore set failed id=%s name=%s err=%v", r.ID, r.Name, err)
+				continue
+			}
+			writes++
 		}
 	}
+	log.Printf("leaderboard.Record success rounds=%d writes=%d failures=%d", len(rounds), writes, failures)
 }
 
 // Snapshot reads all stats from Firestore and returns a sorted leaderboard view.
@@ -153,6 +192,7 @@ func (fs *FirestoreStore) Snapshot() []EntryView {
 			break
 		}
 		if err != nil {
+			log.Printf("leaderboard.Snapshot firestore iter failed err=%v", err)
 			return []EntryView{}
 		}
 
@@ -164,22 +204,10 @@ func (fs *FirestoreStore) Snapshot() []EntryView {
 		id, _ := data["id"].(string)
 		name, _ := data["name"].(string)
 		isAI, _ := data["is_ai"].(bool)
-		score := int64(0)
-		if s, ok := data["score"].(int64); ok {
-			score = s
-		}
-		rounds := int64(0)
-		if r, ok := data["rounds"].(int64); ok {
-			rounds = r
-		}
-		totalDev := 0.0
-		if td, ok := data["total_dev"].(float64); ok {
-			totalDev = td
-		}
-		wins := int64(0)
-		if w, ok := data["wins"].(int64); ok {
-			wins = w
-		}
+		score := asInt64(data["score"])
+		rounds := asInt64(data["rounds"])
+		totalDev := asFloat64(data["total_dev"])
+		wins := asInt64(data["wins"])
 
 		avgErr := 0.0
 		winRate := 0.0

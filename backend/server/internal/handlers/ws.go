@@ -226,8 +226,10 @@ func (h *WSHandler) handleReady(c *hub.Client) {
 	session := game.NewSession(c.LobbyID, lobby, h.Hub, h.Predictor, game.DefaultConfig)
 	session.HistoryStore = h.HistoryStore
 	h.Sessions.Set(c.LobbyID, session)
+	log.Printf("session.start lobby=%s host=%s players=%d", c.LobbyID, c.PlayerID, lobby.PlayerCount())
 	go func(lobbyID string) {
 		session.Run()
+		log.Printf("session.end lobby=%s rounds=%d", lobbyID, len(session.RoundSummaries))
 		if h.LB != nil {
 			lbRounds := make([][]leaderboard.RoundEntry, len(session.RoundSummaries))
 			for i, round := range session.RoundSummaries {
@@ -237,7 +239,10 @@ func (h *WSHandler) handleReady(c *hub.Client) {
 				}
 				lbRounds[i] = lbRound
 			}
+			log.Printf("leaderboard.record.invoke lobby=%s rounds=%d store=%T", lobbyID, len(lbRounds), h.LB)
 			h.LB.Record(lbRounds)
+		} else {
+			log.Printf("leaderboard.record.skip lobby=%s reason=LB-nil", lobbyID)
 		}
 		time.Sleep(cleanupDelay)
 		h.Sessions.Delete(lobbyID)

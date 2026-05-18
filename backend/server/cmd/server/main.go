@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"cloud.google.com/go/firestore"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -37,18 +38,23 @@ func main() {
 
 	var lb leaderboard.Storer
 	var hs history.Storer
+	var fsClient *firestore.Client
 
 	if cfg.AppEnv == "production" {
-		fsClient, err := firebasepkg.GetFirestore(context.Background())
+		client, err := firebasepkg.GetFirestore(context.Background())
 		if err != nil {
 			log.Fatalf("firestore init: %v", err)
 		}
+		fsClient = client
 		lb = leaderboard.NewFirestoreStore(fsClient)
 		hs = history.NewFirestoreStore(fsClient)
 	} else {
 		lb = leaderboard.NewStore()
 		hs = history.NewStore()
 	}
+
+	log.Printf("storage backend: leaderboard=%T history=%T appEnv=%s firebaseProject=%s corsOrigins=%v",
+		lb, hs, cfg.AppEnv, cfg.FirebaseProjectID, cfg.CORSOrigins)
 
 	lobbyHandler := handlers.NewLobbyHandler(store)
 	wsHandler := handlers.NewWSHandler(h, store, sessions, predictor, lb, hs)
@@ -65,6 +71,9 @@ func main() {
 	}))
 
 	r.GET("/health", handlers.Health)
+	if fsClient != nil {
+		r.GET("/health/firestore", handlers.FirestoreHealth(fsClient, cfg.FirebaseProjectID))
+	}
 	r.POST("/auth/verify", handlers.VerifyToken)
 	r.GET("/leaderboard", lbHandler.Get)
 

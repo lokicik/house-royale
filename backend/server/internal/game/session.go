@@ -294,12 +294,15 @@ func (s *Session) broadcastLeaderboard() {
 
 func (s *Session) recordHistory() {
 	if s.HistoryStore == nil {
+		log.Printf("history.record.skip lobby=%s reason=HistoryStore-nil", s.lobbyID)
 		return
 	}
 	players := s.lobby.Snapshot()
 	if len(players) == 0 {
+		log.Printf("history.record.skip lobby=%s reason=no-players", s.lobbyID)
 		return
 	}
+	log.Printf("history.record.invoke lobby=%s humanPlayers=%d store=%T", s.lobbyID, len(players), s.HistoryStore)
 
 	// Build a combined ranked list (human + AI) mirroring broadcastLeaderboard.
 	type ranked struct {
