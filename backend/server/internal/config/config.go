@@ -1,13 +1,16 @@
 package config
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 type Config struct {
 	Port              string
 	MLInfraURL        string
 	AppEnv            string
 	FirebaseProjectID string
-	CORSOrigin        string
+	CORSOrigins       []string
 }
 
 func Load() *Config {
@@ -26,15 +29,19 @@ func Load() *Config {
 	if appEnv == "" {
 		appEnv = "development"
 	}
-	corsOrigin := os.Getenv("CORS_ORIGIN")
-	if corsOrigin == "" {
-		corsOrigin = "http://localhost:5173"
+	corsRaw := os.Getenv("CORS_ORIGIN")
+	if corsRaw == "" {
+		corsRaw = "http://localhost:5173"
+	}
+	corsOrigins := strings.Split(corsRaw, ",")
+	for i, o := range corsOrigins {
+		corsOrigins[i] = strings.TrimSpace(o)
 	}
 	return &Config{
 		Port:              port,
 		MLInfraURL:        mlURL,
 		AppEnv:            appEnv,
 		FirebaseProjectID: os.Getenv("FIREBASE_PROJECT_ID"),
-		CORSOrigin:        corsOrigin,
+		CORSOrigins:       corsOrigins,
 	}
 }
