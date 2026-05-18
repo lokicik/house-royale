@@ -38,15 +38,25 @@ type playerGuess struct {
 	Price    float64
 }
 
+// RoundSummaryEntry captures one participant's per-round stats for leaderboard recording.
+type RoundSummaryEntry struct {
+	ID           string
+	Name         string
+	IsAI         bool
+	DeviationPct float64
+	PointsEarned int
+}
+
 // Session manages one game's lifecycle from start to leaderboard.
 type Session struct {
-	lobbyID     string
-	lobby       *Lobby
-	broadcaster Broadcaster
-	predictor   mlclient.Predictor
-	cfg         SessionConfig
-	GuessCh     chan playerGuess
-	aiScores    map[string]int // cumulative points per AI model name
+	lobbyID        string
+	lobby          *Lobby
+	broadcaster    Broadcaster
+	predictor      mlclient.Predictor
+	cfg            SessionConfig
+	GuessCh        chan playerGuess
+	aiScores       map[string]int // cumulative points per AI model name
+	RoundSummaries [][]RoundSummaryEntry
 
 	// voteSig wakes the vote-wait loop when a vote arrives or a player
 	// disconnects. Buffered/non-blocking sends.
@@ -161,6 +171,15 @@ func (s *Session) Run() {
 		for name, ar := range aiResults {
 			s.aiScores[name] += ar.PointsEarned
 		}
+
+		roundRow := make([]RoundSummaryEntry, 0, len(results)+len(aiResults))
+		for _, r := range results {
+			roundRow = append(roundRow, RoundSummaryEntry{ID: r.PlayerID, Name: r.Nickname, DeviationPct: r.DeviationPct, PointsEarned: r.PointsEarned})
+		}
+		for name, ar := range aiResults {
+			roundRow = append(roundRow, RoundSummaryEntry{ID: "ai:" + name, Name: name, IsAI: true, DeviationPct: ar.DeviationPct, PointsEarned: ar.PointsEarned})
+		}
+		s.RoundSummaries = append(s.RoundSummaries, roundRow)
 
 		s.broadcast(MsgRoundResult, roundResultPayload{
 			Round:         round,

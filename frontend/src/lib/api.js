@@ -24,6 +24,12 @@ export async function getLobby(lobbyId) {
   return res.json()
 }
 
+export async function getLeaderboard() {
+  const res = await fetch(`${BASE}/leaderboard`)
+  if (!res.ok) throw new Error('Liderlik tablosu yüklenemedi')
+  return res.json()
+}
+
 /**
  * Builds the WebSocket URL for a lobby connection.
  * Passes the Firebase ID token as ?token= so both dev (JWT decode)

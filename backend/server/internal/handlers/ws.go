@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/lokicik/house-royale/backend/server/internal/game"
 	"github.com/lokicik/house-royale/backend/server/internal/hub"
+	"github.com/lokicik/house-royale/backend/server/internal/leaderboard"
 	"github.com/lokicik/house-royale/backend/server/internal/middleware"
 	"github.com/lokicik/house-royale/backend/server/internal/mlclient"
 )
@@ -33,10 +34,11 @@ type WSHandler struct {
 	Store     *LobbyStore
 	Sessions  *SessionStore
 	Predictor mlclient.Predictor
+	LB        *leaderboard.Store
 }
 
-func NewWSHandler(h *hub.Hub, store *LobbyStore, sessions *SessionStore, predictor mlclient.Predictor) *WSHandler {
-	return &WSHandler{Hub: h, Store: store, Sessions: sessions, Predictor: predictor}
+func NewWSHandler(h *hub.Hub, store *LobbyStore, sessions *SessionStore, predictor mlclient.Predictor, lb *leaderboard.Store) *WSHandler {
+	return &WSHandler{Hub: h, Store: store, Sessions: sessions, Predictor: predictor, LB: lb}
 }
 
 func (h *WSHandler) ServeWS(c *gin.Context) {
@@ -223,6 +225,17 @@ func (h *WSHandler) handleReady(c *hub.Client) {
 	h.Sessions.Set(c.LobbyID, session)
 	go func(lobbyID string) {
 		session.Run()
+		if h.LB != nil {
+			lbRounds := make([][]leaderboard.RoundEntry, len(session.RoundSummaries))
+			for i, round := range session.RoundSummaries {
+				lbRound := make([]leaderboard.RoundEntry, len(round))
+				for j, e := range round {
+					lbRound[j] = leaderboard.RoundEntry{ID: e.ID, Name: e.Name, IsAI: e.IsAI, DeviationPct: e.DeviationPct, PointsEarned: e.PointsEarned}
+				}
+				lbRounds[i] = lbRound
+			}
+			h.LB.Record(lbRounds)
+		}
 		time.Sleep(cleanupDelay)
 		h.Sessions.Delete(lobbyID)
 		h.Store.Delete(lobbyID)

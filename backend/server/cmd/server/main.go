@@ -11,6 +11,7 @@ import (
 	firebasepkg "github.com/lokicik/house-royale/backend/server/internal/firebase"
 	"github.com/lokicik/house-royale/backend/server/internal/handlers"
 	"github.com/lokicik/house-royale/backend/server/internal/hub"
+	"github.com/lokicik/house-royale/backend/server/internal/leaderboard"
 	"github.com/lokicik/house-royale/backend/server/internal/middleware"
 	"github.com/lokicik/house-royale/backend/server/internal/mlclient"
 )
@@ -32,9 +33,11 @@ func main() {
 	store := handlers.NewLobbyStore()
 	sessions := handlers.NewSessionStore()
 	predictor := mlclient.NewMockPredictor()
+	lb := leaderboard.NewStore()
 
 	lobbyHandler := handlers.NewLobbyHandler(store)
-	wsHandler := handlers.NewWSHandler(h, store, sessions, predictor)
+	wsHandler := handlers.NewWSHandler(h, store, sessions, predictor, lb)
+	lbHandler := &handlers.LeaderboardHandler{LB: lb}
 
 	r := gin.Default()
 
@@ -47,6 +50,7 @@ func main() {
 
 	r.GET("/health", handlers.Health)
 	r.POST("/auth/verify", handlers.VerifyToken)
+	r.GET("/leaderboard", lbHandler.Get)
 
 	auth := middleware.Auth()
 	r.POST("/lobbies", auth, lobbyHandler.Create)
