@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/lokicik/house-royale/backend/server/internal/history"
 	"github.com/lokicik/house-royale/backend/server/internal/mlclient"
 	"github.com/lokicik/house-royale/backend/server/internal/property"
 )
@@ -57,6 +58,7 @@ type Session struct {
 	GuessCh        chan playerGuess
 	aiScores       map[string]int // cumulative points per AI model name
 	RoundSummaries [][]RoundSummaryEntry
+	HistoryStore   *history.Store // optional; records per-user game results on finish
 
 	// voteSig wakes the vote-wait loop when a vote arrives or a player
 	// disconnects. Buffered/non-blocking sends.
@@ -195,6 +197,7 @@ func (s *Session) Run() {
 	}
 
 	s.broadcastLeaderboard()
+	s.recordHistory()
 
 	s.lobby.mu.Lock()
 	s.lobby.Status = StatusFinished
@@ -287,6 +290,55 @@ func (s *Session) broadcastLeaderboard() {
 		entries[i].Rank = i + 1
 	}
 	s.broadcast(MsgLeaderboard, map[string]any{"players": entries})
+}
+
+func (s *Session) recordHistory() {
+	if s.HistoryStore == nil {
+		return
+	}
+	players := s.lobby.Snapshot()
+	if len(players) == 0 {
+		return
+	}
+
+	// Build a combined ranked list (human + AI) mirroring broadcastLeaderboard.
+	type ranked struct {
+		playerID string
+		nickname string
+		score    int
+		isAI     bool
+		rank     int
+	}
+	all := make([]ranked, 0, len(players)+len(s.aiScores))
+	for _, p := range players {
+		all = append(all, ranked{playerID: p.ID, nickname: p.Nickname, score: p.Score})
+	}
+	for name, score := range s.aiScores {
+		all = append(all, ranked{playerID: "ai:" + name, nickname: name, score: score, isAI: true})
+	}
+	sort.SliceStable(all, func(i, j int) bool { return all[i].score > all[j].score })
+	for i := range all {
+		all[i].rank = i + 1
+	}
+
+	rounds := s.lobby.Settings.RoundCount
+	playerCount := len(players)
+	now := time.Now()
+
+	for _, entry := range all {
+		if entry.isAI {
+			continue
+		}
+		s.HistoryStore.Record(entry.playerID, history.GameRecord{
+			LobbyID:     s.lobbyID,
+			FinishedAt:  now,
+			Nickname:    entry.nickname,
+			Rank:        entry.rank,
+			Score:       entry.score,
+			Rounds:      rounds,
+			PlayerCount: playerCount,
+		})
+	}
 }
 
 func (s *Session) broadcast(msgType MessageType, payload any) {

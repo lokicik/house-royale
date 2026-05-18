@@ -10,6 +10,7 @@ import (
 	"github.com/lokicik/house-royale/backend/server/internal/config"
 	firebasepkg "github.com/lokicik/house-royale/backend/server/internal/firebase"
 	"github.com/lokicik/house-royale/backend/server/internal/handlers"
+	"github.com/lokicik/house-royale/backend/server/internal/history"
 	"github.com/lokicik/house-royale/backend/server/internal/hub"
 	"github.com/lokicik/house-royale/backend/server/internal/leaderboard"
 	"github.com/lokicik/house-royale/backend/server/internal/middleware"
@@ -34,10 +35,12 @@ func main() {
 	sessions := handlers.NewSessionStore()
 	predictor := mlclient.NewMockPredictor()
 	lb := leaderboard.NewStore()
+	hs := history.NewStore()
 
 	lobbyHandler := handlers.NewLobbyHandler(store)
-	wsHandler := handlers.NewWSHandler(h, store, sessions, predictor, lb)
+	wsHandler := handlers.NewWSHandler(h, store, sessions, predictor, lb, hs)
 	lbHandler := &handlers.LeaderboardHandler{LB: lb}
+	historyHandler := handlers.NewHistoryHandler(hs)
 
 	r := gin.Default()
 
@@ -54,7 +57,9 @@ func main() {
 
 	auth := middleware.Auth()
 	r.POST("/lobbies", auth, lobbyHandler.Create)
+	r.GET("/lobbies", auth, lobbyHandler.List)
 	r.GET("/lobbies/:id", lobbyHandler.Get)
+	r.GET("/history", auth, historyHandler.Get)
 	r.GET("/ws/lobby/:id", auth, wsHandler.ServeWS)
 
 	log.Printf("House Royale server starting on %s (env: %s)", cfg.Port, cfg.AppEnv)

@@ -30,6 +30,28 @@ export async function getLeaderboard() {
   return res.json()
 }
 
+export async function getMyLobbies(user, idToken) {
+  const res = await fetch(`${BASE}/lobbies`, {
+    headers: {
+      'Authorization': `Bearer ${idToken}`,
+      'X-Player-ID': user.uid,
+    },
+  })
+  if (!res.ok) throw new Error('Odalar yüklenemedi')
+  return res.json()
+}
+
+export async function getMyHistory(user, idToken) {
+  const res = await fetch(`${BASE}/history`, {
+    headers: {
+      'Authorization': `Bearer ${idToken}`,
+      'X-Player-ID': user.uid,
+    },
+  })
+  if (!res.ok) throw new Error('Geçmiş yüklenemedi')
+  return res.json()
+}
+
 /**
  * Builds the WebSocket URL for a lobby connection.
  * Passes the Firebase ID token as ?token= so both dev (JWT decode)

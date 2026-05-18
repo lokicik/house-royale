@@ -42,6 +42,19 @@ func (s *LobbyStore) Delete(id string) {
 	s.mu.Unlock()
 }
 
+// ListByHost returns active (non-finished) lobbies where HostID matches.
+func (s *LobbyStore) ListByHost(hostID string) []*game.Lobby {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	var out []*game.Lobby
+	for _, l := range s.lobbies {
+		if l.HostID == hostID && l.CurrentStatus() != game.StatusFinished {
+			out = append(out, l)
+		}
+	}
+	return out
+}
+
 func newID() string {
 	b := make([]byte, 8)
 	rand.Read(b)
@@ -69,6 +82,35 @@ func (h *LobbyHandler) Create(c *gin.Context) {
 
 	lobby := h.Store.Create(playerID.(string))
 	c.JSON(http.StatusCreated, lobby)
+}
+
+func (h *LobbyHandler) List(c *gin.Context) {
+	playerIDVal, _ := c.Get(middleware.PlayerIDKey)
+	playerID, _ := playerIDVal.(string)
+	if playerID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	lobbies := h.Store.ListByHost(playerID)
+	type lobbyView struct {
+		ID          string      `json:"id"`
+		Status      game.Status `json:"status"`
+		PlayerCount int         `json:"player_count"`
+		CreatedAt   interface{} `json:"created_at"`
+		Settings    interface{} `json:"settings"`
+	}
+	out := make([]lobbyView, 0, len(lobbies))
+	for _, l := range lobbies {
+		settings, _ := l.SettingsSnapshot()
+		out = append(out, lobbyView{
+			ID:          l.ID,
+			Status:      l.CurrentStatus(),
+			PlayerCount: l.PlayerCount(),
+			CreatedAt:   l.CreatedAt,
+			Settings:    settings,
+		})
+	}
+	c.JSON(http.StatusOK, out)
 }
 
 func (h *LobbyHandler) Get(c *gin.Context) {

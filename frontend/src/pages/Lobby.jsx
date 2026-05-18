@@ -1,10 +1,29 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/authContextValue'
-import { createLobby } from '../lib/api'
+import { createLobby, getMyLobbies, getMyHistory, getLeaderboard } from '../lib/api'
 import AppShell from '../components/AppShell'
 import { Icon } from '../components/icons'
 import './Lobby.css'
+
+const RANK_MEDALS = ['🥇', '🥈', '🥉']
+
+function statusLabel(status) {
+  if (status === 'waiting') return { text: 'Bekliyor', cls: 'lp-status-waiting' }
+  if (status === 'playing') return { text: 'Oynuyor', cls: 'lp-status-playing' }
+  return { text: status, cls: '' }
+}
+
+function timeAgo(isoString) {
+  const diff = Math.floor((Date.now() - new Date(isoString)) / 1000)
+  if (diff < 60) return `${diff}sn önce`
+  if (diff < 3600) return `${Math.floor(diff / 60)}dk önce`
+  return `${Math.floor(diff / 3600)}sa önce`
+}
+
+function formatDate(isoString) {
+  return new Date(isoString).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
 
 export default function Lobby() {
   const { user } = useAuth()
@@ -13,6 +32,19 @@ export default function Lobby() {
   const [joinId, setJoinId] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const [myLobbies, setMyLobbies] = useState([])
+  const [gameHistory, setGameHistory] = useState([])
+  const [leaderboard, setLeaderboard] = useState([])
+
+  useEffect(() => {
+    if (!user) return
+    user.getIdToken().then(idToken => {
+      getMyLobbies(user, idToken).then(data => setMyLobbies(Array.isArray(data) ? data : [])).catch(() => {})
+      getMyHistory(user, idToken).then(data => setGameHistory(data?.records ?? [])).catch(() => {})
+    })
+    getLeaderboard().then(data => setLeaderboard(data?.entries ?? [])).catch(() => {})
+  }, [user])
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -116,22 +148,68 @@ export default function Lobby() {
         </div>
       </div>
 
+      {myLobbies.length > 0 && (
+        <div className="lp-active-lobbies">
+          <h3>Aktif Odalarım</h3>
+          <ul className="lp-lobby-list">
+            {myLobbies.map(lobby => {
+              const s = statusLabel(lobby.status)
+              return (
+                <li key={lobby.id} className="lp-lobby-row">
+                  <span className="lp-lobby-code">{lobby.id.toUpperCase()}</span>
+                  <span className={`lp-status-badge ${s.cls}`}>{s.text}</span>
+                  <span className="lp-lobby-meta">{lobby.player_count} oyuncu · {timeAgo(lobby.created_at)}</span>
+                  <button
+                    className="hr-btn hr-btn-outline"
+                    onClick={() => navigate(`/lobby/${lobby.id}`, { state: { nickname: nickname.trim() || displayName, isHost: true } })}
+                  >
+                    Odaya Git →
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
+
       <div className="lp-info-row">
         <div className="lp-info">
           <h3>Nasıl Oynanır?</h3>
           <p>Ev görselini ve detaylarını incele, fiyatını tahmin et, AI'a karşı yarış. En yakın tahmin tur puanlarını alır.</p>
         </div>
         <div className="lp-info">
-          <h3>Bugünkü Liderler</h3>
-          <ul className="lp-info-list">
-            <li><span>🥇 Lokman</span><strong>1.250</strong></li>
-            <li><span>🥈 Custom ANN</span><strong>1.182</strong></li>
-            <li><span>🥉 Eda_98</span><strong>1.140</strong></li>
-          </ul>
+          <h3>Liderler</h3>
+          {leaderboard.length === 0 ? (
+            <p className="lp-empty">Henüz kayıtlı oyun yok.</p>
+          ) : (
+            <ul className="lp-info-list">
+              {leaderboard.slice(0, 3).map((entry, i) => (
+                <li key={entry.id}>
+                  <span>{RANK_MEDALS[i] ?? `#${entry.rank}`} {entry.name}</span>
+                  <strong>{entry.score.toLocaleString('tr-TR')}</strong>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="lp-info">
-          <h3>Günün Modeli</h3>
-          <p><strong style={{ color: 'var(--hr-text)' }}>Hybrid Model</strong> — Son 24 saatte %2.34 ortalama hata ile birinci sırada.</p>
+          <h3>Oyun Geçmişim</h3>
+          {gameHistory.length === 0 ? (
+            <p className="lp-empty">Henüz tamamlanmış oyunun yok.</p>
+          ) : (
+            <ul className="lp-history-list">
+              {gameHistory.slice(0, 5).map((rec, i) => (
+                <li key={i} className="lp-history-row">
+                  <span className="lp-history-rank">{RANK_MEDALS[rec.rank - 1] ?? `#${rec.rank}`}</span>
+                  <span className="lp-history-info">
+                    <span className="lp-history-nickname">{rec.nickname}</span>
+                    <span className="lp-history-date">{formatDate(rec.finished_at)}</span>
+                  </span>
+                  <strong className="lp-history-score">{rec.score}p</strong>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </AppShell>

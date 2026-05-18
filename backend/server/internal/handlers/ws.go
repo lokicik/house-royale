@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/lokicik/house-royale/backend/server/internal/game"
+	"github.com/lokicik/house-royale/backend/server/internal/history"
 	"github.com/lokicik/house-royale/backend/server/internal/hub"
 	"github.com/lokicik/house-royale/backend/server/internal/leaderboard"
 	"github.com/lokicik/house-royale/backend/server/internal/middleware"
@@ -30,15 +31,16 @@ var upgrader = websocket.Upgrader{
 }
 
 type WSHandler struct {
-	Hub       *hub.Hub
-	Store     *LobbyStore
-	Sessions  *SessionStore
-	Predictor mlclient.Predictor
-	LB        *leaderboard.Store
+	Hub          *hub.Hub
+	Store        *LobbyStore
+	Sessions     *SessionStore
+	Predictor    mlclient.Predictor
+	LB           *leaderboard.Store
+	HistoryStore *history.Store
 }
 
-func NewWSHandler(h *hub.Hub, store *LobbyStore, sessions *SessionStore, predictor mlclient.Predictor, lb *leaderboard.Store) *WSHandler {
-	return &WSHandler{Hub: h, Store: store, Sessions: sessions, Predictor: predictor, LB: lb}
+func NewWSHandler(h *hub.Hub, store *LobbyStore, sessions *SessionStore, predictor mlclient.Predictor, lb *leaderboard.Store, hs *history.Store) *WSHandler {
+	return &WSHandler{Hub: h, Store: store, Sessions: sessions, Predictor: predictor, LB: lb, HistoryStore: hs}
 }
 
 func (h *WSHandler) ServeWS(c *gin.Context) {
@@ -222,6 +224,7 @@ func (h *WSHandler) handleReady(c *hub.Client) {
 	h.broadcastActivity(c.LobbyID, "ready", c.PlayerID, hostNickname)
 
 	session := game.NewSession(c.LobbyID, lobby, h.Hub, h.Predictor, game.DefaultConfig)
+	session.HistoryStore = h.HistoryStore
 	h.Sessions.Set(c.LobbyID, session)
 	go func(lobbyID string) {
 		session.Run()

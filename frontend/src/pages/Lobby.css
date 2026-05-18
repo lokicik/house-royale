@@ -120,7 +120,111 @@
 .lp-info-list li:last-child { border-bottom: 0; }
 .lp-info-list strong { color: var(--hr-text); font-weight: 600; }
 
+/* Active lobbies section */
+.lp-active-lobbies {
+  margin-top: 20px;
+  background: var(--hr-card);
+  border: 1px solid var(--hr-border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.lp-active-lobbies h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--hr-text);
+}
+.lp-lobby-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lp-lobby-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.lp-lobby-code {
+  font-family: monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--hr-text);
+  min-width: 90px;
+}
+.lp-lobby-meta {
+  color: var(--hr-muted);
+  flex: 1;
+}
+.lp-status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.lp-status-waiting {
+  background: rgba(234, 179, 8, 0.12);
+  color: #b45309;
+}
+.lp-status-playing {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+
+/* Game history list */
+.lp-empty {
+  margin: 0;
+  font-size: 12px;
+  color: var(--hr-muted);
+  font-style: italic;
+}
+.lp-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.lp-history-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px dashed var(--hr-row-border);
+}
+.lp-history-row:last-child { border-bottom: none; }
+.lp-history-rank { font-size: 14px; flex-shrink: 0; }
+.lp-history-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.lp-history-nickname {
+  font-weight: 600;
+  color: var(--hr-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lp-history-date {
+  color: var(--hr-muted);
+  font-size: 10px;
+}
+.lp-history-score {
+  color: var(--hr-text);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
 @media (max-width: 800px) {
   .lp-grid { grid-template-columns: 1fr; }
   .lp-info-row { grid-template-columns: 1fr; }
+  .lp-lobby-row { flex-wrap: wrap; }
 }
