@@ -13,7 +13,10 @@ type Config struct {
 func Load() *Config {
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = ":8080"
+		port = "8080"
+	}
+	if port[0] != ':' {
+		port = ":" + port
 	}
 	mlURL := os.Getenv("ML_INFRA_URL")
 	if mlURL == "" {
