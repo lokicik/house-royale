@@ -1,25 +1,28 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { wsUrl } from '../lib/api'
 import AppShell from '../components/AppShell'
+import { Icon, ModelBadge } from '../components/icons'
 import './LobbyRoom.css'
 
-const MOCK_OPPONENTS = [
-  { name: 'Custom ANN', type: 'Neural Network', on: true },
-  { name: 'Hybrid Model', type: 'Ensemble', on: true },
-  { name: 'MLP Model', type: 'Neural Network', on: true },
-  { name: 'CNN Model', type: 'Vision', on: false },
-  { name: 'Transformer Model', type: 'LLM', on: false },
-  { name: 'Tree Ensemble', type: 'XGBoost', on: true },
-]
-const MOCK_ACTIVITY = [
-  { who: 'Ahmet', what: 'lobi̇ye katıldı', time: '2dk önce' },
-  { who: 'Eda', what: 'hazır', time: '1dk önce' },
-  { who: 'Sistem', what: 'ev veri seti güncellendi', time: '30sn önce' },
-  { who: 'Player_03', what: 'lobi̇ye katıldı', time: '15sn önce' },
-]
+const ROUND_COUNT_OPTIONS = [3, 6]
+const ROUND_DURATION_OPTIONS = [15, 30]
+const ACTIVITY_MAX = 20
+
+const ACTIVITY_VERBS = {
+  joined: 'lobiye katıldı',
+  rejoined: 'lobiye geri döndü',
+  left: 'lobiden ayrıldı',
+  ready: 'oyunu başlattı',
+  settings_changed: 'oyun ayarlarını güncelledi',
+  ai_toggled: 'AI rakiplerini güncelledi',
+  submitted: 'tahminini gönderdi',
+  voted_next: 'sonraki tura hazır',
+  round_advanced: 'sonraki tura geçildi',
+}
+
 const fmt = (n) => n?.toLocaleString('tr-TR') ?? '—'
 
 function initials(name) {
@@ -28,14 +31,23 @@ function initials(name) {
   return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase()
 }
 
+function relativeTime(ts) {
+  if (!ts) return ''
+  const diff = Math.max(0, Date.now() - ts)
+  if (diff < 10_000) return 'az önce'
+  if (diff < 60_000) return `${Math.floor(diff / 1000)}sn önce`
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}dk önce`
+  return `${Math.floor(diff / 3_600_000)}sa önce`
+}
+
 export default function LobbyRoom() {
   const { id: lobbyId } = useParams()
   const { state } = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  const nickname = state?.nickname ?? user?.displayName ?? 'Misafir'
-  const isHost = state?.isHost ?? false
+  const fallbackNick = user?.displayName || user?.email?.split('@')[0] || 'Oyuncu'
+  const nickname = state?.nickname ?? fallbackNick
 
   const [screen, setScreen] = useState('waiting')
   const [players, setPlayers] = useState([])
@@ -47,18 +59,76 @@ export default function LobbyRoom() {
   const [submitted, setSubmitted] = useState(false)
   const timerRef = useRef(null)
 
+  // Lobby state hydrated from the server.
+  const [settings, setSettings] = useState({ round_count: 3, round_duration_sec: 15 })
+  const [aiModels, setAIModels] = useState({})
+  const [availableAI, setAvailableAI] = useState([])
+  const [hostId, setHostId] = useState(null)
+  const [youId, setYouId] = useState(null)
+  const [activity, setActivity] = useState([])
+  const [voteState, setVoteState] = useState({ round: 0, voted: [], needed: [] })
+  const [voted, setVoted] = useState(false)
+  const [error, setError] = useState(null)
+
+  const isHost = !!youId && youId === hostId
+
   const [url, setUrl] = useState(null)
   useEffect(() => {
     if (!user) return
     user.getIdToken().then(token => setUrl(wsUrl(lobbyId, token)))
   }, [user, lobbyId])
 
+  const pushActivity = useCallback((entry) => {
+    setActivity(prev => [entry, ...prev].slice(0, ACTIVITY_MAX))
+  }, [])
+
   const onMessage = useCallback((msg) => {
     switch (msg.type) {
+      case 'LOBBY_STATE': {
+        const p = msg.payload || {}
+        setHostId(p.host_id ?? null)
+        setYouId(p.you_id ?? null)
+        if (p.settings) setSettings(p.settings)
+        if (p.ai_models) setAIModels(p.ai_models)
+        if (Array.isArray(p.available_ai_models)) setAvailableAI(p.available_ai_models)
+        if (Array.isArray(p.players)) {
+          setPlayers(p.players.map(pl => ({
+            player_id: pl.id,
+            nickname: pl.nickname,
+            score: pl.score,
+            connected: pl.connected,
+          })))
+        }
+        break
+      }
       case 'PLAYER_JOINED':
         setPlayers(prev => {
-          if (prev.find(p => p.player_id === msg.payload?.player_id)) return prev
-          return [...prev, msg.payload]
+          const id = msg.payload?.player_id
+          if (!id) return prev
+          if (prev.find(p => p.player_id === id)) {
+            return prev.map(p => p.player_id === id ? { ...p, connected: true, nickname: msg.payload.nickname ?? p.nickname } : p)
+          }
+          return [...prev, { ...msg.payload, connected: true }]
+        })
+        break
+      case 'PLAYER_LEFT':
+        setPlayers(prev => {
+          const id = msg.payload?.player_id
+          if (!id) return prev
+          // Mark disconnected during a game; drop entirely during waiting.
+          return prev.map(p => p.player_id === id ? { ...p, connected: false } : p)
+        })
+        break
+      case 'SETTINGS_UPDATED':
+        if (msg.payload?.settings) setSettings(msg.payload.settings)
+        if (msg.payload?.ai_models) setAIModels(msg.payload.ai_models)
+        break
+      case 'LOBBY_ACTIVITY':
+        pushActivity({
+          id: `${msg.payload?.ts ?? Date.now()}-${msg.payload?.actor_id ?? ''}-${msg.payload?.kind ?? ''}-${Math.random().toString(36).slice(2, 6)}`,
+          kind: msg.payload?.kind ?? '',
+          actor: msg.payload?.actor_nickname ?? 'Sistem',
+          ts: msg.payload?.ts ?? Date.now(),
         })
         break
       case 'ROUND_START':
@@ -68,20 +138,34 @@ export default function LobbyRoom() {
         setGuess('')
         setScreen('round')
         setTimeLeft(msg.payload.time_limit_sec)
+        setVoted(false)
+        setVoteState({ round: 0, voted: [], needed: [] })
         break
       case 'ROUND_RESULT':
         clearInterval(timerRef.current)
         setResultData(msg.payload)
         setScreen('result')
+        setVoted(false)
+        break
+      case 'ROUND_VOTE_STATE':
+        setVoteState({
+          round: msg.payload?.round ?? 0,
+          voted: msg.payload?.voted ?? [],
+          needed: msg.payload?.needed ?? [],
+        })
         break
       case 'LEADERBOARD':
         setLeaderboardData(msg.payload)
         setScreen('leaderboard')
         break
+      case 'ERROR':
+        setError(msg.payload?.message ?? 'Bir hata oluştu')
+        setTimeout(() => setError(null), 4000)
+        break
       default:
         break
     }
-  }, [])
+  }, [pushActivity])
 
   const { connected, send } = useWebSocket(url, onMessage)
 
@@ -90,6 +174,9 @@ export default function LobbyRoom() {
     if (connected && !joinedRef.current) {
       joinedRef.current = true
       send('JOIN', { nickname })
+    }
+    if (!connected) {
+      joinedRef.current = false
     }
   }, [connected, nickname, send])
 
@@ -100,6 +187,13 @@ export default function LobbyRoom() {
     }, 1000)
     return () => clearInterval(timerRef.current)
   }, [roundData?.round, screen])
+
+  // Keep activity timestamps fresh.
+  const [, forceRerender] = useState(0)
+  useEffect(() => {
+    const i = setInterval(() => forceRerender(x => x + 1), 15_000)
+    return () => clearInterval(i)
+  }, [])
 
   function handleStartGame() {
     send('READY', {})
@@ -113,6 +207,22 @@ export default function LobbyRoom() {
     setSubmitted(true)
   }
 
+  function handleUpdateSetting(field, value) {
+    if (!isHost) return
+    send('UPDATE_SETTINGS', { [field]: value })
+  }
+
+  function handleToggleAI(modelId, nextValue) {
+    if (!isHost) return
+    send('UPDATE_SETTINGS', { ai_models: { [modelId]: nextValue } })
+  }
+
+  function handleVoteNext() {
+    if (voted) return
+    send('NEXT_ROUND_VOTE', {})
+    setVoted(true)
+  }
+
   if (!user) {
     navigate('/login')
     return null
@@ -124,6 +234,8 @@ export default function LobbyRoom() {
       ? { label: 'Tur', value: `${resultData.round}` }
       : null
 
+  const aiActiveCount = availableAI.filter(m => aiModels[m.id]).length
+
   return (
     <AppShell>
       <div className="lr-subnav">
@@ -133,22 +245,35 @@ export default function LobbyRoom() {
         {screen === 'round' && (
           <div className="lr-subnav-item">Süre <strong style={{ color: timeLeft <= 10 ? '#fca5a5' : '#fff' }}>{timeLeft}s</strong></div>
         )}
-        <div className="lr-subnav-item">Host <strong>{nickname}</strong></div>
-        <div className="lr-subnav-item">Oyuncular <strong>{players.length} / 8</strong></div>
+        <div className="lr-subnav-item">Host <strong>{
+          (hostId && players.find(p => p.player_id === hostId)?.nickname) || (isHost ? nickname : '—')
+        }</strong></div>
+        <div className="lr-subnav-item">Oyuncular <strong>{players.filter(p => p.connected !== false).length} / 8</strong></div>
         <div className="lr-subnav-spacer" />
         <span className={`lr-conn ${connected ? 'ok' : 'bad'}`}>
           {connected ? 'Bağlı' : 'Bağlanılıyor…'}
         </span>
+        {/* "Oyundan Çık" just disconnects the WS — the server keeps your slot
+            (and score) so navigating back to /lobby/<id> reconnects you. */}
         <button className="hr-btn hr-btn-danger" onClick={() => navigate('/lobby')}>
           Oyundan Çık
         </button>
       </div>
+
+      {error && <div className="lr-error">{error}</div>}
 
       {screen === 'waiting' && (
         <WaitingScreen
           players={players}
           isHost={isHost}
           onStart={handleStartGame}
+          settings={settings}
+          onChangeSetting={handleUpdateSetting}
+          availableAI={availableAI}
+          aiModels={aiModels}
+          aiActiveCount={aiActiveCount}
+          onToggleAI={handleToggleAI}
+          activity={activity}
         />
       )}
       {screen === 'round' && roundData && (
@@ -163,7 +288,16 @@ export default function LobbyRoom() {
         />
       )}
       {screen === 'result' && resultData && (
-        <ResultScreen data={resultData} nickname={nickname} />
+        <ResultScreen
+          data={resultData}
+          nickname={nickname}
+          totalRounds={settings.round_count}
+          voteState={voteState}
+          voted={voted}
+          onVoteNext={handleVoteNext}
+          players={players}
+          youId={youId}
+        />
       )}
       {screen === 'leaderboard' && leaderboardData && (
         <FinalLeaderboard data={leaderboardData} onExit={() => navigate('/lobby')} />
@@ -172,20 +306,24 @@ export default function LobbyRoom() {
   )
 }
 
-function WaitingScreen({ players, isHost, onStart }) {
+function WaitingScreen({
+  players, isHost, onStart, settings, onChangeSetting,
+  availableAI, aiModels, aiActiveCount, onToggleAI, activity,
+}) {
+  const connectedPlayers = players.filter(p => p.connected !== false)
   return (
     <div className="lr-wait-grid">
       <div>
         <div className="lr-panel">
           <div className="lr-panel-header">
-            <h3>Oyuncular ({players.length})</h3>
+            <h3>Oyuncular ({connectedPlayers.length})</h3>
             <span className="lr-pill ready">Canlı</span>
           </div>
           <div className="lr-panel-body">
-            {players.length === 0 && (
+            {connectedPlayers.length === 0 && (
               <div className="lr-player-row empty">Oyuncu bekleniyor…</div>
             )}
-            {players.map(p => (
+            {connectedPlayers.map(p => (
               <div className="lr-player-row" key={p.player_id}>
                 <span className="lr-pavatar">{initials(p.nickname)}</span>
                 <span className="lr-player-name">{p.nickname}</span>
@@ -200,10 +338,13 @@ function WaitingScreen({ players, isHost, onStart }) {
             <h3>Lobi Aktivitesi</h3>
           </div>
           <div className="lr-panel-body">
-            {MOCK_ACTIVITY.map((a, i) => (
-              <div key={i} className="lr-activity">
-                <strong>{a.who}</strong> {a.what}
-                <span className="time">{a.time}</span>
+            {activity.length === 0 && (
+              <div className="lr-activity" style={{ fontStyle: 'italic' }}>Henüz aktivite yok.</div>
+            )}
+            {activity.map(a => (
+              <div key={a.id} className="lr-activity">
+                <strong>{a.actor}</strong> {ACTIVITY_VERBS[a.kind] ?? a.kind}
+                <span className="time">{relativeTime(a.ts)}</span>
               </div>
             ))}
           </div>
@@ -214,14 +355,25 @@ function WaitingScreen({ players, isHost, onStart }) {
         <div className="lr-panel">
           <div className="lr-panel-header">
             <h3>Oyun Ayarları</h3>
-            <button className="lr-chip">Sıfırla</button>
+            {!isHost && <span style={{ fontSize: 11, color: 'var(--hr-muted)' }}>Sadece host değiştirebilir</span>}
           </div>
           <div className="lr-panel-body">
-            <SettingRow label="Tur Sayısı" options={['5', '10', '15']} active="10" />
-            <SettingRow label="Tur Süresi" options={['30s', '60s', '90s']} active="60s" />
-            <SettingRow label="Zorluk" options={['Kolay', 'Orta', 'Zor']} active="Orta" />
-            <SettingRow label="Veri Tipi" options={['Görsel', 'Detay', 'Karışık']} active="Karışık" />
-            <SettingRow label="Para Birimi" options={['₺', '$', '€']} active="₺" />
+            <SettingRow
+              label="Tur Sayısı"
+              options={ROUND_COUNT_OPTIONS}
+              active={settings.round_count}
+              disabled={!isHost}
+              onChange={(v) => onChangeSetting('round_count', v)}
+              renderOption={(v) => v}
+            />
+            <SettingRow
+              label="Tur Süresi"
+              options={ROUND_DURATION_OPTIONS}
+              active={settings.round_duration_sec}
+              disabled={!isHost}
+              onChange={(v) => onChangeSetting('round_duration_sec', v)}
+              renderOption={(v) => `${v}s`}
+            />
           </div>
         </div>
 
@@ -245,25 +397,32 @@ function WaitingScreen({ players, isHost, onStart }) {
           <div className="lr-panel-header">
             <h3>AI Rakipleri</h3>
             <span style={{ fontSize: 12, color: 'var(--hr-muted)' }}>
-              {MOCK_OPPONENTS.filter(o => o.on).length} / {MOCK_OPPONENTS.length} aktif
+              {aiActiveCount} / {availableAI.length} aktif
             </span>
           </div>
           <div className="lr-panel-body">
-            {MOCK_OPPONENTS.map(m => (
-              <div className="lr-model-row" key={m.name}>
-                <span className="lr-model-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="3" />
-                    <path d="M9 9h6v6H9z" />
-                  </svg>
-                </span>
-                <div className="lr-model-info">
-                  <div className="n">{m.name}</div>
-                  <div className="t">{m.type}</div>
+            {availableAI.length === 0 && (
+              <div className="lr-player-row empty">Modeller yükleniyor…</div>
+            )}
+            {availableAI.map(m => {
+              const on = !!aiModels[m.id]
+              return (
+                <div className="lr-model-row" key={m.id}>
+                  <ModelBadge name={m.name} size={32} />
+                  <div className="lr-model-info">
+                    <div className="n">{m.name}</div>
+                    <div className="t">{m.type}</div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`lr-toggle${on ? ' on' : ''}${isHost ? '' : ' disabled'}`}
+                    aria-label={`${m.name} ${on ? 'açık' : 'kapalı'}`}
+                    onClick={() => onToggleAI(m.id, !on)}
+                    disabled={!isHost}
+                  />
                 </div>
-                <button className={`lr-toggle${m.on ? ' on' : ''}`} aria-label="Toggle" />
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 
@@ -279,13 +438,21 @@ function WaitingScreen({ players, isHost, onStart }) {
   )
 }
 
-function SettingRow({ label, options, active }) {
+function SettingRow({ label, options, active, disabled, onChange, renderOption }) {
   return (
     <div className="lr-setting-row">
       <span className="label">{label}</span>
       <div className="lr-chip-group">
         {options.map(o => (
-          <button key={o} className={`lr-chip${o === active ? ' active' : ''}`}>{o}</button>
+          <button
+            key={o}
+            className={`lr-chip${o === active ? ' active' : ''}${disabled ? ' disabled' : ''}`}
+            onClick={() => !disabled && onChange?.(o)}
+            disabled={disabled}
+            type="button"
+          >
+            {renderOption ? renderOption(o) : o}
+          </button>
         ))}
       </div>
     </div>
@@ -295,14 +462,14 @@ function SettingRow({ label, options, active }) {
 function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nickname }) {
   const { property } = data
   const fields = [
-    { l: 'Alan', v: `${property.metrekare_brut} m²` },
-    { l: 'Oda', v: property.oda_salon },
-    { l: 'Yaş', v: property.bina_yasi },
-    { l: 'Kat', v: `${property.kat} / ${property.kat_sayisi}` },
-    { l: 'Isıtma', v: property.isitma },
-    { l: 'Balkon', v: property.balkon },
-    { l: 'Asansör', v: property.asansor },
-    { l: 'Otopark', v: property.otopark },
+    { l: 'Alan', v: `${property.metrekare_brut} m²`, icon: 'ruler' },
+    { l: 'Oda', v: property.oda_salon, icon: 'bed' },
+    { l: 'Yaş', v: property.bina_yasi, icon: 'building' },
+    { l: 'Kat', v: `${property.kat} / ${property.kat_sayisi}`, icon: 'floor' },
+    { l: 'Isıtma', v: property.isitma, icon: 'heater' },
+    { l: 'Balkon', v: property.balkon, icon: 'balcony' },
+    { l: 'Asansör', v: property.asansor, icon: 'elevator' },
+    { l: 'Otopark', v: property.otopark, icon: 'parking' },
   ]
   return (
     <div className="lr-round-grid">
@@ -311,25 +478,20 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
           <img className="lr-property-img" src="/assets/landing-page-house-img.png" alt="Listing" />
           <div className="lr-property-body">
             <div className="lr-location">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
+              <Icon name="pin" size={16} />
               {property.mahalle}, {property.ilce} / {property.il}
             </div>
             <div className="lr-specs">
               {fields.map(f => (
                 <div className="lr-spec" key={f.l}>
+                  <span className="lr-spec-icon"><Icon name={f.icon} size={16} /></span>
                   <div className="l">{f.l}</div>
                   <div className="v">{f.v ?? '—'}</div>
                 </div>
               ))}
             </div>
             <button className="hr-btn hr-btn-outline" style={{ width: '100%' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
+              <Icon name="map" size={16} />
               Haritada Göster
             </button>
           </div>
@@ -358,6 +520,7 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
                 ))}
               </div>
               <button type="submit" className="hr-btn hr-btn-primary hr-btn-lg" style={{ width: '100%' }}>
+                <Icon name="send" size={16} />
                 Tahmini Gönder
               </button>
               <div className="lr-tip">
@@ -371,7 +534,7 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
 
         <div className="lr-progress">
           <h4>Canlı İlerleme</h4>
-          {(players.length ? players : [{ player_id: 'self', nickname }]).map(p => (
+          {(players.length ? players.filter(p => p.connected !== false) : [{ player_id: 'self', nickname }]).map(p => (
             <div className="lr-player-row" key={p.player_id}>
               <span className="lr-pavatar">{initials(p.nickname)}</span>
               <span className="lr-player-name">{p.nickname}</span>
@@ -390,13 +553,13 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
   )
 }
 
-function ResultScreen({ data, nickname }) {
+function ResultScreen({ data, nickname, totalRounds, voteState, voted, onVoteNext, players, youId }) {
   const { round, actual_price, player_results = [], ai_predictions = {} } = data
   const winner = player_results[0]
   const me = player_results.find(p => p.nickname === nickname) ?? player_results[0]
   const isWinner = winner?.nickname === nickname
 
-  const allPreds = [
+  const allPreds = useMemo(() => [
     ...player_results.map(p => ({ name: p.nickname, type: 'Oyuncu', price: p.guess, dev: p.deviation_pct })),
     ...Object.entries(ai_predictions).map(([name, pred]) => ({
       name: name.toUpperCase(),
@@ -404,13 +567,23 @@ function ResultScreen({ data, nickname }) {
       price: pred.price_try,
       dev: pred.deviation_pct,
     })),
-  ].sort((a, b) => Math.abs(a.dev ?? 0) - Math.abs(b.dev ?? 0))
+  ].sort((a, b) => Math.abs(a.dev ?? 0) - Math.abs(b.dev ?? 0)), [player_results, ai_predictions])
 
   const avgDev = allPreds.length
     ? (allPreds.reduce((s, p) => s + Math.abs(p.dev ?? 0), 0) / allPreds.length).toFixed(2)
     : '—'
   const bestDev = allPreds[0]?.dev?.toFixed?.(2) ?? '—'
   const totalPts = player_results.reduce((s, p) => s + (p.points_earned ?? 0), 0)
+
+  const isFinalRound = totalRounds && round >= totalRounds
+  const votedIds = new Set(voteState.voted ?? [])
+  const neededIds = new Set(voteState.needed ?? [])
+  const voteParticipants = players.filter(
+    p => p.connected !== false && (votedIds.has(p.player_id) || neededIds.has(p.player_id))
+  )
+  const votedCount = voteParticipants.filter(p => votedIds.has(p.player_id)).length
+  const totalParticipants = voteParticipants.length
+  const youVoted = voted || (youId && votedIds.has(youId))
 
   return (
     <>
@@ -420,10 +593,7 @@ function ResultScreen({ data, nickname }) {
             <img className="lr-property-img" src="/assets/landing-page-house-img.png" alt="Listing" />
             <div className="lr-property-body">
               <div className="lr-location">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
+                <Icon name="pin" size={16} />
                 Tur {round} sonucu
               </div>
               <div className="lr-actual">
@@ -464,6 +634,9 @@ function ResultScreen({ data, nickname }) {
             <div className="lr-panel-body">
               {allPreds.map((p, i) => (
                 <div className="lr-pred-row" key={`${p.type}-${p.name}-${i}`}>
+                  {p.type === 'AI'
+                    ? <ModelBadge name={p.name} size={26} />
+                    : <span className="lr-pavatar" style={{ width: 26, height: 26, fontSize: 10 }}>{initials(p.name)}</span>}
                   <span className="nm">
                     {p.name}
                     <span className="tag">{p.type}</span>
@@ -479,15 +652,54 @@ function ResultScreen({ data, nickname }) {
         </div>
       </div>
 
+      {!isFinalRound && (
+        <div className="lr-vote-card">
+          <div className="lr-vote-head">
+            <div>
+              <h4>Sonraki Tur</h4>
+              <p>Hazır olan tüm oyuncular bekleniyor.</p>
+            </div>
+            <button
+              type="button"
+              className={`hr-btn ${youVoted ? 'hr-btn-outline' : 'hr-btn-primary'}`}
+              onClick={onVoteNext}
+              disabled={youVoted}
+            >
+              {youVoted ? '✓ Hazırsın' : 'Sonraki Tur'}
+            </button>
+          </div>
+          <div className="lr-vote-progress">
+            <div className="lr-vote-count">
+              Hazır oyuncular: <strong>{votedCount} / {totalParticipants}</strong>
+            </div>
+            <div className="lr-vote-chips">
+              {voteParticipants.map(p => {
+                const ok = votedIds.has(p.player_id)
+                return (
+                  <span key={p.player_id} className={`lr-vote-chip${ok ? ' ok' : ''}`}>
+                    <span className="lr-pavatar" style={{ width: 22, height: 22, fontSize: 9 }}>{initials(p.nickname)}</span>
+                    {p.nickname}
+                    {ok && <span className="check">✓</span>}
+                  </span>
+                )
+              })}
+              {totalParticipants === 0 && <span className="lr-vote-empty">Oyuncu bekleniyor…</span>}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="lr-result-bottom">
         <div className="lr-dots">
-          {Array.from({ length: 10 }, (_, i) => {
+          {Array.from({ length: totalRounds || round }, (_, i) => {
             const n = i + 1
             const cls = n < round ? 'done' : n === round ? 'curr' : ''
             return <span key={n} className={cls}>{n}</span>
           })}
         </div>
-        <button className="hr-btn hr-btn-primary">Sonraki Tur Bekleniyor…</button>
+        {isFinalRound && (
+          <span className="lr-final-pending">Final sıralaması hazırlanıyor…</span>
+        )}
       </div>
     </>
   )

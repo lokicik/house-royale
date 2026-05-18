@@ -7,7 +7,6 @@ const TABS = [
   { to: '/lobby', label: 'Lobi' },
   { to: '/leaderboard', label: 'Liderlik' },
   { to: '/model-comparison', label: 'Modeller' },
-  { to: '/', label: 'Nasıl Oynanır' },
 ]
 
 function initials(name) {
@@ -131,7 +130,6 @@ export default function AppShell({ children }) {
                 <li><a onClick={(e) => { e.preventDefault(); navigate('/lobby') }}>Lobi</a></li>
                 <li><a onClick={(e) => { e.preventDefault(); navigate('/leaderboard') }}>Liderlik</a></li>
                 <li><a onClick={(e) => { e.preventDefault(); navigate('/model-comparison') }}>Modeller</a></li>
-                <li><a href="#">Nasıl Oynanır</a></li>
               </ul>
             </div>
 

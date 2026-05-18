@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { createLobby } from '../lib/api'
 import AppShell from '../components/AppShell'
+import { Icon } from '../components/icons'
 import './Lobby.css'
 
 export default function Lobby() {
@@ -50,11 +51,7 @@ export default function Lobby() {
 
       <div className="lp-grid">
         <div className="lp-card">
-          <div className="lp-card-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-          </div>
+          <div className="lp-card-icon"><Icon name="sparkle" size={22} /></div>
           <h2>Yeni Oda Oluştur</h2>
           <p className="lp-card-desc">Hızlı bir oda aç, kodunu paylaş, oyunu yönet.</p>
           <form onSubmit={handleCreate}>
@@ -81,14 +78,7 @@ export default function Lobby() {
         </div>
 
         <div className="lp-card">
-          <div className="lp-card-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </div>
+          <div className="lp-card-icon"><Icon name="users" size={22} /></div>
           <h2>Mevcut Odaya Katıl</h2>
           <p className="lp-card-desc">Arkadaşından aldığın oda kodunu gir.</p>
           <form onSubmit={handleJoin}>

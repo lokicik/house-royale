@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import AppShell from '../components/AppShell'
+import { Icon, ModelBadge } from '../components/icons'
 import './Leaderboard.css'
 
 const ROWS = [
@@ -15,10 +16,10 @@ const ROWS = [
   { rank: 10, name: 'Player_433', type: 'Oyuncu', rounds: 64, avgErr: 4.56, winRate: 33, score: 754 },
 ]
 const ACHIEVEMENTS = [
-  { title: 'Keskin Nişancı', desc: '%1 sapma altında tahmin yap', icon: '🎯' },
-  { title: 'İstikrarlı', desc: '7 gün üst üste oyna', icon: '🔥' },
-  { title: 'AI Avcısı', desc: 'AI modellerine karşı 10 galibiyet', icon: '🤖' },
-  { title: 'Mükemmeliyetçi', desc: 'Tam tahminle 1 tur kazan', icon: '💎' },
+  { title: 'Keskin Nişancı', desc: '%1 sapma altında tahmin yap', icon: 'target' },
+  { title: 'İstikrarlı', desc: '7 gün üst üste oyna', icon: 'flame' },
+  { title: 'AI Avcısı', desc: 'AI modellerine karşı 10 galibiyet', icon: 'robot' },
+  { title: 'Mükemmeliyetçi', desc: 'Tam tahminle 1 tur kazan', icon: 'gem' },
 ]
 const SPARK = [62, 68, 65, 72, 78, 74, 80, 84, 82, 86, 90, 88, 92]
 
@@ -87,7 +88,9 @@ export default function Leaderboard() {
                   <td><span className="lb-rank">{medal(r.rank)}</span></td>
                   <td>
                     <div className="lb-name-cell">
-                      <span className="av">{initials(r.name)}</span>
+                      {r.type === 'AI'
+                        ? <ModelBadge name={r.name} size={28} />
+                        : <span className="av">{initials(r.name)}</span>}
                       {r.name}
                     </div>
                   </td>
@@ -155,7 +158,7 @@ export default function Leaderboard() {
             <h3>En İyi AI Modelleri</h3>
             {ROWS.filter(r => r.type === 'AI').slice(0, 3).map(r => (
               <div className="lb-mini-row" key={r.name}>
-                <span style={{ fontSize: 14 }}>{medal(r.rank)}</span>
+                <ModelBadge name={r.name} size={24} />
                 <span className="nm">{r.name}</span>
                 <span className="sc">%{r.avgErr.toFixed(2)}</span>
               </div>
@@ -167,7 +170,7 @@ export default function Leaderboard() {
       <div className="lb-achievements">
         {ACHIEVEMENTS.map(a => (
           <div className="lb-ach" key={a.title}>
-            <div className="ico" style={{ fontSize: 22 }}>{a.icon}</div>
+            <div className="ico"><Icon name={a.icon} size={22} /></div>
             <h4>{a.title}</h4>
             <p>{a.desc}</p>
           </div>

@@ -6,18 +6,24 @@ import (
 	"math/rand"
 )
 
-var modelNames = []string{"mlp", "ann", "hybrid"}
-
 // per-model systematic bias and noise (standard deviation as fraction of base price)
 var modelBias = map[string]float64{
-	"mlp":    0.00,
-	"ann":    -0.05,
-	"hybrid": 0.08,
+	"mlp":         0.00,
+	"ann":         -0.05,
+	"hybrid":      0.08,
+	"custom_ann":  -0.02,
+	"cnn":         0.04,
+	"transformer": 0.10,
+	"tree":        -0.07,
 }
 var modelNoise = map[string]float64{
-	"mlp":    0.15,
-	"ann":    0.20,
-	"hybrid": 0.12,
+	"mlp":         0.15,
+	"ann":         0.20,
+	"hybrid":      0.12,
+	"custom_ann":  0.10,
+	"cnn":         0.18,
+	"transformer": 0.22,
+	"tree":        0.14,
 }
 
 // cityPricePerM2 holds approximate 2024 TL/m² medians by city.
@@ -35,11 +41,19 @@ func NewMockPredictor() *MockPredictor { return &MockPredictor{} }
 
 func (m *MockPredictor) Predict(_ context.Context, req PredictRequest) (*PredictResponse, error) {
 	base := estimateBase(req.Features)
-	predictions := make(map[string]ModelPrediction, len(modelNames))
-	for _, name := range modelNames {
+	predictions := make(map[string]ModelPrediction, len(req.ModelIDs))
+	for _, name := range req.ModelIDs {
+		bias, ok := modelBias[name]
+		if !ok {
+			bias = 0.0
+		}
+		noiseFactor, ok := modelNoise[name]
+		if !ok {
+			noiseFactor = 0.15
+		}
 		// uniform noise in [-1, 1] scaled by model's noise factor
-		noise := (rand.Float64()*2 - 1) * modelNoise[name]
-		multiplier := 1.0 + modelBias[name] + noise
+		noise := (rand.Float64()*2 - 1) * noiseFactor
+		multiplier := 1.0 + bias + noise
 		if multiplier < 0.3 {
 			multiplier = 0.3
 		}

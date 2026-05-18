@@ -15,11 +15,11 @@ import (
 )
 
 const (
-	writeWait      = 10 * time.Second
-	pongWait       = 60 * time.Second
-	pingPeriod     = (pongWait * 9) / 10
-	maxMsgSize     = 4096
-	cleanupDelay   = 30 * time.Second // grace period after game ends before store cleanup
+	writeWait    = 10 * time.Second
+	pongWait     = 60 * time.Second
+	pingPeriod   = (pongWait * 9) / 10
+	maxMsgSize   = 4096
+	cleanupDelay = 30 * time.Second // grace period after game ends before store cleanup
 )
 
 var upgrader = websocket.Upgrader{
@@ -41,14 +41,25 @@ func NewWSHandler(h *hub.Hub, store *LobbyStore, sessions *SessionStore, predict
 
 func (h *WSHandler) ServeWS(c *gin.Context) {
 	lobbyID := c.Param("id")
-	if _, ok := h.Store.Get(lobbyID); !ok {
+	lobby, ok := h.Store.Get(lobbyID)
+	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "lobby not found"})
 		return
 	}
 
-	playerID, _ := c.Get(middleware.PlayerIDKey)
-	if playerID == nil {
+	playerIDVal, _ := c.Get(middleware.PlayerIDKey)
+	playerID, _ := playerIDVal.(string)
+	if playerID == "" {
 		playerID = "anonymous"
+	}
+
+	// Reject newcomers once the game is in progress — only existing players may
+	// reconnect.
+	if status := lobby.CurrentStatus(); status != game.StatusWaiting {
+		if !lobby.HasPlayer(playerID) {
+			c.JSON(http.StatusConflict, gin.H{"error": "game already in progress"})
+			return
+		}
 	}
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -57,8 +68,12 @@ func (h *WSHandler) ServeWS(c *gin.Context) {
 		return
 	}
 
-	client := hub.NewClient(lobbyID, playerID.(string), conn)
+	client := hub.NewClient(lobbyID, playerID, conn)
 	h.Hub.Register <- client
+
+	// Hydrate this socket with the current lobby snapshot so it can render the
+	// waiting room without waiting for the next event.
+	h.sendLobbyState(client, lobby)
 
 	go h.writePump(client)
 	go h.readPump(client)
@@ -66,13 +81,21 @@ func (h *WSHandler) ServeWS(c *gin.Context) {
 
 func (h *WSHandler) readPump(c *hub.Client) {
 	defer func() {
-		// Collect nickname before removing player from lobby.
+		// Collect nickname before marking player as disconnected.
 		nickname := ""
 		if lobby, ok := h.Store.Get(c.LobbyID); ok {
 			if p, ok := lobby.GetPlayer(c.PlayerID); ok {
 				nickname = p.Nickname
 			}
-			lobby.RemovePlayer(c.PlayerID)
+			// If the game has not started yet, fully remove the player so the
+			// waiting room reflects who's actually there. Once a game is in
+			// progress (or finished), preserve their slot so they can rejoin
+			// and keep their score.
+			if lobby.CurrentStatus() == game.StatusWaiting {
+				lobby.RemovePlayer(c.PlayerID)
+			} else {
+				lobby.MarkConnected(c.PlayerID, false)
+			}
 		}
 
 		// Unregister from hub first: closes c.Send so writePump exits,
@@ -80,8 +103,15 @@ func (h *WSHandler) readPump(c *hub.Client) {
 		h.Hub.Unregister <- c
 		c.Conn.Close()
 
+		// Notify the session so a vote-wait can re-evaluate (the disconnected
+		// player no longer needs to vote).
+		if session, ok := h.Sessions.Get(c.LobbyID); ok {
+			session.NotifyPlayerDisconnected(c.PlayerID)
+		}
+
 		// Broadcast after unregister so only remaining clients receive it.
 		h.broadcastPlayerLeft(c.LobbyID, c.PlayerID, nickname)
+		h.broadcastActivity(c.LobbyID, "left", c.PlayerID, nickname)
 	}()
 
 	c.Conn.SetReadLimit(maxMsgSize)
@@ -108,75 +138,157 @@ func (h *WSHandler) readPump(c *hub.Client) {
 
 		switch msg.Type {
 		case game.MsgJoin:
-			var p game.JoinPayload
-			if err := json.Unmarshal(msg.Payload, &p); err != nil {
-				h.sendError(c, "invalid JOIN payload")
-				continue
-			}
-			if lobby, ok := h.Store.Get(c.LobbyID); ok {
-				lobby.AddPlayer(&game.Player{ID: c.PlayerID, Nickname: p.Nickname})
-				h.broadcastPlayerJoined(c, p.Nickname)
-
-				// Send each existing player to the newly joined client so their
-				// waiting-room list is complete regardless of join order.
-				for _, existing := range lobby.Snapshot() {
-					if existing.ID == c.PlayerID {
-						continue
-					}
-					payload, _ := json.Marshal(map[string]string{
-						"player_id": existing.ID,
-						"nickname":  existing.Nickname,
-					})
-					out, _ := json.Marshal(game.Message{Type: game.MsgPlayerJoined, Payload: payload})
-					select {
-					case c.Send <- out:
-					default:
-					}
-				}
-			}
-
+			h.handleJoin(c, msg)
 		case game.MsgReady:
-			lobby, ok := h.Store.Get(c.LobbyID)
-			if !ok {
-				h.sendError(c, "lobby not found")
-				continue
-			}
-			if c.PlayerID != lobby.HostID {
-				h.sendError(c, "only the host can start the game")
-				continue
-			}
-			if lobby.Status != game.StatusWaiting {
-				h.sendError(c, "game already started")
-				continue
-			}
-			if lobby.PlayerCount() == 0 {
-				h.sendError(c, "at least one player must join before starting")
-				continue
-			}
-			if h.Sessions.Has(c.LobbyID) {
-				continue
-			}
-			session := game.NewSession(c.LobbyID, lobby, h.Hub, h.Predictor, game.DefaultConfig)
-			h.Sessions.Set(c.LobbyID, session)
-			go func(lobbyID string) {
-				session.Run()
-				time.Sleep(cleanupDelay)
-				h.Sessions.Delete(lobbyID)
-				h.Store.Delete(lobbyID)
-			}(c.LobbyID)
-
+			h.handleReady(c)
 		case game.MsgSubmitGuess:
-			var p game.GuessPayload
-			if err := json.Unmarshal(msg.Payload, &p); err != nil {
-				h.sendError(c, "invalid SUBMIT_GUESS payload")
-				continue
-			}
-			if session, ok := h.Sessions.Get(c.LobbyID); ok {
-				session.SubmitGuess(c.PlayerID, p.PriceTRY)
-			}
-
+			h.handleSubmitGuess(c, msg)
+		case game.MsgUpdateSettings:
+			h.handleUpdateSettings(c, msg)
+		case game.MsgNextRoundVote:
+			h.handleNextRoundVote(c)
+		case game.MsgLeave:
+			return
 		default:
 			h.sendError(c, "unknown message type")
+		}
+	}
+}
+
+func (h *WSHandler) handleJoin(c *hub.Client, msg game.Message) {
+	var p game.JoinPayload
+	if err := json.Unmarshal(msg.Payload, &p); err != nil {
+		h.sendError(c, "invalid JOIN payload")
+		return
+	}
+	lobby, ok := h.Store.Get(c.LobbyID)
+	if !ok {
+		return
+	}
+	reconnect := lobby.AddOrReconnectPlayer(&game.Player{ID: c.PlayerID, Nickname: p.Nickname})
+	h.broadcastPlayerJoined(c, p.Nickname)
+	if reconnect {
+		h.broadcastActivity(c.LobbyID, "rejoined", c.PlayerID, p.Nickname)
+	} else {
+		h.broadcastActivity(c.LobbyID, "joined", c.PlayerID, p.Nickname)
+	}
+
+	// Send each existing player to the newly joined client so their
+	// waiting-room list is complete regardless of join order.
+	for _, existing := range lobby.Snapshot() {
+		if existing.ID == c.PlayerID {
+			continue
+		}
+		payload, _ := json.Marshal(map[string]string{
+			"player_id": existing.ID,
+			"nickname":  existing.Nickname,
+		})
+		out, _ := json.Marshal(game.Message{Type: game.MsgPlayerJoined, Payload: payload})
+		select {
+		case c.Send <- out:
+		default:
+		}
+	}
+}
+
+func (h *WSHandler) handleReady(c *hub.Client) {
+	lobby, ok := h.Store.Get(c.LobbyID)
+	if !ok {
+		h.sendError(c, "lobby not found")
+		return
+	}
+	if c.PlayerID != lobby.HostID {
+		h.sendError(c, "only the host can start the game")
+		return
+	}
+	if lobby.CurrentStatus() != game.StatusWaiting {
+		h.sendError(c, "game already started")
+		return
+	}
+	if lobby.PlayerCount() == 0 {
+		h.sendError(c, "at least one player must join before starting")
+		return
+	}
+	if h.Sessions.Has(c.LobbyID) {
+		return
+	}
+
+	hostNickname := ""
+	if p, ok := lobby.GetPlayer(c.PlayerID); ok {
+		hostNickname = p.Nickname
+	}
+	h.broadcastActivity(c.LobbyID, "ready", c.PlayerID, hostNickname)
+
+	session := game.NewSession(c.LobbyID, lobby, h.Hub, h.Predictor, game.DefaultConfig)
+	h.Sessions.Set(c.LobbyID, session)
+	go func(lobbyID string) {
+		session.Run()
+		time.Sleep(cleanupDelay)
+		h.Sessions.Delete(lobbyID)
+		h.Store.Delete(lobbyID)
+	}(c.LobbyID)
+}
+
+func (h *WSHandler) handleSubmitGuess(c *hub.Client, msg game.Message) {
+	var p game.GuessPayload
+	if err := json.Unmarshal(msg.Payload, &p); err != nil {
+		h.sendError(c, "invalid SUBMIT_GUESS payload")
+		return
+	}
+	if session, ok := h.Sessions.Get(c.LobbyID); ok {
+		session.SubmitGuess(c.PlayerID, p.PriceTRY)
+	}
+	if lobby, ok := h.Store.Get(c.LobbyID); ok {
+		if pl, ok := lobby.GetPlayer(c.PlayerID); ok {
+			h.broadcastActivity(c.LobbyID, "submitted", c.PlayerID, pl.Nickname)
+		}
+	}
+}
+
+func (h *WSHandler) handleUpdateSettings(c *hub.Client, msg game.Message) {
+	var p game.UpdateSettingsPayload
+	if err := json.Unmarshal(msg.Payload, &p); err != nil {
+		h.sendError(c, "invalid UPDATE_SETTINGS payload")
+		return
+	}
+	lobby, ok := h.Store.Get(c.LobbyID)
+	if !ok {
+		return
+	}
+	if c.PlayerID != lobby.HostID {
+		h.sendError(c, "only the host can change settings")
+		return
+	}
+	if err := lobby.ApplyUpdate(p.RoundCount, p.RoundDurationSec, p.AIModels); err != nil {
+		h.sendError(c, err.Error())
+		return
+	}
+
+	settings, ai := lobby.SettingsSnapshot()
+	updated := game.SettingsUpdatedPayload{Settings: settings, AIModels: ai}
+	h.sendBroadcast(c.LobbyID, game.MsgSettingsUpdated, updated)
+
+	hostNickname := ""
+	if pl, ok := lobby.GetPlayer(c.PlayerID); ok {
+		hostNickname = pl.Nickname
+	}
+	kind := "settings_changed"
+	if len(p.AIModels) > 0 && p.RoundCount == 0 && p.RoundDurationSec == 0 {
+		kind = "ai_toggled"
+	}
+	h.broadcastActivity(c.LobbyID, kind, c.PlayerID, hostNickname)
+}
+
+func (h *WSHandler) handleNextRoundVote(c *hub.Client) {
+	session, ok := h.Sessions.Get(c.LobbyID)
+	if !ok {
+		return
+	}
+	session.VoteNextRound(c.PlayerID)
+
+	if lobby, ok := h.Store.Get(c.LobbyID); ok {
+		if pl, ok := lobby.GetPlayer(c.PlayerID); ok {
+			h.broadcastActivity(c.LobbyID, "voted_next", c.PlayerID, pl.Nickname)
 		}
 	}
 }
@@ -218,6 +330,43 @@ func (h *WSHandler) sendError(c *hub.Client, msg string) {
 	}
 }
 
+func (h *WSHandler) sendLobbyState(c *hub.Client, lobby *game.Lobby) {
+	settings, ai := lobby.SettingsSnapshot()
+	playersMap := lobby.Snapshot()
+	players := make([]game.Player, 0, len(playersMap))
+	for _, p := range playersMap {
+		players = append(players, *p)
+	}
+	payload := game.LobbyStatePayload{
+		LobbyID:           lobby.ID,
+		HostID:            lobby.HostID,
+		Status:            lobby.CurrentStatus(),
+		Players:           players,
+		Settings:          settings,
+		AIModels:          ai,
+		AvailableAIModels: game.AvailableAIModels,
+		YouID:             c.PlayerID,
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+	out, _ := json.Marshal(game.Message{Type: game.MsgLobbyState, Payload: json.RawMessage(data)})
+	select {
+	case c.Send <- out:
+	default:
+	}
+}
+
+func (h *WSHandler) sendBroadcast(lobbyID string, t game.MessageType, payload any) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+	out, _ := json.Marshal(game.Message{Type: t, Payload: json.RawMessage(data)})
+	h.Hub.SendToLobby(lobbyID, out)
+}
+
 func (h *WSHandler) broadcastPlayerJoined(c *hub.Client, nickname string) {
 	payload, _ := json.Marshal(map[string]string{"player_id": c.PlayerID, "nickname": nickname})
 	out, _ := json.Marshal(game.Message{Type: game.MsgPlayerJoined, Payload: payload})
@@ -228,4 +377,14 @@ func (h *WSHandler) broadcastPlayerLeft(lobbyID, playerID, nickname string) {
 	payload, _ := json.Marshal(map[string]string{"player_id": playerID, "nickname": nickname})
 	out, _ := json.Marshal(game.Message{Type: game.MsgPlayerLeft, Payload: payload})
 	h.Hub.SendToLobby(lobbyID, out)
+}
+
+func (h *WSHandler) broadcastActivity(lobbyID, kind, actorID, actorNickname string) {
+	payload := game.LobbyActivityPayload{
+		Kind:          kind,
+		ActorID:       actorID,
+		ActorNickname: actorNickname,
+		UnixMillis:    time.Now().UnixMilli(),
+	}
+	h.sendBroadcast(lobbyID, game.MsgLobbyActivity, payload)
 }

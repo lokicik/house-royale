@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	DefaultRoundCount    = 5
-	DefaultRoundDuration = 30 * time.Second
-	InterRoundPause      = 5 * time.Second
+	DefaultRoundCount    = 3
+	DefaultRoundDuration = 15 * time.Second
+	VoteTimeout          = 90 * time.Second
 )
 
 // Broadcaster is satisfied by *hub.Hub — kept here to avoid importing hub from game.
@@ -46,6 +46,10 @@ type Session struct {
 	predictor   mlclient.Predictor
 	cfg         SessionConfig
 	GuessCh     chan playerGuess
+
+	// voteSig wakes the vote-wait loop when a vote arrives or a player
+	// disconnects. Buffered/non-blocking sends.
+	voteSig chan struct{}
 }
 
 func NewSession(lobbyID string, lobby *Lobby, b Broadcaster, p mlclient.Predictor, cfg SessionConfig) *Session {
@@ -56,6 +60,7 @@ func NewSession(lobbyID string, lobby *Lobby, b Broadcaster, p mlclient.Predicto
 		predictor:   p,
 		cfg:         cfg,
 		GuessCh:     make(chan playerGuess, 32),
+		voteSig:     make(chan struct{}, 32),
 	}
 }
 
@@ -67,41 +72,78 @@ func (s *Session) SubmitGuess(playerID string, price float64) {
 	}
 }
 
+// VoteNextRound records a player's vote and nudges the vote-wait loop.
+func (s *Session) VoteNextRound(playerID string) {
+	if s.lobby.RecordVote(playerID) {
+		s.poke()
+	}
+}
+
+// NotifyPlayerDisconnected re-evaluates the vote state when a player drops.
+func (s *Session) NotifyPlayerDisconnected(_ string) {
+	s.poke()
+}
+
+func (s *Session) poke() {
+	select {
+	case s.voteSig <- struct{}{}:
+	default:
+	}
+}
+
 // Run executes the full game loop. Call as a goroutine.
 func (s *Session) Run() {
 	s.lobby.mu.Lock()
 	s.lobby.Status = StatusPlaying
 	s.lobby.mu.Unlock()
 
+	settings, _ := s.lobby.SettingsSnapshot()
+	roundCount := settings.RoundCount
+	if roundCount == 0 {
+		roundCount = s.cfg.RoundCount
+	}
+	roundDuration := time.Duration(settings.RoundDurationSec) * time.Second
+	if roundDuration == 0 {
+		roundDuration = s.cfg.RoundDuration
+	}
+
 	props := property.All()
 	used := make(map[string]bool)
 
-	for round := 1; round <= s.cfg.RoundCount; round++ {
+	for round := 1; round <= roundCount; round++ {
 		prop := pickUnused(props, used)
 		used[prop.ID] = true
 
-		aiResp, err := s.predictor.Predict(context.Background(), mlclient.PredictRequest{
-			ModelIDs: []string{"mlp", "ann", "hybrid"},
-			Features: prop.ToFeatures(),
-		})
-		if err != nil {
-			log.Printf("session %s round %d predictor error: %v", s.lobbyID, round, err)
+		enabledModels := s.lobby.EnabledAIModelIDs()
+		var aiResp *mlclient.PredictResponse
+		if len(enabledModels) > 0 {
+			resp, err := s.predictor.Predict(context.Background(), mlclient.PredictRequest{
+				ModelIDs: enabledModels,
+				Features: prop.ToFeatures(),
+			})
+			if err != nil {
+				log.Printf("session %s round %d predictor error: %v", s.lobbyID, round, err)
+				aiResp = &mlclient.PredictResponse{Predictions: map[string]mlclient.ModelPrediction{}}
+			} else {
+				aiResp = resp
+			}
+		} else {
 			aiResp = &mlclient.PredictResponse{Predictions: map[string]mlclient.ModelPrediction{}}
 		}
 
-		// Discard any stale guesses that arrived during the inter-round pause.
+		// Discard any stale guesses that arrived during the inter-round wait.
 		for len(s.GuessCh) > 0 {
 			<-s.GuessCh
 		}
 
 		s.broadcast(MsgRoundStart, roundStartPayload{
 			Round:        round,
-			TotalRounds:  s.cfg.RoundCount,
-			TimeLimitSec: int(s.cfg.RoundDuration.Seconds()),
+			TotalRounds:  roundCount,
+			TimeLimitSec: int(roundDuration.Seconds()),
 			Property:     prop.Public(),
 		})
 
-		guesses := s.collectGuesses()
+		guesses := s.collectGuesses(roundDuration)
 
 		players := s.lobby.Snapshot()
 		results := scoreRound(players, guesses, prop.PriceTRY)
@@ -122,8 +164,8 @@ func (s *Session) Run() {
 			AIPredictions: buildAIResults(aiResp.Predictions, prop.PriceTRY),
 		})
 
-		if round < s.cfg.RoundCount {
-			time.Sleep(InterRoundPause)
+		if round < roundCount {
+			s.waitForNextRoundVotes(round)
 		}
 	}
 
@@ -134,9 +176,9 @@ func (s *Session) Run() {
 	s.lobby.mu.Unlock()
 }
 
-func (s *Session) collectGuesses() map[string]float64 {
+func (s *Session) collectGuesses(duration time.Duration) map[string]float64 {
 	guesses := make(map[string]float64)
-	deadline := time.After(s.cfg.RoundDuration)
+	deadline := time.After(duration)
 
 	for {
 		// Re-snapshot on every iteration so disconnected players are excluded.
@@ -150,6 +192,53 @@ func (s *Session) collectGuesses() map[string]float64 {
 			return guesses
 		}
 	}
+}
+
+// waitForNextRoundVotes blocks until every currently-connected real player has
+// voted to advance, or VoteTimeout elapses, whichever comes first.
+func (s *Session) waitForNextRoundVotes(round int) {
+	s.lobby.ResetVotes()
+	// Drain stale signals from a prior round.
+	for len(s.voteSig) > 0 {
+		<-s.voteSig
+	}
+
+	deadline := time.Now().Add(VoteTimeout)
+	timer := time.NewTimer(VoteTimeout)
+	defer timer.Stop()
+
+	s.broadcastVoteState(round, deadline)
+
+	for {
+		_, needed := s.lobby.VoteState()
+		// If no connected players remain, or all connected have voted, advance.
+		if len(needed) == 0 {
+			return
+		}
+		select {
+		case <-s.voteSig:
+			s.broadcastVoteState(round, deadline)
+		case <-timer.C:
+			s.broadcastVoteState(round, deadline)
+			return
+		}
+	}
+}
+
+func (s *Session) broadcastVoteState(round int, deadline time.Time) {
+	voted, needed := s.lobby.VoteState()
+	if voted == nil {
+		voted = []string{}
+	}
+	if needed == nil {
+		needed = []string{}
+	}
+	s.broadcast(MsgRoundVoteState, RoundVoteStatePayload{
+		Round:      round,
+		Voted:      voted,
+		Needed:     needed,
+		DeadlineTS: deadline.UnixMilli(),
+	})
 }
 
 func (s *Session) broadcastLeaderboard() {
@@ -199,9 +288,9 @@ type roundStartPayload struct {
 }
 
 type roundResultPayload struct {
-	Round         int                `json:"round"`
-	PropertyID    string             `json:"property_id"`
-	ActualPrice   float64            `json:"actual_price"`
-	PlayerResults []PlayerResult     `json:"player_results"`
+	Round         int                 `json:"round"`
+	PropertyID    string              `json:"property_id"`
+	ActualPrice   float64             `json:"actual_price"`
+	PlayerResults []PlayerResult      `json:"player_results"`
 	AIPredictions map[string]AIResult `json:"ai_predictions"`
 }

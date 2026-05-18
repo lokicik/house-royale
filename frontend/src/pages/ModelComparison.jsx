@@ -1,4 +1,5 @@
 import AppShell from '../components/AppShell'
+import { Icon, ModelBadge } from '../components/icons'
 import './ModelComparison.css'
 
 const MODELS = [
@@ -73,7 +74,9 @@ export default function ModelComparison() {
           <div className="mc-stat" key={s.l}>
             <div className="l">{s.l}</div>
             <div className="v">{s.v}</div>
-            <div className={`d ${s.dir}`}>↗ {s.d}</div>
+            <div className={`d ${s.dir}`}>
+              <Icon name={s.dir === 'up' ? 'trend' : 'trendDown'} size={12} /> {s.d}
+            </div>
           </div>
         ))}
       </div>
@@ -103,12 +106,7 @@ export default function ModelComparison() {
                   <tr key={m.name}>
                     <td>
                       <div className="mc-model-cell">
-                        <span className="mc-model-icon">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="3" />
-                            <path d="M9 9h6v6H9z" />
-                          </svg>
-                        </span>
+                        <ModelBadge name={m.name} size={28} />
                         <strong>{m.name}</strong>
                         {m.best && <span className="mc-best">EN İYİ</span>}
                       </div>
@@ -235,7 +233,7 @@ export default function ModelComparison() {
       </div>
 
       <div className="mc-about">
-        <h3>Modeller Hakkında</h3>
+        <h3><Icon name="brain" size={18} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Modeller Hakkında</h3>
         <p>
           Bu sayfada House Royale altyapısında çalışan tüm yapay zeka modellerinin son 30 günlük
           performans metriklerini görebilirsin. MAE ve MAPE düşük; R² ve kazanma oranı yüksek olmalı.
