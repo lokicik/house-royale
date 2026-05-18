@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/authContextValue'
-import { createLobby, getMyLobbies, getMyHistory, getLeaderboard } from '../lib/api'
+import { createLobby, getLobby, getMyLobbies, getMyHistory, getLeaderboard } from '../lib/api'
 import AppShell from '../components/AppShell'
 import { Icon } from '../components/icons'
 import './Lobby.css'
@@ -62,10 +62,20 @@ export default function Lobby() {
     }
   }
 
-  function handleJoin(e) {
+  async function handleJoin(e) {
     e.preventDefault()
-    if (!joinId.trim() || !nickname.trim()) return
-    navigate(`/lobby/${joinId.trim()}`, { state: { nickname: nickname.trim(), isHost: false } })
+    const code = joinId.trim()
+    if (!code || !nickname.trim()) return
+    setLoading(true)
+    setError('')
+    try {
+      await getLobby(code)
+      navigate(`/lobby/${code}`, { state: { nickname: nickname.trim(), isHost: false } })
+    } catch (err) {
+      setError('Oda bulunamadı. Kodu kontrol et ve tekrar dene.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const displayName = nickname || user?.displayName || user?.email?.split('@')[0] || 'Oyuncu'
@@ -132,17 +142,17 @@ export default function Lobby() {
                 className="lp-input code"
                 value={joinId}
                 onChange={e => setJoinId(e.target.value.toUpperCase())}
-                placeholder="HR12JA"
-                maxLength={10}
+                placeholder="ABC234"
+                maxLength={6}
               />
             </div>
             <button
               type="submit"
-              disabled={!joinId.trim() || !nickname.trim()}
+              disabled={loading || !joinId.trim() || !nickname.trim()}
               className="hr-btn hr-btn-outline hr-btn-lg"
               style={{ width: '100%' }}
             >
-              Katıl
+              {loading ? 'Kontrol ediliyor…' : 'Katıl'}
             </button>
           </form>
         </div>
@@ -156,7 +166,7 @@ export default function Lobby() {
               const s = statusLabel(lobby.status)
               return (
                 <li key={lobby.id} className="lp-lobby-row">
-                  <span className="lp-lobby-code">{lobby.id.toUpperCase()}</span>
+                  <span className="lp-lobby-code">{lobby.id}</span>
                   <span className={`lp-status-badge ${s.cls}`}>{s.text}</span>
                   <span className="lp-lobby-meta">{lobby.player_count} oyuncu · {timeAgo(lobby.created_at)}</span>
                   <button

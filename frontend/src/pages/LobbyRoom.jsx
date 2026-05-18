@@ -74,9 +74,25 @@ export default function LobbyRoom() {
   const isHost = !!youId && youId === hostId
 
   const [url, setUrl] = useState(null)
+  const [urlKey, setUrlKey] = useState(0)
   useEffect(() => {
     if (!user) return
-    user.getIdToken().then(token => setUrl(wsUrl(lobbyId, token)))
+    let cancelled = false
+    user.getIdToken().then(token => {
+      if (!cancelled) setUrl(wsUrl(lobbyId, token))
+    })
+    const interval = setInterval(() => {
+      user.getIdToken(true).then(token => {
+        if (!cancelled) {
+          setUrl(wsUrl(lobbyId, token))
+          setUrlKey(k => k + 1)
+        }
+      })
+    }, 50 * 60 * 1000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
   }, [user, lobbyId])
 
   const pushActivity = useCallback((entry) => {
@@ -170,7 +186,7 @@ export default function LobbyRoom() {
     }
   }, [pushActivity])
 
-  const { connected, send } = useWebSocket(url, onMessage)
+  const { connected, connectionError, send } = useWebSocket(url, onMessage)
 
   const joinedRef = useRef(false)
   useEffect(() => {
@@ -181,7 +197,7 @@ export default function LobbyRoom() {
     if (!connected) {
       joinedRef.current = false
     }
-  }, [connected, nickname, send])
+  }, [connected, nickname, send, urlKey])
 
   useEffect(() => {
     if (screen !== 'round') return
@@ -254,7 +270,7 @@ export default function LobbyRoom() {
         <div className="lr-subnav-item">Oyuncular <strong>{players.filter(p => p.connected !== false).length} / 8</strong></div>
         <div className="lr-subnav-spacer" />
         <span className={`lr-conn ${connected ? 'ok' : 'bad'}`}>
-          {connected ? 'Bağlı' : 'Bağlanılıyor…'}
+          {connected ? 'Bağlı' : connectionError ?? 'Bağlanılıyor…'}
         </span>
         {/* "Oyundan Çık" just disconnects the WS — the server keeps your slot
             (and score) so navigating back to /lobby/<id> reconnects you. */}

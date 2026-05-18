@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"crypto/rand"
-	"encoding/hex"
 	"net/http"
 	"sync"
 
@@ -55,10 +54,16 @@ func (s *LobbyStore) ListByHost(hostID string) []*game.Lobby {
 	return out
 }
 
+const lobbyIDCharset = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
 func newID() string {
-	b := make([]byte, 8)
+	b := make([]byte, 6)
 	rand.Read(b)
-	return hex.EncodeToString(b)
+	out := make([]byte, 6)
+	for i := range b {
+		out[i] = lobbyIDCharset[int(b[i])%len(lobbyIDCharset)]
+	}
+	return string(out)
 }
 
 type LobbyHandler struct {
