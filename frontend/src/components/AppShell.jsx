@@ -75,7 +75,7 @@ export default function AppShell({ children }) {
             {open && (
               <div className="hr-menu">
                 <button onClick={() => { setOpen(false); navigate('/lobby') }}>Lobi'ye dön</button>
-                <button onClick={() => { setOpen(false); navigate('/leaderboard') }}>İstatistiklerim</button>
+                <button onClick={() => { setOpen(false); navigate('/profile') }}>Profilim</button>
                 <button className="danger" onClick={handleLogout}>Çıkış Yap</button>
               </div>
             )}

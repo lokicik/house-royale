@@ -10,6 +10,7 @@ import LobbyRoom from './pages/LobbyRoom'
 import Game from './pages/Game'
 import RoundResult from './pages/RoundResult'
 import Leaderboard from './pages/Leaderboard'
+import Profile from './pages/Profile'
 import ModelComparison from './pages/ModelComparison'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="/game/:id" element={<ProtectedRoute><Game /></ProtectedRoute>} />
             <Route path="/round-result" element={<ProtectedRoute><RoundResult /></ProtectedRoute>} />
             <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/model-comparison" element={<ProtectedRoute><ModelComparison /></ProtectedRoute>} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
