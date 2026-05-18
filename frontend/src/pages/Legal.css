@@ -33,7 +33,7 @@
 
 .legal-content p {
   font-size: 14px;
-  color: #374151;
+  color: var(--hr-text);
   margin: 0 0 14px;
   line-height: 1.7;
 }
@@ -45,7 +45,7 @@
 
 .legal-content li {
   font-size: 14px;
-  color: #374151;
+  color: var(--hr-text);
   margin-bottom: 8px;
   line-height: 1.6;
 }

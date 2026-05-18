@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/authContextValue'
 import { useWebSocket } from '../hooks/useWebSocket'
 import { wsUrl } from '../lib/api'
 import AppShell from '../components/AppShell'

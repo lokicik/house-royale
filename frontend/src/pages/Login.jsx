@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth'
 import { auth, googleProvider } from '../lib/firebase'
 import { Icon } from '../components/icons'
+import ThemeToggle from '../components/ThemeToggle'
 import './Login.css'
 
 export default function Login() {
@@ -96,6 +97,7 @@ export default function Login() {
 
       <section className="login-right">
         <div className="login-right-top">
+          <ThemeToggle className="login-theme-toggle" />
           Burada yeni misin? <Link to="/login" className="login-forgot">Kayıt Ol</Link>
         </div>
 

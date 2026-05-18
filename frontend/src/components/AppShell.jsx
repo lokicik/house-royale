@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/authContextValue'
+import ThemeToggle from './ThemeToggle'
 import './AppShell.css'
 
 const TABS = [
@@ -57,6 +58,8 @@ export default function AppShell({ children }) {
               )
             })}
           </nav>
+
+          <ThemeToggle className="hr-theme-toggle" />
 
           <div className="hr-user" ref={menuRef}>
             <button className="hr-user-btn" onClick={() => setOpen(o => !o)}>

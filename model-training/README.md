@@ -6,7 +6,7 @@ House Royale'ın **YSA eğitim pipeline'ı**. Scraping modülünün ürettiği v
 
 1. **MLP (Multi-Layer Perceptron)** — tablo tabanlı öznitelikler üzerinden fiyat tahmini (baseline).
 2. **Custom ANN** — özel tasarlanmış, tablo verisi için optimize edilmiş sinir ağı.
-3. **Hibrit Model (ANN + MLP)** — görsel (CNN kolu) + tablo (MLP kolu) özniteliklerini birleştiren çok girdili (multi-input) mimari.
+3. **Hibrit Model (ANN + MLP)** ANN + MLP özniteliklerini birleştiren çok girdili (multi-input) mimari.
 
 > Değerlendirme aşamasında ek modeller (XGBoost benchmark, transformer tabanlı varyantlar vb.) eklenebilir.
 

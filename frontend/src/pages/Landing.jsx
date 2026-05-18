@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Icon } from '../components/icons'
+import ThemeToggle from '../components/ThemeToggle'
 import './Landing.css'
 
 const avatarColors = ['#2563eb', '#7c3aed', '#db2777', '#f59e0b', '#10b981']
@@ -37,6 +38,7 @@ export default function Landing() {
             <a href="#about">Hakkında</a>
           </div>
           <div className="landing-nav-actions">
+            <ThemeToggle className="landing-theme-toggle" />
             <button className="landing-btn landing-btn-ghost" onClick={goLogin}>Giriş Yap</button>
             <button className="landing-btn landing-btn-primary" onClick={goLogin}>Kayıt Ol</button>
           </div>

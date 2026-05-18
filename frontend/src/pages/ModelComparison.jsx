@@ -6,7 +6,6 @@ const MODELS = [
   { name: 'Custom ANN', type: 'Neural Network', mae: 92430, mape: 2.34, r2: 0.91, resp: 124, params: '2.3M', trainTime: 142, accuracy: 0.91, best: true },
   { name: 'Hybrid Model', type: 'Ensemble', mae: 98120, mape: 2.48, r2: 0.89, resp: 168, params: '4.1M', trainTime: 218, accuracy: 0.89 },
   { name: 'MLP Model', type: 'Neural Network', mae: 110450, mape: 2.89, r2: 0.86, resp: 102, params: '1.1M', trainTime: 89, accuracy: 0.86 },
-  { name: 'CNN Model', type: 'Vision', mae: 122340, mape: 3.12, r2: 0.84, resp: 245, params: '5.8M', trainTime: 374, accuracy: 0.84 },
   { name: 'Transformer', type: 'LLM', mae: 138290, mape: 3.62, r2: 0.80, resp: 412, params: '12.4M', trainTime: 891, accuracy: 0.80 },
   { name: 'Tree Ensemble', type: 'XGBoost', mae: 145780, mape: 3.91, r2: 0.77, resp: 88, params: '0.3M', trainTime: 34, accuracy: 0.77 },
 ]
@@ -139,11 +138,11 @@ export default function ModelComparison() {
                           />
                         )
                       })}
-                      <text x={groupX + 21} y={188} fontSize="10" textAnchor="middle" fill="#64748b">{m}</text>
+                      <text x={groupX + 21} y={188} fontSize="10" textAnchor="middle" fill="var(--hr-muted)">{m}</text>
                     </g>
                   )
                 })}
-                <line x1="20" y1="170" x2="310" y2="170" stroke="#e5e7eb" strokeWidth="1" />
+                <line x1="20" y1="170" x2="310" y2="170" stroke="var(--hr-border)" strokeWidth="1" />
               </svg>
               <div className="mc-legend">
                 {BAR_DATA.map(d => (
@@ -170,7 +169,7 @@ export default function ModelComparison() {
                         return `${Math.cos(angle) * 90 * scale},${Math.sin(angle) * 90 * scale}`
                       }).join(' ')}
                       fill="none"
-                      stroke="#e5e7eb"
+                      stroke="var(--hr-border)"
                       strokeWidth="1"
                     />
                   ))}
@@ -182,8 +181,8 @@ export default function ModelComparison() {
                     const ly = Math.sin(angle) * 108
                     return (
                       <g key={axis}>
-                        <line x1="0" y1="0" x2={x} y2={y} stroke="#e5e7eb" strokeWidth="1" />
-                        <text x={lx} y={ly + 4} fontSize="10" textAnchor="middle" fill="#64748b">{axis}</text>
+                        <line x1="0" y1="0" x2={x} y2={y} stroke="var(--hr-border)" strokeWidth="1" />
+                        <text x={lx} y={ly + 4} fontSize="10" textAnchor="middle" fill="var(--hr-muted)">{axis}</text>
                       </g>
                     )
                   })}

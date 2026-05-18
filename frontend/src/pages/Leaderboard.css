@@ -47,7 +47,7 @@
   font-family: inherit;
   opacity: 0.7;
 }
-.lb-tabs button.active { background: #fff; color: var(--hr-blue-darker); opacity: 1; }
+.lb-tabs button.active { background: var(--hr-card); color: var(--hr-blue-darker); opacity: 1; }
 
 .lb-grid {
   display: grid;
@@ -56,7 +56,7 @@
 }
 
 .lb-main {
-  background: #fff;
+  background: var(--hr-card);
   border: 1px solid var(--hr-border);
   border-radius: 14px;
   overflow: hidden;
@@ -76,7 +76,7 @@
   border-radius: 6px;
   padding: 5px 8px;
   font-size: 12px;
-  background: #fff;
+  background: var(--hr-input-bg);
   font-family: inherit;
 }
 .lb-table { width: 100%; border-collapse: collapse; }
@@ -84,7 +84,7 @@
   padding: 12px 14px;
   font-size: 13px;
   text-align: left;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--hr-row-border);
 }
 .lb-table th {
   background: var(--hr-bg);
@@ -95,7 +95,7 @@
   letter-spacing: 0.5px;
 }
 .lb-table td { color: var(--hr-text); }
-.lb-table tr.you td { background: #eff6ff; font-weight: 600; }
+.lb-table tr.you td { background: var(--hr-soft-blue); font-weight: 600; }
 .lb-rank {
   font-weight: 700;
   font-size: 14px;
@@ -118,18 +118,18 @@
 }
 .lb-tag {
   font-size: 10px;
-  background: #f1f5f9;
+  background: var(--hr-subtle);
   padding: 3px 8px;
   border-radius: 4px;
   font-weight: 600;
   color: var(--hr-muted);
   text-transform: uppercase;
 }
-.lb-tag.ai { background: #eef2ff; color: #6366f1; }
+.lb-tag.ai { background: var(--hr-soft-blue); color: var(--hr-blue); }
 .lb-progress {
   width: 80px;
   height: 6px;
-  background: #f1f5f9;
+  background: var(--hr-subtle);
   border-radius: 3px;
   overflow: hidden;
   display: inline-block;
@@ -153,7 +153,7 @@
 .lb-page-dots button {
   width: 28px; height: 28px;
   border-radius: 6px;
-  background: #fff;
+  background: var(--hr-card);
   border: 1px solid var(--hr-border);
   font-size: 12px;
   cursor: pointer;
@@ -162,7 +162,7 @@
 .lb-page-dots button.active { background: var(--hr-blue); color: #fff; border-color: var(--hr-blue); }
 
 .lb-side .lb-card {
-  background: #fff;
+  background: var(--hr-card);
   border: 1px solid var(--hr-border);
   border-radius: 14px;
   padding: 18px;
@@ -218,7 +218,7 @@
   align-items: center;
   gap: 10px;
   padding: 8px 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--hr-row-border);
   font-size: 12px;
 }
 .lb-mini-row:last-child { border-bottom: 0; }
@@ -232,7 +232,7 @@
   margin-top: 16px;
 }
 .lb-ach {
-  background: #fff;
+  background: var(--hr-card);
   border: 1px solid var(--hr-border);
   border-radius: 12px;
   padding: 16px;
@@ -241,7 +241,7 @@
 .lb-ach .ico {
   width: 40px; height: 40px;
   margin: 0 auto 8px;
-  background: #eff6ff;
+  background: var(--hr-soft-blue);
   border-radius: 10px;
   display: grid; place-items: center;
   color: var(--hr-blue);

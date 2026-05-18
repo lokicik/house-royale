@@ -4,9 +4,23 @@
   --hr-blue-darker: #1e3a8a;
   --hr-bg: #f8fafc;
   --hr-card: #ffffff;
+  --hr-card-elevated: #ffffff;
   --hr-border: #e5e7eb;
   --hr-text: #0f172a;
   --hr-muted: #64748b;
+  --hr-subtle: #f1f5f9;
+  --hr-soft-blue: #eff6ff;
+  --hr-surface-muted: rgba(241, 245, 249, 0.8);
+  --hr-row-border: #f1f5f9;
+  --hr-input-bg: #ffffff;
+  --hr-success-bg: #dcfce7;
+  --hr-success-text: #166534;
+  --hr-danger-bg: #fee2e2;
+  --hr-danger-border: #fecaca;
+  --hr-danger-text: #991b1b;
+  --hr-warning-bg: #fef3c7;
+  --hr-warning-border: #fde68a;
+  --hr-warning-text: #92400e;
   --hr-success: #10b981;
   --hr-danger: #ef4444;
   --hr-warning: #f59e0b;
@@ -24,10 +38,39 @@
   display: flex;
   flex-direction: column;
 }
+
+html[data-theme='dark'] .hr-shell {
+  --hr-blue: #60a5fa;
+  --hr-blue-dark: #3b82f6;
+  --hr-blue-darker: #1e40af;
+  --hr-bg: #0b1120;
+  --hr-card: #111827;
+  --hr-card-elevated: #172033;
+  --hr-border: #263244;
+  --hr-text: #f8fafc;
+  --hr-muted: #94a3b8;
+  --hr-subtle: #1e293b;
+  --hr-soft-blue: rgba(37, 99, 235, 0.18);
+  --hr-surface-muted: rgba(30, 41, 59, 0.78);
+  --hr-row-border: #1f2a3b;
+  --hr-input-bg: #0f172a;
+  --hr-success-bg: rgba(16, 185, 129, 0.16);
+  --hr-success-text: #86efac;
+  --hr-danger-bg: rgba(239, 68, 68, 0.14);
+  --hr-danger-border: rgba(248, 113, 113, 0.34);
+  --hr-danger-text: #fca5a5;
+  --hr-warning-bg: rgba(245, 158, 11, 0.16);
+  --hr-warning-border: rgba(251, 191, 36, 0.35);
+  --hr-warning-text: #fcd34d;
+  --hr-success: #34d399;
+  --hr-danger: #f87171;
+  --hr-warning: #fbbf24;
+  --hr-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+}
 .hr-shell * { box-sizing: border-box; }
 
 .hr-nav {
-  background: #fff;
+  background: var(--hr-card);
   border-bottom: 1px solid var(--hr-border);
 }
 .hr-nav-inner {
@@ -66,9 +109,9 @@
   border: 0;
   font-family: inherit;
 }
-.hr-tab:hover { background: #f1f5f9; color: var(--hr-text); }
+.hr-tab:hover { background: var(--hr-subtle); color: var(--hr-text); }
 .hr-tab.active {
-  background: #eff6ff;
+  background: var(--hr-soft-blue);
   color: var(--hr-blue);
 }
 .hr-user {
@@ -95,7 +138,7 @@
 }
 .hr-user-pill {
   font-size: 11px;
-  background: #eff6ff;
+  background: var(--hr-soft-blue);
   color: var(--hr-blue);
   padding: 2px 6px;
   border-radius: 4px;
@@ -113,12 +156,12 @@
   cursor: pointer;
   font-family: inherit;
 }
-.hr-user-btn:hover { background: #f1f5f9; }
+.hr-user-btn:hover { background: var(--hr-subtle); }
 .hr-menu {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  background: #fff;
+  background: var(--hr-card-elevated);
   border: 1px solid var(--hr-border);
   border-radius: 10px;
   box-shadow: var(--hr-shadow);
@@ -138,7 +181,7 @@
   font-family: inherit;
   color: var(--hr-text);
 }
-.hr-menu button:hover { background: #f1f5f9; }
+.hr-menu button:hover { background: var(--hr-subtle); }
 .hr-menu button.danger { color: var(--hr-danger); }
 
 .hr-main {
@@ -174,12 +217,12 @@
 .hr-btn:active:not(:disabled) { transform: translateY(1px); }
 .hr-btn-primary { background: var(--hr-blue); color: #fff; }
 .hr-btn-primary:hover:not(:disabled) { background: var(--hr-blue-dark); }
-.hr-btn-outline { background: #fff; color: var(--hr-text); border-color: var(--hr-border); }
+.hr-btn-outline { background: var(--hr-card); color: var(--hr-text); border-color: var(--hr-border); }
 .hr-btn-outline:hover:not(:disabled) { border-color: var(--hr-blue); color: var(--hr-blue); }
 .hr-btn-ghost { background: transparent; color: var(--hr-text); }
-.hr-btn-ghost:hover:not(:disabled) { background: #f1f5f9; }
-.hr-btn-danger { background: #fee2e2; color: var(--hr-danger); }
-.hr-btn-danger:hover:not(:disabled) { background: #fecaca; }
+.hr-btn-ghost:hover:not(:disabled) { background: var(--hr-subtle); }
+.hr-btn-danger { background: var(--hr-danger-bg); color: var(--hr-danger-text); }
+.hr-btn-danger:hover:not(:disabled) { background: var(--hr-danger-border); }
 .hr-btn-lg { padding: 12px 22px; font-size: 15px; }
 
 .hr-footer {
@@ -236,9 +279,10 @@
 .hr-footer-bar .legal a:hover { color: #fff; }
 
 @media (max-width: 800px) {
-  .hr-nav-inner { gap: 16px; padding: 12px 16px; }
-  .hr-tabs { gap: 2px; }
+  .hr-nav-inner { gap: 12px; padding: 12px 16px; flex-wrap: wrap; }
+  .hr-tabs { gap: 2px; order: 3; flex: 1 0 100%; }
   .hr-tab { padding: 6px 8px; font-size: 13px; }
+  .hr-theme-toggle { margin-left: auto; }
   .hr-user-name { display: none; }
   .hr-main { padding: 16px; }
   .hr-footer-inner { padding: 0 16px; }

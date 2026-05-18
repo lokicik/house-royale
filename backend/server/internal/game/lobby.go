@@ -37,7 +37,6 @@ var AvailableAIModels = []AIModelMeta{
 	{ID: "custom_ann", Name: "Custom ANN", Type: "Neural Network"},
 	{ID: "hybrid", Name: "Hybrid Model", Type: "Ensemble"},
 	{ID: "mlp", Name: "MLP Model", Type: "Neural Network"},
-	{ID: "cnn", Name: "CNN Model", Type: "Vision"},
 	{ID: "transformer", Name: "Transformer Model", Type: "LLM"},
 	{ID: "tree", Name: "Tree Ensemble", Type: "XGBoost"},
 }

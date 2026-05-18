@@ -12,7 +12,6 @@ var modelBias = map[string]float64{
 	"ann":         -0.05,
 	"hybrid":      0.08,
 	"custom_ann":  -0.02,
-	"cnn":         0.04,
 	"transformer": 0.10,
 	"tree":        -0.07,
 }
@@ -21,7 +20,6 @@ var modelNoise = map[string]float64{
 	"ann":         0.20,
 	"hybrid":      0.12,
 	"custom_ann":  0.10,
-	"cnn":         0.18,
 	"transformer": 0.22,
 	"tree":        0.14,
 }

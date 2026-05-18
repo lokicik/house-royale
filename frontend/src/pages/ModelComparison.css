@@ -4,7 +4,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  background: #fff;
+  background: var(--hr-card);
   border: 1px solid var(--hr-border);
   border-radius: 14px;
   padding: 20px 24px;
@@ -26,7 +26,7 @@
 }
 .mc-filter select {
   border: 1px solid var(--hr-border);
-  background: #fff;
+  background: var(--hr-input-bg);
   padding: 7px 12px;
   border-radius: 8px;
   font-size: 13px;
@@ -41,7 +41,7 @@
   margin-bottom: 16px;
 }
 .mc-stat {
-  background: #fff;
+  background: var(--hr-card);
   border: 1px solid var(--hr-border);
   border-radius: 12px;
   padding: 16px;
@@ -68,7 +68,7 @@
   gap: 16px;
 }
 .mc-card {
-  background: #fff;
+  background: var(--hr-card);
   border: 1px solid var(--hr-border);
   border-radius: 14px;
   box-shadow: var(--hr-shadow);
@@ -94,7 +94,7 @@
   padding: 10px 12px;
   font-size: 12px;
   text-align: left;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--hr-row-border);
 }
 .mc-table th {
   background: var(--hr-bg);
@@ -109,11 +109,11 @@
 .mc-model-icon {
   width: 26px; height: 26px;
   border-radius: 6px;
-  background: #eff6ff;
+  background: var(--hr-soft-blue);
   color: var(--hr-blue);
   display: grid; place-items: center;
 }
-.mc-best { background: #dcfce7; color: #166534; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+.mc-best { background: var(--hr-success-bg); color: var(--hr-success-text); font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
 
 .mc-bar-chart {
   width: 100%;
@@ -132,14 +132,14 @@
   margin-top: 16px;
 }
 .mc-insight {
-  background: #fff;
+  background: var(--hr-card);
   border: 1px solid var(--hr-border);
   border-radius: 12px;
   padding: 16px;
 }
 .mc-insight .tag {
   font-size: 10px;
-  background: #eff6ff;
+  background: var(--hr-soft-blue);
   color: var(--hr-blue);
   padding: 3px 8px;
   border-radius: 4px;
@@ -153,7 +153,7 @@
 
 .mc-about {
   margin-top: 16px;
-  background: #fff;
+  background: var(--hr-card);
   border: 1px solid var(--hr-border);
   border-radius: 12px;
   padding: 18px;
