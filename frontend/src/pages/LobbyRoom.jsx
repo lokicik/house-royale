@@ -54,6 +54,7 @@ export default function LobbyRoom() {
   const [roundData, setRoundData] = useState(null)
   const [resultData, setResultData] = useState(null)
   const [leaderboardData, setLeaderboardData] = useState(null)
+  const [roundHistory, setRoundHistory] = useState([])
   const [timeLeft, setTimeLeft] = useState(0)
   const [guess, setGuess] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -132,6 +133,7 @@ export default function LobbyRoom() {
         })
         break
       case 'ROUND_START':
+        if (msg.payload?.round === 1) setRoundHistory([])
         clearInterval(timerRef.current)
         setRoundData(msg.payload)
         setSubmitted(false)
@@ -144,6 +146,7 @@ export default function LobbyRoom() {
       case 'ROUND_RESULT':
         clearInterval(timerRef.current)
         setResultData(msg.payload)
+        setRoundHistory(prev => [...prev, msg.payload])
         setScreen('result')
         setVoted(false)
         break
@@ -300,7 +303,7 @@ export default function LobbyRoom() {
         />
       )}
       {screen === 'leaderboard' && leaderboardData && (
-        <FinalLeaderboard data={leaderboardData} onExit={() => navigate('/lobby')} />
+        <FinalLeaderboard data={leaderboardData} roundHistory={roundHistory} onExit={() => navigate('/lobby')} />
       )}
     </AppShell>
   )
@@ -705,7 +708,9 @@ function ResultScreen({ data, nickname, totalRounds, voteState, voted, onVoteNex
   )
 }
 
-function FinalLeaderboard({ data, onExit }) {
+const ROUND_MEDALS = ['🥇', '🥈', '🥉']
+
+function FinalLeaderboard({ data, roundHistory, onExit }) {
   const players = data?.players ?? []
   const top3 = players.slice(0, 3)
   const rest = players.slice(3)
@@ -721,7 +726,10 @@ function FinalLeaderboard({ data, onExit }) {
             return (
               <div className={`lr-podium-step ${cls}`} key={p.player_id}>
                 <div className="rank">{p.rank}</div>
-                <div className="nick">{p.nickname}{p.rank === 1 ? ' 👑' : ''}</div>
+                <div className="nick">
+                  {p.is_ai && <span className="lr-ai-badge">AI</span>}
+                  {p.nickname}{p.rank === 1 ? ' 👑' : ''}
+                </div>
                 <div className="score">{fmt(p.score)} puan</div>
               </div>
             )
@@ -732,11 +740,78 @@ function FinalLeaderboard({ data, onExit }) {
         {rest.map(p => (
           <div className="lr-final-row" key={p.player_id}>
             <span className="rk">#{p.rank}</span>
-            <span className="nick">{p.nickname}</span>
+            <span className="nick">
+              {p.is_ai && <span className="lr-ai-badge">AI</span>}
+              {p.nickname}
+            </span>
             <span className="sc">{fmt(p.score)} p</span>
           </div>
         ))}
       </div>
+
+      {roundHistory.length > 0 && (
+        <div className="lr-round-breakdown">
+          <h3 className="lr-breakdown-title">Tur Özeti</h3>
+          {roundHistory.map(rd => {
+            const sorted = [...(rd.player_results ?? [])].sort((a, b) => a.deviation_pct - b.deviation_pct)
+            const aiEntries = Object.entries(rd.ai_predictions ?? {})
+            return (
+              <div className="lr-round-card" key={rd.round}>
+                <div className="lr-round-card-header">
+                  <span className="lr-round-label">Tur {rd.round}</span>
+                  <span className="lr-round-price">Gerçek Fiyat: <strong>₺{fmt(rd.actual_price)}</strong></span>
+                </div>
+                <div className="lr-breakdown-section">
+                  <div className="lr-breakdown-section-title">Oyuncular</div>
+                  <div className="lr-breakdown-table">
+                    <div className="lr-breakdown-row lr-breakdown-header">
+                      <span>Oyuncu</span>
+                      <span>Tahmin</span>
+                      <span>Sapma</span>
+                      <span>Puan</span>
+                    </div>
+                    {sorted.map((pr, idx) => (
+                      <div className={`lr-breakdown-row${idx === 0 ? ' winner' : ''}`} key={pr.player_id}>
+                        <span className="lr-breakdown-nick">
+                          {idx < 3 && <span className="lr-breakdown-medal">{ROUND_MEDALS[idx]}</span>}
+                          {pr.nickname}
+                        </span>
+                        <span>{pr.guess > 0 ? `₺${fmt(pr.guess)}` : '—'}</span>
+                        <span className={`lr-deviation${idx === 0 ? ' best' : ''}`}>
+                          %{pr.deviation_pct?.toFixed(1) ?? '—'}
+                        </span>
+                        <span className="lr-points">{pr.points_earned > 0 ? `+${pr.points_earned}` : '0'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {aiEntries.length > 0 && (
+                  <div className="lr-breakdown-section">
+                    <div className="lr-breakdown-section-title">AI Tahminleri</div>
+                    <div className="lr-breakdown-table">
+                      <div className="lr-breakdown-row lr-breakdown-header">
+                        <span>Model</span>
+                        <span>Tahmin</span>
+                        <span>Sapma</span>
+                        <span>Puan</span>
+                      </div>
+                      {aiEntries.map(([model, pred]) => (
+                        <div className="lr-breakdown-row ai" key={model}>
+                          <span className="lr-breakdown-nick lr-ai-model">{model}</span>
+                          <span>₺{fmt(pred.price_try)}</span>
+                          <span className="lr-deviation">%{pred.deviation_pct?.toFixed(1) ?? '—'}</span>
+                          <span className="lr-points">{pred.points_earned > 0 ? `+${pred.points_earned}` : '0'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
       <button className="hr-btn hr-btn-primary hr-btn-lg" onClick={onExit}>
         Lobiye Dön
       </button>

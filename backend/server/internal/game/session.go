@@ -46,6 +46,7 @@ type Session struct {
 	predictor   mlclient.Predictor
 	cfg         SessionConfig
 	GuessCh     chan playerGuess
+	aiScores    map[string]int // cumulative points per AI model name
 
 	// voteSig wakes the vote-wait loop when a vote arrives or a player
 	// disconnects. Buffered/non-blocking sends.
@@ -60,6 +61,7 @@ func NewSession(lobbyID string, lobby *Lobby, b Broadcaster, p mlclient.Predicto
 		predictor:   p,
 		cfg:         cfg,
 		GuessCh:     make(chan playerGuess, 32),
+		aiScores:    make(map[string]int),
 		voteSig:     make(chan struct{}, 32),
 	}
 }
@@ -146,7 +148,7 @@ func (s *Session) Run() {
 		guesses := s.collectGuesses(roundDuration)
 
 		players := s.lobby.Snapshot()
-		results := scoreRound(players, guesses, prop.PriceTRY)
+		results, aiResults := scoreRound(players, guesses, aiResp.Predictions, prop.PriceTRY)
 
 		s.lobby.mu.Lock()
 		for _, r := range results {
@@ -156,12 +158,16 @@ func (s *Session) Run() {
 		}
 		s.lobby.mu.Unlock()
 
+		for name, ar := range aiResults {
+			s.aiScores[name] += ar.PointsEarned
+		}
+
 		s.broadcast(MsgRoundResult, roundResultPayload{
 			Round:         round,
 			PropertyID:    prop.ID,
 			ActualPrice:   prop.PriceTRY,
 			PlayerResults: results,
-			AIPredictions: buildAIResults(aiResp.Predictions, prop.PriceTRY),
+			AIPredictions: aiResults,
 		})
 
 		if round < roundCount {
@@ -247,11 +253,15 @@ func (s *Session) broadcastLeaderboard() {
 		Nickname string `json:"nickname"`
 		Score    int    `json:"score"`
 		Rank     int    `json:"rank"`
+		IsAI     bool   `json:"is_ai"`
 	}
 	players := s.lobby.Snapshot()
-	entries := make([]entry, 0, len(players))
+	entries := make([]entry, 0, len(players)+len(s.aiScores))
 	for _, p := range players {
 		entries = append(entries, entry{PlayerID: p.ID, Nickname: p.Nickname, Score: p.Score})
+	}
+	for name, score := range s.aiScores {
+		entries = append(entries, entry{PlayerID: "ai:" + name, Nickname: name, Score: score, IsAI: true})
 	}
 	sort.SliceStable(entries, func(i, j int) bool { return entries[i].Score > entries[j].Score })
 	for i := range entries {
