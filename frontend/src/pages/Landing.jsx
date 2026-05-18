@@ -250,7 +250,7 @@ export default function Landing() {
                 <li><a href="#">Hakkımızda</a></li>
                 <li><a href="#">Kariyer</a></li>
                 <li><a href="#">Basın</a></li>
-                <li><a href="mailto:info@houseroyale.app">İletişim</a></li>
+                <li><a href="mailto:help@houseroyale.fun">İletişim</a></li>
               </ul>
             </div>
 

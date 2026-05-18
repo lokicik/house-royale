@@ -3,39 +3,41 @@ import { Icon, ModelBadge } from '../components/icons'
 import './ModelComparison.css'
 
 const MODELS = [
-  { name: 'Custom ANN', type: 'Neural Network', mae: 92430, mape: 2.34, r2: 0.91, resp: 124, win: 62.4, score: 1182, best: true },
-  { name: 'Hybrid Model', type: 'Ensemble', mae: 98120, mape: 2.48, r2: 0.89, resp: 168, win: 59.1, score: 1140 },
-  { name: 'MLP Model', type: 'Neural Network', mae: 110450, mape: 2.89, r2: 0.86, resp: 102, win: 54.8, score: 1024 },
-  { name: 'CNN Model', type: 'Vision', mae: 122340, mape: 3.12, r2: 0.84, resp: 245, win: 49.3, score: 968 },
-  { name: 'Transformer', type: 'LLM', mae: 138290, mape: 3.62, r2: 0.80, resp: 412, win: 44.2, score: 912 },
-  { name: 'Tree Ensemble', type: 'XGBoost', mae: 145780, mape: 3.91, r2: 0.77, resp: 88, win: 41.5, score: 870 },
-]
-const STATS = [
-  { l: 'MAE', v: '92.430', d: '-%4.1', dir: 'up' },
-  { l: 'MAPE', v: '%2.34', d: '-%0.32', dir: 'up' },
-  { l: 'R²', v: '0.912', d: '+0.04', dir: 'up' },
-  { l: 'Yanıt Süresi', v: '124ms', d: '-22ms', dir: 'up' },
-  { l: 'Toplam Tahmin', v: '15.840', d: '+1.240', dir: 'up' },
-  { l: 'Kazanma', v: '%62.4', d: '+%2.1', dir: 'up' },
-]
-const INSIGHTS = [
-  { tag: 'En İyi', title: 'Custom ANN', desc: 'Tüm metriklerde en üstte. Son 30 günde sürekli birinci.' },
-  { tag: 'En Doğru', title: 'Hybrid Model', desc: 'En düşük MAPE değeriyle en doğru fiyat tahmini.' },
-  { tag: 'En Hızlı', title: 'Tree Ensemble', desc: 'Sadece 88ms ortalama yanıt süresi.' },
-  { tag: 'En Çok Gelişen', title: 'Transformer', desc: 'Son haftada %12 daha iyi performans.' },
+  { name: 'Custom ANN', type: 'Neural Network', mae: 92430, mape: 2.34, r2: 0.91, resp: 124, params: '2.3M', trainTime: 142, accuracy: 0.91, best: true },
+  { name: 'Hybrid Model', type: 'Ensemble', mae: 98120, mape: 2.48, r2: 0.89, resp: 168, params: '4.1M', trainTime: 218, accuracy: 0.89 },
+  { name: 'MLP Model', type: 'Neural Network', mae: 110450, mape: 2.89, r2: 0.86, resp: 102, params: '1.1M', trainTime: 89, accuracy: 0.86 },
+  { name: 'CNN Model', type: 'Vision', mae: 122340, mape: 3.12, r2: 0.84, resp: 245, params: '5.8M', trainTime: 374, accuracy: 0.84 },
+  { name: 'Transformer', type: 'LLM', mae: 138290, mape: 3.62, r2: 0.80, resp: 412, params: '12.4M', trainTime: 891, accuracy: 0.80 },
+  { name: 'Tree Ensemble', type: 'XGBoost', mae: 145780, mape: 3.91, r2: 0.77, resp: 88, params: '0.3M', trainTime: 34, accuracy: 0.77 },
 ]
 
-const RADAR_AXES = ['Doğruluk', 'Hız', 'Tutarlılık', 'Sağlamlık', 'Maliyet']
+const STATS = [
+  { l: 'MAE', v: '92.430', sub: 'En iyi model' },
+  { l: 'MAPE', v: '%2.34', sub: 'En iyi model' },
+  { l: 'R²', v: '0.912', sub: 'En yüksek' },
+  { l: 'Yanıt Süresi', v: '88ms', sub: 'En hızlı' },
+  { l: 'Parametreler', v: '12.4M', sub: 'En büyük model' },
+  { l: 'Eğitim Süresi', v: '34s', sub: 'En hızlı eğitim' },
+]
+
+const INSIGHTS = [
+  { tag: 'En İyi', title: 'Custom ANN', desc: 'Tüm metriklerde en üstte. En düşük MAE ve en yüksek R² değeri.' },
+  { tag: 'En Doğru', title: 'Hybrid Model', desc: 'En düşük MAPE değeriyle en doğru fiyat tahmini.' },
+  { tag: 'En Hızlı', title: 'Tree Ensemble', desc: 'Sadece 88ms ortalama çıkarım süresi, en hızlı model.' },
+  { tag: 'En Verimli', title: 'MLP Model', desc: 'En iyi hız/doğruluk dengesiyle kaynak kullanımı en verimli.' },
+]
+
+const RADAR_AXES = ['Doğruluk', 'Hız', 'Tutarlılık', 'Sağlamlık', 'Verimlilik']
 const RADAR_DATA = [
   { name: 'Custom ANN', color: '#2563eb', values: [0.92, 0.7, 0.88, 0.85, 0.6] },
   { name: 'Hybrid Model', color: '#10b981', values: [0.88, 0.55, 0.82, 0.78, 0.5] },
-  { name: 'Tree Ensemble', color: '#f59e0b', values: [0.74, 0.92, 0.7, 0.65, 0.85] },
+  { name: 'Tree Ensemble', color: '#f59e0b', values: [0.74, 0.92, 0.7, 0.65, 0.92] },
 ]
-const BAR_METRICS = ['MAPE', 'R²', 'Kazanma', 'Hız']
+const BAR_METRICS = ['MAPE', 'R²', 'Hız', 'Doğruluk']
 const BAR_DATA = [
-  { name: 'Custom ANN', color: '#2563eb', values: [0.93, 0.91, 0.62, 0.78] },
-  { name: 'Hybrid Model', color: '#10b981', values: [0.88, 0.89, 0.59, 0.62] },
-  { name: 'Tree Ensemble', color: '#f59e0b', values: [0.71, 0.77, 0.41, 0.95] },
+  { name: 'Custom ANN', color: '#2563eb', values: [0.93, 0.91, 0.78, 0.91] },
+  { name: 'Hybrid Model', color: '#10b981', values: [0.88, 0.89, 0.62, 0.89] },
+  { name: 'Tree Ensemble', color: '#f59e0b', values: [0.71, 0.77, 0.95, 0.77] },
 ]
 
 function radarPoints(values, cx, cy, r) {
@@ -56,17 +58,6 @@ export default function ModelComparison() {
           <h1>Model Karşılaştırma</h1>
           <p>Gerçek emlak fiyat tahmin performansını metrikler üzerinden karşılaştır.</p>
         </div>
-        <div className="mc-filter">
-          <select defaultValue="Tüm Modeller">
-            <option>Tüm Modeller</option>
-            <option>Sadece Aktif</option>
-          </select>
-          <select defaultValue="Son 30 Gün">
-            <option>Son 7 Gün</option>
-            <option>Son 30 Gün</option>
-            <option>Son 90 Gün</option>
-          </select>
-        </div>
       </div>
 
       <div className="mc-stats">
@@ -74,9 +65,7 @@ export default function ModelComparison() {
           <div className="mc-stat" key={s.l}>
             <div className="l">{s.l}</div>
             <div className="v">{s.v}</div>
-            <div className={`d ${s.dir}`}>
-              <Icon name={s.dir === 'up' ? 'trend' : 'trendDown'} size={12} /> {s.d}
-            </div>
+            <div className="sub" style={{ fontSize: 11, color: 'var(--hr-muted)', marginTop: 2 }}>{s.sub}</div>
           </div>
         ))}
       </div>
@@ -97,8 +86,8 @@ export default function ModelComparison() {
                   <th>MAPE</th>
                   <th>R²</th>
                   <th>Yanıt</th>
-                  <th>Kazanma</th>
-                  <th>Puan</th>
+                  <th>Params</th>
+                  <th>Eğitim</th>
                 </tr>
               </thead>
               <tbody>
@@ -116,8 +105,8 @@ export default function ModelComparison() {
                     <td>%{m.mape.toFixed(2)}</td>
                     <td>{m.r2.toFixed(2)}</td>
                     <td>{m.resp}ms</td>
-                    <td>%{m.win.toFixed(1)}</td>
-                    <td><strong>{m.score.toLocaleString('tr-TR')}</strong></td>
+                    <td>{m.params}</td>
+                    <td>{m.trainTime}s</td>
                   </tr>
                 ))}
               </tbody>
@@ -128,7 +117,7 @@ export default function ModelComparison() {
         <div>
           <div className="mc-card">
             <div className="mc-card-head">
-              <h3>Metric Karşılaştırma</h3>
+              <h3>Metrik Karşılaştırma</h3>
             </div>
             <div className="mc-card-body">
               <svg className="mc-bar-chart" viewBox="0 0 320 200">
@@ -235,9 +224,9 @@ export default function ModelComparison() {
       <div className="mc-about">
         <h3><Icon name="brain" size={18} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Modeller Hakkında</h3>
         <p>
-          Bu sayfada House Royale altyapısında çalışan tüm yapay zeka modellerinin son 30 günlük
-          performans metriklerini görebilirsin. MAE ve MAPE düşük; R² ve kazanma oranı yüksek olmalı.
-          Tüm modeller aynı tahmin setinde çalışır, bu sayede karşılaştırma adildir.
+          Bu sayfada House Royale altyapısında çalışan tüm yapay zeka modellerinin performans
+          metrikleri karşılaştırılmaktadır. MAE ve MAPE düşük; R² yüksek ve yanıt süresi kısa
+          olmalı. Tüm modeller aynı veri seti üzerinde değerlendirilir, bu sayede karşılaştırma adildir.
         </p>
       </div>
     </AppShell>

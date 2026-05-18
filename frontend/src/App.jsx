@@ -10,6 +10,9 @@ import Game from './pages/Game'
 import RoundResult from './pages/RoundResult'
 import Leaderboard from './pages/Leaderboard'
 import ModelComparison from './pages/ModelComparison'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
+import Cookies from './pages/Cookies'
 
 export default function App() {
   return (
@@ -24,6 +27,9 @@ export default function App() {
           <Route path="/round-result" element={<ProtectedRoute><RoundResult /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
           <Route path="/model-comparison" element={<ProtectedRoute><ModelComparison /></ProtectedRoute>} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/cookies" element={<Cookies />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
