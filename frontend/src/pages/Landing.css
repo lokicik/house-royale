@@ -203,17 +203,15 @@ html[data-theme='dark'] .landing {
 }
 .landing-hero-image-wrap {
   position: relative;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: var(--lp-shadow);
-  aspect-ratio: 4 / 3;
-  background: var(--lp-image-bg);
+  overflow: visible;
+  background: transparent;
 }
 .landing-hero-image-wrap img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   display: block;
+  filter: drop-shadow(0 24px 34px rgba(31, 67, 132, 0.16));
 }
 .landing-price-badge {
   position: absolute;
