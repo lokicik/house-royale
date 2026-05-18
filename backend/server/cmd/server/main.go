@@ -34,8 +34,21 @@ func main() {
 	store := handlers.NewLobbyStore()
 	sessions := handlers.NewSessionStore()
 	predictor := mlclient.NewMockPredictor()
-	lb := leaderboard.NewStore()
-	hs := history.NewStore()
+
+	var lb leaderboard.Storer
+	var hs history.Storer
+
+	if cfg.AppEnv == "production" {
+		fsClient, err := firebasepkg.GetFirestore(context.Background())
+		if err != nil {
+			log.Fatalf("firestore init: %v", err)
+		}
+		lb = leaderboard.NewFirestoreStore(fsClient)
+		hs = history.NewFirestoreStore(fsClient)
+	} else {
+		lb = leaderboard.NewStore()
+		hs = history.NewStore()
+	}
 
 	lobbyHandler := handlers.NewLobbyHandler(store)
 	wsHandler := handlers.NewWSHandler(h, store, sessions, predictor, lb, hs)

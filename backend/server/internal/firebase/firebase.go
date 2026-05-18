@@ -6,7 +6,7 @@ import (
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
-	"google.golang.org/api/option"
+	"cloud.google.com/go/firestore"
 )
 
 var (
@@ -18,12 +18,19 @@ var (
 func Init(ctx context.Context, projectID string) error {
 	once.Do(func() {
 		var err error
-		app, err = firebase.NewApp(ctx, &firebase.Config{ProjectID: projectID}, option.WithoutAuthentication())
+		app, err = firebase.NewApp(ctx, &firebase.Config{ProjectID: projectID})
 		if err != nil {
 			initErr = err
 		}
 	})
 	return initErr
+}
+
+func GetFirestore(ctx context.Context) (*firestore.Client, error) {
+	if app == nil {
+		return nil, ErrNotInitialized
+	}
+	return app.Firestore(ctx)
 }
 
 func GetAuth(ctx context.Context) (*auth.Client, error) {

@@ -35,11 +35,11 @@ type WSHandler struct {
 	Store        *LobbyStore
 	Sessions     *SessionStore
 	Predictor    mlclient.Predictor
-	LB           *leaderboard.Store
-	HistoryStore *history.Store
+	LB           leaderboard.Storer
+	HistoryStore history.Storer
 }
 
-func NewWSHandler(h *hub.Hub, store *LobbyStore, sessions *SessionStore, predictor mlclient.Predictor, lb *leaderboard.Store, hs *history.Store) *WSHandler {
+func NewWSHandler(h *hub.Hub, store *LobbyStore, sessions *SessionStore, predictor mlclient.Predictor, lb leaderboard.Storer, hs history.Storer) *WSHandler {
 	return &WSHandler{Hub: h, Store: store, Sessions: sessions, Predictor: predictor, LB: lb, HistoryStore: hs}
 }
 

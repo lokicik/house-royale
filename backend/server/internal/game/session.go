@@ -58,7 +58,7 @@ type Session struct {
 	GuessCh        chan playerGuess
 	aiScores       map[string]int // cumulative points per AI model name
 	RoundSummaries [][]RoundSummaryEntry
-	HistoryStore   *history.Store // optional; records per-user game results on finish
+	HistoryStore   history.Storer // optional; records per-user game results on finish
 
 	// voteSig wakes the vote-wait loop when a vote arrives or a player
 	// disconnects. Buffered/non-blocking sends.

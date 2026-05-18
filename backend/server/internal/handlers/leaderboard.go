@@ -8,7 +8,7 @@ import (
 )
 
 type LeaderboardHandler struct {
-	LB *leaderboard.Store
+	LB leaderboard.Storer
 }
 
 func (h *LeaderboardHandler) Get(c *gin.Context) {

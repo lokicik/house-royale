@@ -9,10 +9,10 @@ import (
 )
 
 type HistoryHandler struct {
-	Store *history.Store
+	Store history.Storer
 }
 
-func NewHistoryHandler(store *history.Store) *HistoryHandler {
+func NewHistoryHandler(store history.Storer) *HistoryHandler {
 	return &HistoryHandler{Store: store}
 }
 
