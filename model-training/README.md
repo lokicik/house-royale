@@ -1,86 +1,93 @@
-# Model Training
+# 🧠 Model Training (YSA Eğitim Süreci)
 
-House Royale'ın **YSA eğitim pipeline'ı**. Scraping modülünün ürettiği veri setini alır, önişleme adımlarından geçirir, birden fazla mimariyi eğitir ve inference servisinin tüketeceği model artifact'larını üretir.
+Bu dizin, House Royale projesinin Yapay Sinir Ağları (YSA) eğitim sürecini, veri keşfi aşamasından başlayıp canlı tahmin altyapısına model üretmeye kadar olan tüm pipeline'ı içerir. 
 
-## Hedef Modeller
+Eğitim sürecinde kullanılan veri seti, veri temizliği, öznitelik mühendisliği ve kodlama (encoding) adımlarından geçirilmiş ve TensorFlow/Keras kütüphanesi kullanılarak farklı mimarilerde **8 adet model** eğitilmiştir.
 
-1. **MLP (Multi-Layer Perceptron)** — tablo tabanlı öznitelikler üzerinden fiyat tahmini (baseline).
-2. **Custom ANN** — özel tasarlanmış, tablo verisi için optimize edilmiş sinir ağı.
-3. **Hibrit Model (ANN + MLP)** ANN + MLP özniteliklerini birleştiren çok girdili (multi-input) mimari.
+---
 
-> Değerlendirme aşamasında ek modeller (XGBoost benchmark, transformer tabanlı varyantlar vb.) eklenebilir.
+## 📂 Dosya Yapısı ve Eğitim Adımları
 
-## Önişleme
+Eğitim süreci 6 ana Jupyter Notebook (`.ipynb`) dosyası üzerinden sırasıyla yürütülmektedir:
 
-### Eksik Veri
-- Düşük eksiklik → medyan/mod ile doldurma (imputation)
-- Yüksek eksiklik → sütun silme veya model tabanlı imputation (KNN Imputer)
+### 1️⃣ [1)EDA.ipynb](file:///C:/Users/Baran/Desktop/YSA_PROJE/house-royale/model-training/1)EDA.ipynb) — Keşifçi Veri Analizi (Exploratory Data Analysis)
+* **Amaç:** Scraping aşamasından gelen `train_data.csv` veri setinin genel yapısını incelemek, hedef değişken olan `fiyat` ve diğer numerik değişkenlerin dağılımlarını analiz etmek.
+* **Yapılan Çalışmalar:** 
+  * Fiyat verisinin Q-Q Plot (normal olasılık grafiği) ve Histogram grafikleri çizilerek dağılımın sağa çarpık (right-skewed) olduğu tespit edilmiştir.
+  * Kutu grafikleri (Boxplot) kullanılarak veri setindeki aşırı yüksek ve mantıksız fiyat uç değerleri (aykırı değerler) görselleştirilmiştir.
 
-### Aykırı Değer (Outlier)
-- **IQR yöntemi** ve **Z-score** analizi
-- Alan bilgisi ışığında filtreleme veya dönüştürme
+### 2️⃣ [2)Outlier_Cleaning.ipynb](file:///C:/Users/Baran/Desktop/YSA_PROJE/house-royale/model-training/2)Outlier_Cleaning.ipynb) — Aykırı Değer Temizliği
+* **Amaç:** Model eğitimini olumsuz etkileyecek uç/hatalı fiyat verilerini veri setinden uzaklaştırmak.
+* **Yapılan Çalışmalar:**
+  * Çeyreklikler Açıklığı (**IQR - Interquartile Range**) yöntemi uygulanmıştır.
+  * Hesaplanan üst ve alt sınırlar dışındaki aykırı konut fiyatları filtrelenerek veri seti temizlenmiş ve `cleaned_data.csv` olarak kaydedilmiştir.
 
-### Ölçeklendirme
-- **Min-Max Scaling** veya **Standard Scaling (Z-score)**
-- Seçim, özniteliğin dağılımına göre yapılır
+### 3️⃣ [3)Missing_Data_Analysis_and_Feature_Engineering.ipynb](file:///C:/Users/Baran/Desktop/YSA_PROJE/house-royale/model-training/3)Missing_Data_Analysis_and_Feature_Engineering.ipynb) — Kayıp Veri Analizi ve Öznitelik Mühendisliği
+* **Amaç:** Eksik verilerin imputasyonunu yapmak ve YSA modellerinin başarısını artıracak yeni türetilmiş özellikler (features) eklemek.
+* **Yapılan Çalışmalar:**
+  * **Eksik Veri:** Analizler yapılarak veri setindeki eksik değerler mantıklı varsayılanlarla veya medyan/mod değerleriyle doldurulmuştur.
+  * **Öznitelik Mühendisliği (Feature Engineering):**
+    * `kat_orani`: Konutun bulunduğu katın binanın toplam kat sayısına oranı (`kat / kat_sayisi`).
+    * `metrekare_farki`: Brüt ve net metrekare farkı (`metrekare_brut - metrekare_net`).
+    * `metrekare_verimliligi`: Net alanın brüt alana oranı (`metrekare_net / metrekare_brut`).
+    * `oda_salon` kolonu bölünerek `oda_sayisi`, `salon_sayisi` ve `toplam_oda` (`oda_sayisi + salon_sayisi`) özellikleri türetilmiştir.
+  * **Anomali Filtreleme:** Brüt ve net alan arasında mantıksız fark olan (`metrekare_farki > 50`) hatalı kayıtlar temizlenerek veri seti `no_beylikdüzü.csv` adıyla kaydedilmiştir.
 
-### Kategorik Kodlama
-- Düşük kardinalite → **One-Hot Encoding**
-- Yüksek kardinalite (ör. mahalle) → **Target Encoding**
+### 4️⃣ [4)Encoding.ipynb](file:///C:/Users/Baran/Desktop/YSA_PROJE/house-royale/model-training/4)Encoding.ipynb) — Kategorik Veri Kodlama (Encoding)
+* **Amaç:** Kategorik metin verilerini YSA modellerinin işleyebileceği numerik formatlara dönüştürmek ve ölçeklemek.
+* **Yapılan Çalışmalar:**
+  * `bina_yasi` metinsel ifadeleri ("Sıfır Bina", "6 Yaşında", "5-10" vb.) sayısal yaş değerlerine dönüştürülmüştür.
+  * Isıtma türleri (`isitma`) için **One-Hot Encoding** uygulanmıştır.
+  * Yüksek kardinaliteye sahip konum verileri (`ilce` ve `mahalle`) için **Target Encoding** (`category_encoders.TargetEncoder`) uygulanmıştır.
+  * Target encoder nesnesi `target_encoder.pkl` ve ısıtma sütunları `isitma_columns.pkl` olarak canlı servislerin kullanımı için dışa aktarılmıştır.
 
-### Feature Engineering
-Türetilen yeni öznitelikler:
-- Metrekare başına fiyat
-- Oda başına metrekare
-- Göreli kat konumu (bulunduğu kat / toplam kat)
-- Bölgesel ortalama fiyat farkı
+### 5️⃣ [5.1)Scaling_and_Training.ipynb](file:///C:/Users/Baran/Desktop/YSA_PROJE/house-royale/model-training/5.1)Scaling_and_Training.ipynb) — Başarılı Modellerin Eğitimi
+* **Amaç:** Veriyi ölçeklemek, veriyi Eğitim/Doğrulama/Test setlerine bölmek ve yüksek performanslı derin öğrenme mimarileri eğitmek.
+* **Yapılan Çalışmalar:**
+  * Hem X girdileri hem de y (hedef fiyat) değişkeni için `StandardScaler` uygulanmıştır. Ölçekleyiciler `scaler_X.pkl` ve `scaler_y.pkl` olarak kaydedilmiştir.
+  * **ResNet mimarisi tabanlı** (Residual bağlantılar içeren gelişmiş derin MLP ağları) modeller tasarlanmış ve eğitilmiştir.
+  * En başarılı 3 model olan **model_1**, **model_2** ve **model_3** (ortalama hata payları **%3 - %5** arasındadır) bu aşamada üretilmiş ve kaydedilmiştir.
 
-## Eğitim
+### 6️⃣ [5.2.)Moderate_Models.ipynb](file:///C:/Users/Baran/Desktop/YSA_PROJE/house-royale/model-training/5.2.)Moderate_Models.ipynb) — Standart ve Temel Modellerin Eğitimi
+* **Amaç:** Karşılaştırma ve yedekleme amacıyla standart derinlikte modeller (orta ve zayıf modeller) eğitmek.
+* **Yapılan Çalışmalar:**
+  * Daha az katmanlı standart MLP ağları, yüksek dropout oranlarına sahip regüle edilmiş yapılar tasarlanmıştır.
+  * **model_4**, **model_5**, **model_6** (orta performans) ve **model_7**, **model_8** (baz/zayıf performans) modelleri bu aşamada eğitilmiştir.
 
-| Parametre | Değer |
-|---|---|
-| Veri bölme | Harici test seti + %80 eğitim / %20 doğrulama |
-| Kayıp fonksiyonu | MSE veya Huber Loss |
-| Optimizer | Adam, RMSprop, SGD (LR scheduler ile) |
-| Regularization | Dropout, Batch Normalization, L1/L2 |
-| Early Stopping | Doğrulama kaybı platolaştığında |
-| Hiperparametre | Grid Search veya Optuna |
-| Epoch / Batch | 100–200 epoch, batch 32–64 (early stopping ile ayar) |
-| Donanım | Google Colab / Kaggle GPU |
+---
 
-## Başarı Metrikleri
+## 🛠️ Kurulum ve Çalıştırma
 
-| Metrik | Açıklama | Seçilme Nedeni |
-|---|---|---|
-| **MAE** | Ortalama mutlak hata (TL) | Yorumlanabilirlik; gerçek fiyat farkını gösterir |
-| **RMSE** | Kök ortalama kare hata | Büyük hataları cezalandırır; uç değerlere duyarlı |
-| **MAPE** | Yüzdesel mutlak hata | Ölçekten bağımsız; fiyat aralıklarını karşılaştırır |
-| **R²** | Belirtme katsayısı | Modelin varyansı ne oranda açıkladığını gösterir |
+Notebook dosyalarını yerel bilgisayarınızda çalıştırmak veya modelleri yeniden eğitmek için aşağıdaki adımları takip edin:
 
-## Çıktılar
-
-Eğitilmiş modeller `artifacts/` altında saklanır ve [backend/ml-infra/](../backend/ml-infra/) tarafından yüklenir:
-
-- `*.pt` / `*.pth` — PyTorch
-- `*.h5` / `.keras` — TensorFlow/Keras
-- `*.onnx` — çerçeveden bağımsız export (opsiyonel)
-
-Boyut nedeniyle artifact'lar `.gitignore`'da — paylaşım için Git LFS veya harici storage kullanılır.
-
-## Kullanım (iskelet)
+### 1. Sanal Ortamı Aktif Edin (Örnek: `sp500` Env)
+Modellerin eğitildiği ve test edildiği kararlı Python ortamını kurmak için `requirements.txt` dosyasındaki kütüphaneleri yükleyebilirsiniz:
 
 ```bash
+# Sanal ortamı aktif edin (conda kullanıyorsanız)
+conda activate sp500
+
+# Veya yeni bir venv oluşturun:
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # Windows için: .venv\Scripts\activate
+
+# Gerekli bağımlılıkları yükleyin
 pip install -r requirements.txt
-
-# Önişleme
-python -m src.preprocess --input ../scraping/data/processed/dataset.csv --output data/clean.csv
-
-# Eğitim
-python -m src.train --model mlp --config configs/mlp.yaml
-python -m src.train --model hybrid --config configs/hybrid.yaml
-
-# Hiperparametre arama
-python -m src.tune --model mlp --trials 50
 ```
+
+### 2. Notebook Dosyalarını Çalıştırma Sırası
+Veri işleme ve eğitim adımlarının doğru çalışması için notebook'ları aşağıdaki sıralamada çalıştırınız:
+1. `1)EDA.ipynb`
+2. `2)Outlier_Cleaning.ipynb`
+3. `3)Missing_Data_Analysis_and_Feature_Engineering.ipynb`
+4. `4)Encoding.ipynb`
+5. `5.1)Scaling_and_Training.ipynb` *(Başarılı Modeller için)*
+6. `5.2.)Moderate_Models.ipynb` *(Standart/Temel Modeller için)*
+
+---
+
+## 🎯 Model Çıktıları ve Canlı Tahmin Entegrasyonu
+
+Eğitilen tüm modeller (`model.keras`) ve ön işleme nesneleri (`scaler_X.pkl`, `scaler_y.pkl`, `target_encoder.pkl`, `isitma_columns.pkl`) canlı servis altyapısının tüketebileceği şekilde organize edilmiştir.
+
+Model çıktılarının doğrulanması ve test veri seti üzerindeki hata payı analizleri için ana backend dizinindeki [run_predict.py](file:///C:/Users/Baran/Desktop/YSA_PROJE/house-royale/backend/ml-infra/run_predict.py) dosyasını inceleyebilirsiniz.
