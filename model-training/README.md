@@ -46,13 +46,13 @@ Eğitim süreci 6 ana Jupyter Notebook (`.ipynb`) dosyası üzerinden sırasıyl
 * **Yapılan Çalışmalar:**
   * Hem X girdileri hem de y (hedef fiyat) değişkeni için `StandardScaler` uygulanmıştır. Ölçekleyiciler `scaler_X.pkl` ve `scaler_y.pkl` olarak kaydedilmiştir.
   * **ResNet mimarisi tabanlı** (Residual bağlantılar içeren gelişmiş derin MLP ağları) modeller tasarlanmış ve eğitilmiştir.
-  * En başarılı 3 model olan **model_1**, **model_2** ve **model_3** (ortalama hata payları **%3 - %5** arasındadır) bu aşamada üretilmiş ve kaydedilmiştir.
+  * En başarılı 3 model olan **model_0**, **model_1** ve **model_2** (ortalama hata payları **%3 - %5** arasındadır) bu aşamada üretilmiş ve kaydedilmiştir.
 
 ### 6️⃣ [5.2.)Moderate_Models.ipynb](file:///C:/Users/Baran/Desktop/YSA_PROJE/house-royale/model-training/5.2.)Moderate_Models.ipynb) — Standart ve Temel Modellerin Eğitimi
 * **Amaç:** Karşılaştırma ve yedekleme amacıyla standart derinlikte modeller (orta ve zayıf modeller) eğitmek.
 * **Yapılan Çalışmalar:**
   * Daha az katmanlı standart MLP ağları, yüksek dropout oranlarına sahip regüle edilmiş yapılar tasarlanmıştır.
-  * **model_4**, **model_5**, **model_6** (orta performans) ve **model_7**, **model_8** (baz/zayıf performans) modelleri bu aşamada eğitilmiştir.
+  * **model_3**, **model_4**, **model_5** (orta performans) ve **model_6**, **model_7**, **model_8** (baz/zayıf performans) modelleri bu aşamada eğitilmiştir.
 
 ---
 
