@@ -40,6 +40,15 @@ async def scrape_hepsiemlak_hybrid():
         "Aidat", "Cephe", "URL"
     ]
     
+    # --- PROXY AYARLARI ---
+    proxy_url = input("Proxy URL'sini gir (örnek: http://proxy.example.com:8080): ").strip()
+    proxy_config = None
+    if proxy_url:
+        proxy_config = {"server": proxy_url}
+        print(f"✓ Proxy kullanılacak: {proxy_url}")
+    else:
+        print("⚠ Proxy kullanılmayacak")
+    
     OUTPUT_FILE = "hepsiemlak_istanbul_ml_ready.csv"
     USER_DATA_DIR = os.path.join(os.getcwd(), "browser_data")
     
@@ -49,6 +58,7 @@ async def scrape_hepsiemlak_hybrid():
             user_data_dir=USER_DATA_DIR,
             headless=False,
             slow_mo=1000,
+            proxy=proxy_config,
             args=[
                 '--disable-blink-features=AutomationControlled',
                 '--start-maximized',
