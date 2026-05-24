@@ -125,6 +125,47 @@ func scoreRound(
 	return humanResults, aiResults
 }
 
+// ComputeLPDeltas returns the per-player league-point delta for one round.
+//
+// For each AI in the round, with T = AI league tier (Bronze=1, Gold=2, Diamond=3):
+//   - Player beat AI (strictly lower deviation): LP += 10 * T
+//   - Player lost to AI (strictly higher deviation): LP -= 10 * (4 - T)
+//   - Tie or player didn't submit: no LP change for that AI
+//
+// Higher-league AI wins are worth more; losing to a low-league AI is more
+// punishing. Non-submitting players get 0 delta.
+func ComputeLPDeltas(
+	playerResults []PlayerResult,
+	aiResults map[string]AIResult,
+	aiLeagues map[string]int, // model_id -> tier (1/2/3)
+) map[string]int {
+	deltas := make(map[string]int, len(playerResults))
+	for _, p := range playerResults {
+		if p.Guess <= 0 {
+			deltas[p.PlayerID] = 0
+			continue
+		}
+		var delta int
+		for modelID, ar := range aiResults {
+			if ar.PriceTRY <= 0 {
+				continue
+			}
+			tier, ok := aiLeagues[modelID]
+			if !ok || tier < 1 {
+				continue
+			}
+			switch {
+			case p.DeviationPct < ar.DeviationPct:
+				delta += 10 * tier
+			case p.DeviationPct > ar.DeviationPct:
+				delta -= 10 * (4 - tier)
+			}
+		}
+		deltas[p.PlayerID] = delta
+	}
+	return deltas
+}
+
 // allSubmitted returns true when every current player has a non-zero guess,
 // or when no players remain in the lobby (all disconnected).
 func allSubmitted(guesses map[string]float64, current map[string]*Player) bool {

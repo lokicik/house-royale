@@ -52,6 +52,17 @@ export async function getMyHistory(user, idToken) {
   return res.json()
 }
 
+export async function getMyLeague(user, idToken) {
+  const res = await fetch(`${BASE}/me/league`, {
+    headers: {
+      'Authorization': `Bearer ${idToken}`,
+      'X-Player-ID': user.uid,
+    },
+  })
+  if (!res.ok) throw new Error('Lig bilgisi yüklenemedi')
+  return res.json()
+}
+
 /**
  * Builds the WebSocket URL for a lobby connection.
  * Passes the Firebase ID token as ?token= so both dev (JWT decode)

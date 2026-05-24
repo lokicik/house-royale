@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/authContextValue'
-import { createLobby, getLobby, getMyLobbies, getMyHistory, getLeaderboard } from '../lib/api'
+import { createLobby, getLobby, getMyLobbies, getMyHistory, getLeaderboard, getMyLeague } from '../lib/api'
 import AppShell from '../components/AppShell'
 import { Icon } from '../components/icons'
 import './Lobby.css'
 
 const RANK_MEDALS = ['🥇', '🥈', '🥉']
+
+const LEAGUE_LABEL = { bronze: 'Bronz', gold: 'Altın', diamond: 'Elmas' }
+const LEAGUE_EMOJI = { bronze: '🥉', gold: '🥇', diamond: '💎' }
 
 function statusLabel(status) {
   if (status === 'waiting') return { text: 'Bekliyor', cls: 'lp-status-waiting' }
@@ -36,12 +39,14 @@ export default function Lobby() {
   const [myLobbies, setMyLobbies] = useState([])
   const [gameHistory, setGameHistory] = useState([])
   const [leaderboard, setLeaderboard] = useState([])
+  const [myLeague, setMyLeague] = useState(null)
 
   useEffect(() => {
     if (!user) return
     user.getIdToken().then(idToken => {
       getMyLobbies(user, idToken).then(data => setMyLobbies(Array.isArray(data) ? data : [])).catch(() => {})
       getMyHistory(user, idToken).then(data => setGameHistory(data?.records ?? [])).catch(() => {})
+      getMyLeague(user, idToken).then(data => setMyLeague(data)).catch(() => {})
     })
     getLeaderboard().then(data => setLeaderboard(data?.entries ?? [])).catch(() => {})
   }, [user])
@@ -87,6 +92,21 @@ export default function Lobby() {
           <h1>Hoş geldin, {displayName} 👋</h1>
           <p>Bir oda oluştur ve arkadaşlarını davet et ya da var olan bir odaya katıl.</p>
         </div>
+        {myLeague?.league && (
+          <div className={`lp-league-card lp-league-${myLeague.league}`}>
+            <div className="lp-league-emoji">{LEAGUE_EMOJI[myLeague.league] ?? '🏷️'}</div>
+            <div className="lp-league-info">
+              <div className="lp-league-name">{LEAGUE_LABEL[myLeague.league] ?? myLeague.league} Ligi</div>
+              <div className="lp-league-lp">{myLeague.lp ?? 0} / {myLeague.promote_at ?? 100} LP</div>
+              <div className="lp-league-bar">
+                <div
+                  className="lp-league-bar-fill"
+                  style={{ width: `${Math.max(0, Math.min(100, (myLeague.lp ?? 0) / (myLeague.promote_at ?? 100) * 100))}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {error && <div className="lp-error">{error}</div>}

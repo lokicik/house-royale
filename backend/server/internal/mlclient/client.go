@@ -72,7 +72,7 @@ type Client struct {
 func New(baseURL string) *Client {
 	return &Client{
 		baseURL: baseURL,
-		http:    &http.Client{Timeout: 10 * time.Second},
+		http:    &http.Client{Timeout: 30 * time.Second},
 	}
 }
 
@@ -95,7 +95,9 @@ func (c *Client) Predict(ctx context.Context, req PredictRequest) (*PredictRespo
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("mlclient: ml-infra responded %d", resp.StatusCode)
+		var buf bytes.Buffer
+		buf.ReadFrom(resp.Body)
+		return nil, fmt.Errorf("mlclient: ml-infra responded %d: %s", resp.StatusCode, buf.String())
 	}
 
 	var result PredictResponse

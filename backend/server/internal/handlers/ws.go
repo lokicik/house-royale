@@ -12,6 +12,7 @@ import (
 	"github.com/lokicik/house-royale/backend/server/internal/history"
 	"github.com/lokicik/house-royale/backend/server/internal/hub"
 	"github.com/lokicik/house-royale/backend/server/internal/leaderboard"
+	"github.com/lokicik/house-royale/backend/server/internal/league"
 	"github.com/lokicik/house-royale/backend/server/internal/middleware"
 	"github.com/lokicik/house-royale/backend/server/internal/mlclient"
 )
@@ -37,10 +38,11 @@ type WSHandler struct {
 	Predictor    mlclient.Predictor
 	LB           leaderboard.Storer
 	HistoryStore history.Storer
+	Leagues      league.Storer
 }
 
-func NewWSHandler(h *hub.Hub, store *LobbyStore, sessions *SessionStore, predictor mlclient.Predictor, lb leaderboard.Storer, hs history.Storer) *WSHandler {
-	return &WSHandler{Hub: h, Store: store, Sessions: sessions, Predictor: predictor, LB: lb, HistoryStore: hs}
+func NewWSHandler(h *hub.Hub, store *LobbyStore, sessions *SessionStore, predictor mlclient.Predictor, lb leaderboard.Storer, hs history.Storer, lg league.Storer) *WSHandler {
+	return &WSHandler{Hub: h, Store: store, Sessions: sessions, Predictor: predictor, LB: lb, HistoryStore: hs, Leagues: lg}
 }
 
 func (h *WSHandler) ServeWS(c *gin.Context) {
@@ -225,6 +227,7 @@ func (h *WSHandler) handleReady(c *hub.Client) {
 
 	session := game.NewSession(c.LobbyID, lobby, h.Hub, h.Predictor, game.DefaultConfig)
 	session.HistoryStore = h.HistoryStore
+	session.LeagueStore = h.Leagues
 	h.Sessions.Set(c.LobbyID, session)
 	log.Printf("session.start lobby=%s host=%s players=%d", c.LobbyID, c.PlayerID, lobby.PlayerCount())
 	go func(lobbyID string) {
@@ -361,11 +364,12 @@ func (h *WSHandler) sendLobbyState(c *hub.Client, lobby *game.Lobby) {
 	payload := game.LobbyStatePayload{
 		LobbyID:           lobby.ID,
 		HostID:            lobby.HostID,
+		League:            lobby.League,
 		Status:            lobby.CurrentStatus(),
 		Players:           players,
 		Settings:          settings,
 		AIModels:          ai,
-		AvailableAIModels: game.AvailableAIModels,
+		AvailableAIModels: game.ModelsForLeague(lobby.League),
 		YouID:             c.PlayerID,
 	}
 	data, err := json.Marshal(payload)

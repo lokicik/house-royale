@@ -5,6 +5,7 @@ import { useWebSocket } from '../hooks/useWebSocket'
 import { wsUrl } from '../lib/api'
 import AppShell from '../components/AppShell'
 import { Icon, ModelBadge } from '../components/icons'
+import DistrictMap from '../components/DistrictMap'
 import './LobbyRoom.css'
 
 const ROUND_COUNT_OPTIONS = [3, 6]
@@ -24,6 +25,28 @@ const ACTIVITY_VERBS = {
 }
 
 const fmt = (n) => n?.toLocaleString('tr-TR') ?? '—'
+
+const LEAGUE_LABEL = {
+  bronze: 'Bronz',
+  gold: 'Altın',
+  diamond: 'Elmas',
+}
+
+const LEAGUE_EMOJI = {
+  bronze: '🥉',
+  gold: '🥇',
+  diamond: '💎',
+}
+
+function LeagueBadge({ league }) {
+  if (!league) return null
+  return (
+    <span className={`lr-league-badge lr-league-${league}`}>
+      <span aria-hidden="true">{LEAGUE_EMOJI[league] ?? ''}</span>
+      {LEAGUE_LABEL[league] ?? league}
+    </span>
+  )
+}
 
 function initials(name) {
   if (!name) return '?'
@@ -66,6 +89,8 @@ export default function LobbyRoom() {
   const [availableAI, setAvailableAI] = useState([])
   const [hostId, setHostId] = useState(null)
   const [youId, setYouId] = useState(null)
+  const [lobbyLeague, setLobbyLeague] = useState(null)
+  const [leagueToast, setLeagueToast] = useState(null)
   const [activity, setActivity] = useState([])
   const [voteState, setVoteState] = useState({ round: 0, voted: [], needed: [] })
   const [voted, setVoted] = useState(false)
@@ -105,6 +130,7 @@ export default function LobbyRoom() {
         const p = msg.payload || {}
         setHostId(p.host_id ?? null)
         setYouId(p.you_id ?? null)
+        if (p.league) setLobbyLeague(p.league)
         if (p.settings) setSettings(p.settings)
         if (p.ai_models) setAIModels(p.ai_models)
         if (Array.isArray(p.available_ai_models)) setAvailableAI(p.available_ai_models)
@@ -177,6 +203,13 @@ export default function LobbyRoom() {
         setLeaderboardData(msg.payload)
         setScreen('leaderboard')
         break
+      case 'LEAGUE_UPDATE': {
+        const p = msg.payload || {}
+        if (youId && p.player_id && p.player_id !== youId) break
+        setLeagueToast(p)
+        setTimeout(() => setLeagueToast(null), 6000)
+        break
+      }
       case 'ERROR':
         setError(msg.payload?.message ?? 'Bir hata oluştu')
         setTimeout(() => setError(null), 4000)
@@ -280,6 +313,17 @@ export default function LobbyRoom() {
       </div>
 
       {error && <div className="lr-error">{error}</div>}
+      {leagueToast && (
+        <div className={`lr-league-toast ${leagueToast.promoted ? 'promoted' : leagueToast.demoted ? 'demoted' : ''}`}>
+          <LeagueBadge league={leagueToast.league} />
+          <span className="lr-league-toast-text">
+            {leagueToast.promoted && 'Yükseldin! '}
+            {leagueToast.demoted && 'Düştün. '}
+            LP: <strong>{leagueToast.lp}</strong>
+            <span className="delta"> ({leagueToast.lp_delta >= 0 ? '+' : ''}{leagueToast.lp_delta})</span>
+          </span>
+        </div>
+      )}
 
       {screen === 'waiting' && (
         <WaitingScreen
@@ -293,6 +337,7 @@ export default function LobbyRoom() {
           aiActiveCount={aiActiveCount}
           onToggleAI={handleToggleAI}
           activity={activity}
+          lobbyLeague={lobbyLeague}
         />
       )}
       {screen === 'round' && roundData && (
@@ -309,6 +354,7 @@ export default function LobbyRoom() {
       {screen === 'result' && resultData && (
         <ResultScreen
           data={resultData}
+          property={roundData?.property ?? null}
           nickname={nickname}
           totalRounds={settings.round_count}
           voteState={voteState}
@@ -327,7 +373,7 @@ export default function LobbyRoom() {
 
 function WaitingScreen({
   players, isHost, onStart, settings, onChangeSetting,
-  availableAI, aiModels, aiActiveCount, onToggleAI, activity,
+  availableAI, aiModels, aiActiveCount, onToggleAI, activity, lobbyLeague,
 }) {
   const connectedPlayers = players.filter(p => p.connected !== false)
   return (
@@ -415,9 +461,12 @@ function WaitingScreen({
         <div className="lr-panel">
           <div className="lr-panel-header">
             <h3>AI Rakipleri</h3>
-            <span style={{ fontSize: 12, color: 'var(--hr-muted)' }}>
-              {aiActiveCount} / {availableAI.length} aktif
-            </span>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {lobbyLeague && <LeagueBadge league={lobbyLeague} />}
+              <span style={{ fontSize: 12, color: 'var(--hr-muted)' }}>
+                {aiActiveCount} / {availableAI.length} aktif
+              </span>
+            </div>
           </div>
           <div className="lr-panel-body">
             {availableAI.length === 0 && (
@@ -481,20 +530,25 @@ function SettingRow({ label, options, active, disabled, onChange, renderOption }
 function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nickname }) {
   const { property } = data
   const fields = [
-    { l: 'Alan', v: `${property.metrekare_brut} m²`, icon: 'ruler' },
+    { l: 'Brüt Alan', v: `${property.metrekare_brut} m²`, icon: 'ruler' },
+    property.metrekare_net > 0
+      ? { l: 'Net Alan', v: `${property.metrekare_net} m²`, icon: 'ruler' }
+      : null,
     { l: 'Oda', v: property.oda_salon, icon: 'bed' },
+    property.banyo_sayisi
+      ? { l: 'Banyo', v: property.banyo_sayisi, icon: 'bed' }
+      : null,
     { l: 'Yaş', v: property.bina_yasi, icon: 'building' },
     { l: 'Kat', v: `${property.kat} / ${property.kat_sayisi}`, icon: 'floor' },
     { l: 'Isıtma', v: property.isitma, icon: 'heater' },
-    { l: 'Balkon', v: property.balkon, icon: 'balcony' },
-    { l: 'Asansör', v: property.asansor, icon: 'elevator' },
-    { l: 'Otopark', v: property.otopark, icon: 'parking' },
-  ]
+  ].filter(Boolean)
   return (
     <div className="lr-round-grid">
       <div>
         <div className="lr-property">
-          <img className="lr-property-img" src="/assets/landing-page-house-img.png" alt="Listing" />
+          <div className="lr-property-map">
+            <DistrictMap ilce={property.ilce} mahalle={property.mahalle} />
+          </div>
           <div className="lr-property-body">
             <div className="lr-location">
               <Icon name="pin" size={16} />
@@ -509,10 +563,6 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
                 </div>
               ))}
             </div>
-            <button className="hr-btn hr-btn-outline" style={{ width: '100%' }}>
-              <Icon name="map" size={16} />
-              Haritada Göster
-            </button>
           </div>
         </div>
       </div>
@@ -572,7 +622,7 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
   )
 }
 
-function ResultScreen({ data, nickname, totalRounds, voteState, voted, onVoteNext, players, youId }) {
+function ResultScreen({ data, property, nickname, totalRounds, voteState, voted, onVoteNext, players, youId }) {
   const { round, actual_price, player_results = [], ai_predictions = {} } = data
   const winner = player_results[0]
   const me = player_results.find(p => p.nickname === nickname) ?? player_results[0]
@@ -609,7 +659,11 @@ function ResultScreen({ data, nickname, totalRounds, voteState, voted, onVoteNex
       <div className="lr-result-grid">
         <div>
           <div className="lr-property">
-            <img className="lr-property-img" src="/assets/landing-page-house-img.png" alt="Listing" />
+            {property && (
+              <div className="lr-property-map">
+                <DistrictMap ilce={property.ilce} mahalle={property.mahalle} />
+              </div>
+            )}
             <div className="lr-property-body">
               <div className="lr-location">
                 <Icon name="pin" size={16} />

@@ -1,12 +1,15 @@
 package handlers
 
 import (
+	"context"
 	"crypto/rand"
+	"log"
 	"net/http"
 	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lokicik/house-royale/backend/server/internal/game"
+	"github.com/lokicik/house-royale/backend/server/internal/league"
 	"github.com/lokicik/house-royale/backend/server/internal/middleware"
 )
 
@@ -19,9 +22,9 @@ func NewLobbyStore() *LobbyStore {
 	return &LobbyStore{lobbies: make(map[string]*game.Lobby)}
 }
 
-func (s *LobbyStore) Create(hostID string) *game.Lobby {
+func (s *LobbyStore) Create(hostID string, hostLeague league.League) *game.Lobby {
 	id := newID()
-	l := game.NewLobby(id, hostID)
+	l := game.NewLobby(id, hostID, hostLeague)
 	s.mu.Lock()
 	s.lobbies[id] = l
 	s.mu.Unlock()
@@ -67,15 +70,21 @@ func newID() string {
 }
 
 type LobbyHandler struct {
-	Store *LobbyStore
+	Store   *LobbyStore
+	Leagues league.Storer
 }
 
-func NewLobbyHandler(store *LobbyStore) *LobbyHandler {
-	return &LobbyHandler{Store: store}
+func NewLobbyHandler(store *LobbyStore, leagues league.Storer) *LobbyHandler {
+	return &LobbyHandler{Store: store, Leagues: leagues}
 }
 
 func (h *LobbyHandler) Create(c *gin.Context) {
-	playerID, _ := c.Get(middleware.PlayerIDKey)
+	playerIDVal, _ := c.Get(middleware.PlayerIDKey)
+	playerID, _ := playerIDVal.(string)
+	if playerID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
 
 	var body struct {
 		Nickname string `json:"nickname"`
@@ -85,7 +94,17 @@ func (h *LobbyHandler) Create(c *gin.Context) {
 		return
 	}
 
-	lobby := h.Store.Create(playerID.(string))
+	hostLeague := league.Bronze
+	if h.Leagues != nil {
+		u, err := h.Leagues.Get(context.Background(), playerID)
+		if err != nil {
+			log.Printf("lobby.Create league lookup failed id=%s err=%v (defaulting to bronze)", playerID, err)
+		} else {
+			hostLeague = u.League
+		}
+	}
+
+	lobby := h.Store.Create(playerID, hostLeague)
 	c.JSON(http.StatusCreated, lobby)
 }
 
@@ -128,6 +147,7 @@ func (h *LobbyHandler) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"id":           lobby.ID,
 		"host_id":      lobby.HostID,
+		"league":       lobby.League,
 		"status":       lobby.Status,
 		"player_count": lobby.PlayerCount(),
 		"players":      lobby.Snapshot(),

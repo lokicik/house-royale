@@ -228,3 +228,27 @@
   .lp-info-row { grid-template-columns: 1fr; }
   .lp-lobby-row { flex-wrap: wrap; }
 }
+
+/* League card */
+.lp-league-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: var(--hr-card-bg, #fff);
+  min-width: 240px;
+}
+.lp-league-bronze { border-color: rgba(180, 83, 9, 0.35); background: linear-gradient(135deg, rgba(180,83,9,0.06), transparent); }
+.lp-league-gold { border-color: rgba(202, 138, 4, 0.4); background: linear-gradient(135deg, rgba(202,138,4,0.08), transparent); }
+.lp-league-diamond { border-color: rgba(56, 189, 248, 0.45); background: linear-gradient(135deg, rgba(56,189,248,0.1), transparent); }
+.lp-league-emoji { font-size: 28px; }
+.lp-league-info { display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
+.lp-league-name { font-weight: 700; font-size: 14px; }
+.lp-league-lp { font-size: 12px; color: var(--hr-muted); }
+.lp-league-bar { height: 6px; background: rgba(0,0,0,0.08); border-radius: 999px; overflow: hidden; }
+.lp-league-bar-fill { height: 100%; transition: width 250ms ease-out; }
+.lp-league-bronze .lp-league-bar-fill { background: #b45309; }
+.lp-league-gold .lp-league-bar-fill { background: #ca8a04; }
+.lp-league-diamond .lp-league-bar-fill { background: #0891b2; }

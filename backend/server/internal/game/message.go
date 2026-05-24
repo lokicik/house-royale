@@ -1,6 +1,10 @@
 package game
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/lokicik/house-royale/backend/server/internal/league"
+)
 
 type MessageType string
 
@@ -21,6 +25,7 @@ const (
 	MsgSettingsUpdated MessageType = "SETTINGS_UPDATED"
 	MsgLobbyActivity   MessageType = "LOBBY_ACTIVITY"
 	MsgRoundVoteState  MessageType = "ROUND_VOTE_STATE"
+	MsgLeagueUpdate    MessageType = "LEAGUE_UPDATE"
 )
 
 type Message struct {
@@ -58,14 +63,26 @@ type SettingsUpdatedPayload struct {
 // LobbyStatePayload is sent to a single client on connect/join to hydrate the
 // full waiting-room state.
 type LobbyStatePayload struct {
-	LobbyID            string          `json:"lobby_id"`
-	HostID             string          `json:"host_id"`
-	Status             Status          `json:"status"`
-	Players            []Player        `json:"players"`
-	Settings           LobbySettings   `json:"settings"`
-	AIModels           map[string]bool `json:"ai_models"`
-	AvailableAIModels  []AIModelMeta   `json:"available_ai_models"`
-	YouID              string          `json:"you_id"`
+	LobbyID           string          `json:"lobby_id"`
+	HostID            string          `json:"host_id"`
+	League            league.League   `json:"league"`
+	Status            Status          `json:"status"`
+	Players           []Player        `json:"players"`
+	Settings          LobbySettings   `json:"settings"`
+	AIModels          map[string]bool `json:"ai_models"`
+	AvailableAIModels []AIModelMeta   `json:"available_ai_models"`
+	YouID             string          `json:"you_id"`
+}
+
+// LeagueUpdatePayload is sent to a player after a game when their LP changes
+// or they get promoted/demoted.
+type LeagueUpdatePayload struct {
+	PlayerID  string        `json:"player_id"`
+	League    league.League `json:"league"`
+	LP        int           `json:"lp"`
+	LPDelta   int           `json:"lp_delta"`
+	Promoted  bool          `json:"promoted"`
+	Demoted   bool          `json:"demoted"`
 }
 
 // LobbyActivityPayload is broadcast to all clients so the activity feed stays

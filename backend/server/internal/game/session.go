@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/lokicik/house-royale/backend/server/internal/history"
+	"github.com/lokicik/house-royale/backend/server/internal/league"
 	"github.com/lokicik/house-royale/backend/server/internal/mlclient"
 	"github.com/lokicik/house-royale/backend/server/internal/property"
 )
@@ -59,6 +60,7 @@ type Session struct {
 	aiScores       map[string]int // cumulative points per AI model name
 	RoundSummaries [][]RoundSummaryEntry
 	HistoryStore   history.Storer // optional; records per-user game results on finish
+	LeagueStore    league.Storer  // optional; persists per-user LP and promotions
 
 	// voteSig wakes the vote-wait loop when a vote arrives or a player
 	// disconnects. Buffered/non-blocking sends.
@@ -132,8 +134,9 @@ func (s *Session) Run() {
 		var aiResp *mlclient.PredictResponse
 		if len(enabledModels) > 0 {
 			resp, err := s.predictor.Predict(context.Background(), mlclient.PredictRequest{
-				ModelIDs: enabledModels,
-				Features: prop.ToFeatures(),
+				ModelIDs:  enabledModels,
+				Features:  prop.ToFeatures(),
+				ImageURLs: []string{},
 			})
 			if err != nil {
 				log.Printf("session %s round %d predictor error: %v", s.lobbyID, round, err)
@@ -190,6 +193,8 @@ func (s *Session) Run() {
 			PlayerResults: results,
 			AIPredictions: aiResults,
 		})
+
+		s.applyLPDeltas(results, aiResults)
 
 		if round < roundCount {
 			s.waitForNextRoundVotes(round)
@@ -267,6 +272,54 @@ func (s *Session) broadcastVoteState(round int, deadline time.Time) {
 		Needed:     needed,
 		DeadlineTS: deadline.UnixMilli(),
 	})
+}
+
+// applyLPDeltas computes per-player LP deltas for the round, persists the
+// updated UserLeague, and broadcasts a LEAGUE_UPDATE message for each affected
+// player (so the frontend can render LP bar + promotion/demotion toasts).
+func (s *Session) applyLPDeltas(results []PlayerResult, aiResults map[string]AIResult) {
+	if s.LeagueStore == nil {
+		return
+	}
+	// Build modelID -> tier map for the AI models in this round.
+	aiTiers := make(map[string]int, len(aiResults))
+	for modelID := range aiResults {
+		for _, meta := range AvailableAIModels {
+			if meta.ID == modelID {
+				aiTiers[modelID] = meta.League.Tier()
+				break
+			}
+		}
+	}
+	deltas := ComputeLPDeltas(results, aiResults, aiTiers)
+
+	ctx := context.Background()
+	for _, r := range results {
+		delta := deltas[r.PlayerID]
+		// Skip both empty deltas and players who didn't submit at all
+		// (deltas already returns 0 for non-submitters).
+		if delta == 0 && r.Guess <= 0 {
+			continue
+		}
+		current, err := s.LeagueStore.Get(ctx, r.PlayerID)
+		if err != nil {
+			log.Printf("session %s league.Get failed player=%s err=%v", s.lobbyID, r.PlayerID, err)
+			continue
+		}
+		promoted, demoted := current.ApplyDelta(delta)
+		if err := s.LeagueStore.Upsert(ctx, current); err != nil {
+			log.Printf("session %s league.Upsert failed player=%s err=%v", s.lobbyID, r.PlayerID, err)
+			continue
+		}
+		s.broadcast(MsgLeagueUpdate, LeagueUpdatePayload{
+			PlayerID: r.PlayerID,
+			League:   current.League,
+			LP:       current.LP,
+			LPDelta:  delta,
+			Promoted: promoted,
+			Demoted:  demoted,
+		})
+	}
 }
 
 func (s *Session) broadcastLeaderboard() {
