@@ -19,16 +19,6 @@ env/
 .coverage
 htmlcov/
 
-# Model artifact'ları (deploy sırasında yüklenir)
-models/
-*.pt
-*.pth
-*.h5
-*.keras
-*.ckpt
-*.onnx
-*.pkl
-
 # FastAPI / Uvicorn
 *.log
 logs/
