@@ -3,40 +3,44 @@ import { Icon, ModelBadge } from '../components/icons'
 import './ModelComparison.css'
 
 const MODELS = [
-  { name: 'Custom ANN', type: 'Neural Network', mae: 92430, mape: 2.34, r2: 0.91, resp: 124, params: '2.3M', trainTime: 142, accuracy: 0.91, best: true },
-  { name: 'Hybrid Model', type: 'Ensemble', mae: 98120, mape: 2.48, r2: 0.89, resp: 168, params: '4.1M', trainTime: 218, accuracy: 0.89 },
-  { name: 'MLP Model', type: 'Neural Network', mae: 110450, mape: 2.89, r2: 0.86, resp: 102, params: '1.1M', trainTime: 89, accuracy: 0.86 },
-  { name: 'Transformer', type: 'LLM', mae: 138290, mape: 3.62, r2: 0.80, resp: 412, params: '12.4M', trainTime: 891, accuracy: 0.80 },
-  { name: 'Tree Ensemble', type: 'XGBoost', mae: 145780, mape: 3.91, r2: 0.77, resp: 88, params: '0.3M', trainTime: 34, accuracy: 0.77 },
+  { name: 'ResNet Pro (model_0)', type: 'Deep MLP', mae: 341250, mape: 3.20, r2: 0.96, resp: 124, params: '8.4M', trainTime: 245, accuracy: 0.96, best: true },
+  { name: 'ResNet Plus (model_1)', type: 'Deep MLP', mae: 378400, mape: 3.65, r2: 0.94, resp: 108, params: '6.2M', trainTime: 180, accuracy: 0.94 },
+  { name: 'ResNet Lite (model_2)', type: 'Deep MLP', mae: 415800, mape: 4.10, r2: 0.93, resp: 85, params: '3.1M', trainTime: 95, accuracy: 0.93 },
+  { name: 'MLP Pro (model_3)', type: 'MLP', mae: 812500, mape: 7.80, r2: 0.88, resp: 72, params: '1.8M', trainTime: 65, accuracy: 0.88 },
+  { name: 'MLP Plus (model_4)', type: 'MLP', mae: 865200, mape: 8.40, r2: 0.85, resp: 64, params: '1.2M', trainTime: 48, accuracy: 0.85 },
+  { name: 'MLP Lite (model_5)', type: 'MLP', mae: 928900, mape: 9.20, r2: 0.82, resp: 52, params: '0.8M', trainTime: 35, accuracy: 0.82 },
+  { name: 'Mini MLP (model_6)', type: 'MLP', mae: 2150000, mape: 22.90, r2: 0.45, resp: 45, params: '0.4M', trainTime: 20, accuracy: 0.45 },
+  { name: 'Tiny MLP (model_7)', type: 'MLP', mae: 2680000, mape: 27.60, r2: 0.22, resp: 38, params: '0.2M', trainTime: 15, accuracy: 0.22 },
+  { name: 'Stub MLP (model_8)', type: 'MLP', mae: 3190000, mape: 31.90, r2: -0.12, resp: 32, params: '0.1M', trainTime: 10, accuracy: -0.12 }
 ]
 
 const STATS = [
-  { l: 'MAE', v: '92.430', sub: 'En iyi model' },
-  { l: 'MAPE', v: '%2.34', sub: 'En iyi model' },
-  { l: 'R²', v: '0.912', sub: 'En yüksek' },
-  { l: 'Yanıt Süresi', v: '88ms', sub: 'En hızlı' },
-  { l: 'Parametreler', v: '12.4M', sub: 'En büyük model' },
-  { l: 'Eğitim Süresi', v: '34s', sub: 'En hızlı eğitim' },
+  { l: 'MAE', v: '341.250', sub: 'En iyi model (model_0)' },
+  { l: 'MAPE', v: '%3.20', sub: 'En iyi model (model_0)' },
+  { l: 'R²', v: '0.960', sub: 'En yüksek (model_0)' },
+  { l: 'Yanıt Süresi', v: '32ms', sub: 'En hızlı (model_8)' },
+  { l: 'Parametreler', v: '8.4M', sub: 'En büyük model (model_0)' },
+  { l: 'Eğitim Süresi', v: '10s', sub: 'En hızlı eğitim (model_8)' },
 ]
 
 const INSIGHTS = [
-  { tag: 'En İyi', title: 'Custom ANN', desc: 'Tüm metriklerde en üstte. En düşük MAE ve en yüksek R² değeri.' },
-  { tag: 'En Doğru', title: 'Hybrid Model', desc: 'En düşük MAPE değeriyle en doğru fiyat tahmini.' },
-  { tag: 'En Hızlı', title: 'Tree Ensemble', desc: 'Sadece 88ms ortalama çıkarım süresi, en hızlı model.' },
-  { tag: 'En Verimli', title: 'MLP Model', desc: 'En iyi hız/doğruluk dengesiyle kaynak kullanımı en verimli.' },
+  { tag: 'En İyi', title: 'ResNet Pro (model_0)', desc: 'Tüm metriklerde en üstte. En düşük MAE (%3.20 MAPE) ve en yüksek R² değeri.' },
+  { tag: 'En Dengeli', title: 'ResNet Lite (model_2)', desc: 'Hem yüksek doğruluk (%4.10 MAPE) hem de son derece hızlı yanıt süresi (85ms).' },
+  { tag: 'En Hızlı', title: 'Stub MLP (model_8)', desc: 'Sadece 32ms ortalama çıkarım süresiyle en hızlı çalışan yapay zeka modelimiz.' },
+  { tag: 'En Hafif', title: 'Mini MLP (model_6)', desc: 'Düşük parametre boyutu ve hızlı eğitim süresiyle en az kaynak tüketen model.' },
 ]
 
 const RADAR_AXES = ['Doğruluk', 'Hız', 'Tutarlılık', 'Sağlamlık', 'Verimlilik']
 const RADAR_DATA = [
-  { name: 'Custom ANN', color: '#2563eb', values: [0.92, 0.7, 0.88, 0.85, 0.6] },
-  { name: 'Hybrid Model', color: '#10b981', values: [0.88, 0.55, 0.82, 0.78, 0.5] },
-  { name: 'Tree Ensemble', color: '#f59e0b', values: [0.74, 0.92, 0.7, 0.65, 0.92] },
+  { name: 'ResNet Pro (model_0)', color: '#2563eb', values: [0.96, 0.65, 0.95, 0.92, 0.55] },
+  { name: 'MLP Pro (model_3)', color: '#10b981', values: [0.85, 0.82, 0.82, 0.78, 0.80] },
+  { name: 'Stub MLP (model_8)', color: '#f59e0b', values: [0.45, 0.96, 0.35, 0.30, 0.95] },
 ]
 const BAR_METRICS = ['MAPE', 'R²', 'Hız', 'Doğruluk']
 const BAR_DATA = [
-  { name: 'Custom ANN', color: '#2563eb', values: [0.93, 0.91, 0.78, 0.91] },
-  { name: 'Hybrid Model', color: '#10b981', values: [0.88, 0.89, 0.62, 0.89] },
-  { name: 'Tree Ensemble', color: '#f59e0b', values: [0.71, 0.77, 0.95, 0.77] },
+  { name: 'ResNet Pro (model_0)', color: '#2563eb', values: [0.94, 0.96, 0.65, 0.96] },
+  { name: 'MLP Pro (model_3)', color: '#10b981', values: [0.84, 0.88, 0.82, 0.88] },
+  { name: 'Stub MLP (model_8)', color: '#f59e0b', values: [0.36, 0.10, 0.96, 0.45] },
 ]
 
 function radarPoints(values, cx, cy, r) {
@@ -70,46 +74,150 @@ export default function ModelComparison() {
       </div>
 
       <div className="mc-grid">
-        <div className="mc-card">
-          <div className="mc-card-head">
-            <h3>Model Performans Karşılaştırma</h3>
-            <span style={{ fontSize: 12, color: 'var(--hr-muted)' }}>{MODELS.length} model</span>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="mc-table">
-              <thead>
-                <tr>
-                  <th>Model</th>
-                  <th>Tip</th>
-                  <th>MAE</th>
-                  <th>MAPE</th>
-                  <th>R²</th>
-                  <th>Yanıt</th>
-                  <th>Params</th>
-                  <th>Eğitim</th>
-                </tr>
-              </thead>
-              <tbody>
-                {MODELS.map(m => (
-                  <tr key={m.name}>
-                    <td>
-                      <div className="mc-model-cell">
-                        <ModelBadge name={m.name} size={28} />
-                        <strong>{m.name}</strong>
-                        {m.best && <span className="mc-best">EN İYİ</span>}
-                      </div>
-                    </td>
-                    <td>{m.type}</td>
-                    <td>{m.mae.toLocaleString('tr-TR')}</td>
-                    <td>%{m.mape.toFixed(2)}</td>
-                    <td>{m.r2.toFixed(2)}</td>
-                    <td>{m.resp}ms</td>
-                    <td>{m.params}</td>
-                    <td>{m.trainTime}s</td>
+        <div>
+          <div className="mc-card">
+            <div className="mc-card-head">
+              <h3>Model Performans Karşılaştırma</h3>
+              <span style={{ fontSize: 12, color: 'var(--hr-muted)' }}>{MODELS.length} model</span>
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="mc-table">
+                <thead>
+                  <tr>
+                    <th>Model</th>
+                    <th>Tip</th>
+                    <th>MAE</th>
+                    <th>MAPE</th>
+                    <th>R²</th>
+                    <th>Yanıt</th>
+                    <th>Params</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {MODELS.map(m => (
+                    <tr key={m.name}>
+                      <td>
+                        <div className="mc-model-cell">
+                          <ModelBadge name={m.name} size={28} />
+                          <strong>{m.name}</strong>
+                          {m.best && <span className="mc-best">EN İYİ</span>}
+                        </div>
+                      </td>
+                      <td>{m.type}</td>
+                      <td>{m.mae.toLocaleString('tr-TR')}</td>
+                      <td>%{m.mape.toFixed(2)}</td>
+                      <td>{m.r2.toFixed(2)}</td>
+                      <td>{m.resp}ms</td>
+                      <td>{m.params}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="mc-card" style={{ marginTop: 16 }}>
+            <div className="mc-card-head">
+              <h3>Model Öznitelik Önem Dereceleri (Feature Importance)</h3>
+            </div>
+            <div className="mc-card-body">
+              <p style={{ margin: '0 0 8px', color: 'var(--hr-muted)', fontSize: 13 }}>
+                Modellerin fiyat tahminlerindeki öznitelik ağırlıklarıdır.
+              </p>
+              <svg className="mc-feature-importance" viewBox="0 0 450 220">
+                {/* Y-axis baseline */}
+                <line x1="140" y1="10" x2="140" y2="200" stroke="var(--hr-border)" strokeWidth="1.5" />
+                
+                {/* Bar 1 */}
+                <text x="130" y="28" fontSize="10" fontWeight="600" textAnchor="end" fill="var(--hr-text)">Net Alan (Metrekare)</text>
+                <rect x="140" y="16" width="118" height="18" fill="#2563eb" rx="3" />
+                <text x="264" y="29" fontSize="10" fontWeight="700" fill="#2563eb">%42.0</text>
+
+                {/* Bar 2 */}
+                <text x="130" y="60" fontSize="10" fontWeight="600" textAnchor="end" fill="var(--hr-text)">Lokasyon (Mahalle)</text>
+                <rect x="140" y="48" width="73" height="18" fill="#06b6d4" rx="3" />
+                <text x="219" y="61" fontSize="10" fontWeight="700" fill="#06b6d4">%26.0</text>
+
+                {/* Bar 3 */}
+                <text x="130" y="92" fontSize="10" fontWeight="600" textAnchor="end" fill="var(--hr-text)">Kat Oranı (Kat / Toplam)</text>
+                <rect x="140" y="80" width="39" height="18" fill="#10b981" rx="3" />
+                <text x="185" y="93" fontSize="10" fontWeight="700" fill="#10b981">%14.0</text>
+
+                {/* Bar 4 */}
+                <text x="130" y="124" fontSize="10" fontWeight="600" textAnchor="end" fill="var(--hr-text)">Oda & Salon Sayısı</text>
+                <rect x="140" y="112" width="25" height="18" fill="#8b5cf6" rx="3" />
+                <text x="171" y="125" fontSize="10" fontWeight="700" fill="#8b5cf6">%9.0</text>
+
+                {/* Bar 5 */}
+                <text x="130" y="156" fontSize="10" fontWeight="600" textAnchor="end" fill="var(--hr-text)">Bina Yaşı</text>
+                <rect x="140" y="144" width="17" height="18" fill="#fbbf24" rx="3" />
+                <text x="163" y="157" fontSize="10" fontWeight="700" fill="#fbbf24">%6.0</text>
+
+                {/* Bar 6 */}
+                <text x="130" y="188" fontSize="10" fontWeight="600" textAnchor="end" fill="var(--hr-text)">Isıtma Türü</text>
+                <rect x="140" y="176" width="8" height="18" fill="#f97316" rx="3" />
+                <text x="154" y="189" fontSize="10" fontWeight="700" fill="#f97316">%3.0</text>
+              </svg>
+            </div>
+          </div>
+
+          <div className="mc-card" style={{ marginTop: 16 }}>
+            <div className="mc-card-head">
+              <h3>Model Eğitim Kararlılığı ve Kayıp Eğrisi (Loss Convergence)</h3>
+            </div>
+            <div className="mc-card-body">
+              <p style={{ margin: '0 0 8px', color: 'var(--hr-muted)', fontSize: 13 }}>
+                Modellerin 100 Epoch eğitim hata payı yakınsama eğrisidir.
+              </p>
+              <svg className="mc-loss-chart" viewBox="0 0 450 220">
+                {/* Grid Lines */}
+                <line x1="45" y1="30" x2="410" y2="30" stroke="var(--hr-border)" strokeWidth="1" strokeDasharray="3,3" />
+                <line x1="45" y1="110" x2="410" y2="110" stroke="var(--hr-border)" strokeWidth="1" strokeDasharray="3,3" />
+                <line x1="45" y1="190" x2="410" y2="190" stroke="var(--hr-border)" strokeWidth="1.5" />
+                
+                {/* Y-axis Labels */}
+                <text x="35" y="34" fontSize="8" textAnchor="end" fill="var(--hr-muted)">1.0 (Kayıp)</text>
+                <text x="35" y="114" fontSize="8" textAnchor="end" fill="var(--hr-muted)">0.5</text>
+                <text x="35" y="194" fontSize="8" textAnchor="end" fill="var(--hr-muted)">0.0</text>
+
+                {/* X-axis Labels */}
+                <text x="45" y="206" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">Epoch 0</text>
+                <text x="118" y="206" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">20</text>
+                <text x="191" y="206" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">40</text>
+                <text x="264" y="206" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">60</text>
+                <text x="337" y="206" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">80</text>
+                <text x="410" y="206" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">100</text>
+
+                {/* model_8 Line (Stub) */}
+                <path
+                  d="M 45 33.2 L 81.5 70 L 118 81.2 L 154.5 84.4 L 191 86 L 227.5 86 L 264 87.6 L 337 86 L 410 87.6"
+                  fill="none"
+                  stroke="#f97316"
+                  strokeWidth="2.5"
+                />
+
+                {/* model_3 Line (MLP Pro) */}
+                <path
+                  d="M 45 38 L 81.5 70 L 118 102 L 154.5 126 L 191 142 L 227.5 154.8 L 264 161.2 L 337 167.6 L 410 170.8"
+                  fill="none"
+                  stroke="#10b981"
+                  strokeWidth="2.5"
+                />
+
+                {/* model_0 Line (ResNet Pro) */}
+                <path
+                  d="M 45 46 L 81.5 110 L 118 150 L 154.5 170.8 L 191 177.2 L 227.5 182 L 264 183.6 L 337 185.2 L 410 186.8"
+                  fill="none"
+                  stroke="#2563eb"
+                  strokeWidth="2.5"
+                />
+              </svg>
+              <div className="mc-legend" style={{ marginTop: 8 }}>
+                <span style={{ color: '#2563eb' }}><span style={{ color: 'var(--hr-text)' }}>ResNet Pro (model_0)</span></span>
+                <span style={{ color: '#10b981' }}><span style={{ color: 'var(--hr-text)' }}>MLP Pro (model_3)</span></span>
+                <span style={{ color: '#f97316' }}><span style={{ color: 'var(--hr-text)' }}>Stub MLP (model_8)</span></span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -119,18 +227,30 @@ export default function ModelComparison() {
               <h3>Metrik Karşılaştırma</h3>
             </div>
             <div className="mc-card-body">
-              <svg className="mc-bar-chart" viewBox="0 0 320 200">
+              <svg className="mc-bar-chart" viewBox="0 0 320 390">
+                {/* Horizontal Grid Lines */}
+                <line x1="25" y1="40" x2="310" y2="40" stroke="var(--hr-border)" strokeWidth="1" strokeDasharray="3,3" />
+                <line x1="25" y1="195" x2="310" y2="195" stroke="var(--hr-border)" strokeWidth="1" strokeDasharray="3,3" />
+                
+                {/* Y-axis Labels */}
+                <text x="18" y="43" fontSize="8" textAnchor="end" fill="var(--hr-muted)">1.0</text>
+                <text x="18" y="198" fontSize="8" textAnchor="end" fill="var(--hr-muted)">0.5</text>
+                <text x="18" y="353" fontSize="8" textAnchor="end" fill="var(--hr-muted)">0.0</text>
+
+                {/* Y-axis Line */}
+                <line x1="25" y1="35" x2="25" y2="350" stroke="var(--hr-border)" strokeWidth="1.5" />
+
                 {BAR_METRICS.map((m, mi) => {
-                  const groupX = 30 + mi * 70
+                  const groupX = 35 + mi * 70
                   return (
                     <g key={m}>
                       {BAR_DATA.map((d, di) => {
-                        const h = d.values[mi] * 140
+                        const h = d.values[mi] * 310
                         return (
                           <rect
                             key={d.name}
                             x={groupX + di * 14}
-                            y={170 - h}
+                            y={350 - h}
                             width={12}
                             height={h}
                             fill={d.color}
@@ -138,11 +258,11 @@ export default function ModelComparison() {
                           />
                         )
                       })}
-                      <text x={groupX + 21} y={188} fontSize="10" textAnchor="middle" fill="var(--hr-muted)">{m}</text>
+                      <text x={groupX + 21} y={368} fontSize="10" textAnchor="middle" fill="var(--hr-muted)">{m}</text>
                     </g>
                   )
                 })}
-                <line x1="20" y1="170" x2="310" y2="170" stroke="var(--hr-border)" strokeWidth="1" />
+                <line x1="20" y1="350" x2="310" y2="350" stroke="var(--hr-border)" strokeWidth="1.5" />
               </svg>
               <div className="mc-legend">
                 {BAR_DATA.map(d => (
@@ -204,6 +324,90 @@ export default function ModelComparison() {
                     <span style={{ color: 'var(--hr-text)' }}>{d.name}</span>
                   </span>
                 ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mc-card" style={{ marginTop: 16 }}>
+            <div className="mc-card-head">
+              <h3>Hız ve Doğruluk Dengesi</h3>
+            </div>
+            <div className="mc-card-body">
+              <svg className="mc-scatter" viewBox="0 0 320 220">
+                {/* Y-axis grid lines (R2) */}
+                <line x1="40" y1="25" x2="300" y2="25" stroke="var(--hr-border)" strokeWidth="1" strokeDasharray="3,3" />
+                <line x1="40" y1="93" x2="300" y2="93" stroke="var(--hr-border)" strokeWidth="1" strokeDasharray="3,3" />
+                <line x1="40" y1="169" x2="300" y2="169" stroke="var(--hr-border)" strokeWidth="1" strokeDasharray="3,3" />
+                
+                {/* Axis lines */}
+                <line x1="40" y1="20" x2="40" y2="185" stroke="var(--hr-border)" strokeWidth="1.5" />
+                <line x1="35" y1="180" x2="305" y2="180" stroke="var(--hr-border)" strokeWidth="1.5" />
+
+                {/* Y-axis labels */}
+                <text x="32" y="28" fontSize="8" textAnchor="end" fill="var(--hr-muted)">1.0 (R²)</text>
+                <text x="32" y="96" fontSize="8" textAnchor="end" fill="var(--hr-muted)">0.5</text>
+                <text x="32" y="172" fontSize="8" textAnchor="end" fill="var(--hr-muted)">-0.1</text>
+
+                {/* X-axis labels */}
+                <text x="68" y="195" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">32ms</text>
+                <text x="116" y="195" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">52ms</text>
+                <text x="163" y="195" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">72ms</text>
+                <text x="286" y="195" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">124ms</text>
+
+                <text x="170" y="210" fontSize="9" textAnchor="middle" fontWeight="600" fill="var(--hr-muted)">Çıkarım Hızı (Response Time)</text>
+
+                {/* Pareto Frontier Line */}
+                <path
+                  d="M 68 169 L 83 124 L 99 93 L 116 44 L 144 40 L 163 36 L 194 29 L 248 28 L 286 25"
+                  fill="none"
+                  stroke="var(--hr-blue)"
+                  strokeWidth="1.5"
+                  strokeDasharray="4,4"
+                  opacity="0.6"
+                />
+
+                {/* All 9 points */}
+                {/* model_8 (Stub) */}
+                <circle cx="68" cy="169" r="5" fill="#f97316" />
+                <text x="68" y="161" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_8</text>
+
+                {/* model_7 (Tiny) */}
+                <circle cx="83" cy="124" r="5" fill="#f97316" />
+                <text x="83" y="116" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_7</text>
+
+                {/* model_6 (Mini) */}
+                <circle cx="99" cy="93" r="5" fill="#f97316" />
+                <text x="99" y="85" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_6</text>
+
+                {/* model_5 (MLP Lite) */}
+                <circle cx="116" cy="44" r="5" fill="#fbbf24" />
+                <text x="116" y="36" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_5</text>
+
+                {/* model_4 (MLP Plus) */}
+                <circle cx="144" cy="40" r="5" fill="#fbbf24" />
+                <text x="144" y="32" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_4</text>
+
+                {/* model_3 (MLP Pro) */}
+                <circle cx="163" cy="36" r="5" fill="#fbbf24" />
+                <text x="163" y="28" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_3</text>
+
+                {/* model_2 (ResNet Lite) */}
+                <circle cx="194" cy="29" r="5" fill="#06b6d4" />
+                <text x="194" y="21" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_2</text>
+
+                {/* model_1 (ResNet Plus) */}
+                <circle cx="248" cy="28" r="5" fill="#06b6d4" />
+                <text x="248" y="20" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_1</text>
+
+                {/* model_0 (ResNet Pro) */}
+                <circle cx="286" cy="25" r="5" fill="#06b6d4" />
+                <text x="286" y="17" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_0</text>
+              </svg>
+              
+              <div className="mc-legend" style={{ marginTop: 12 }}>
+                <span style={{ color: '#06b6d4' }}><span style={{ color: 'var(--hr-text)' }}>Elmas Ligi</span></span>
+                <span style={{ color: '#fbbf24' }}><span style={{ color: 'var(--hr-text)' }}>Altın Ligi</span></span>
+                <span style={{ color: '#f97316' }}><span style={{ color: 'var(--hr-text)' }}>Bronz Ligi</span></span>
               </div>
             </div>
           </div>

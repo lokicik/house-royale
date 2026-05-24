@@ -32,7 +32,7 @@
   color: var(--hr-text);
   text-align: left;
   min-height: 100vh;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   letter-spacing: normal;
   line-height: 1.5;
   display: flex;

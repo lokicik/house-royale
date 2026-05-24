@@ -302,14 +302,22 @@ export default function LobbyRoom() {
         }</strong></div>
         <div className="lr-subnav-item">Oyuncular <strong>{players.filter(p => p.connected !== false).length} / 8</strong></div>
         <div className="lr-subnav-spacer" />
-        <span className={`lr-conn ${connected ? 'ok' : 'bad'}`}>
-          {connected ? 'Bağlı' : connectionError ?? 'Bağlanılıyor…'}
-        </span>
-        {/* "Oyundan Çık" just disconnects the WS — the server keeps your slot
-            (and score) so navigating back to /lobby/<id> reconnects you. */}
-        <button className="hr-btn hr-btn-danger" onClick={() => navigate('/lobby')}>
-          Oyundan Çık
-        </button>
+        {screen === 'leaderboard' ? (
+          <button className="hr-btn hr-btn-primary" onClick={() => navigate('/lobby')}>
+            Lobiye Dön
+          </button>
+        ) : (
+          <>
+            <span className={`lr-conn ${connected ? 'ok' : 'bad'}`}>
+              {connected ? 'Bağlı' : connectionError ?? 'Bağlanılıyor…'}
+            </span>
+            {/* "Oyundan Çık" just disconnects the WS — the server keeps your slot
+                (and score) so navigating back to /lobby/<id> reconnects you. */}
+            <button className="hr-btn hr-btn-danger" onClick={() => navigate('/lobby')}>
+              Oyundan Çık
+            </button>
+          </>
+        )}
       </div>
 
       {error && <div className="lr-error">{error}</div>}
@@ -529,6 +537,16 @@ function SettingRow({ label, options, active, disabled, onChange, renderOption }
 
 function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nickname }) {
   const { property } = data
+
+  const handleAddGuess = (amount) => {
+    const current = parseFloat(guess) || 0
+    setGuess(String(current + amount))
+  }
+
+  const handleClearGuess = () => {
+    setGuess('')
+  }
+
   const fields = [
     { l: 'Brüt Alan', v: `${property.metrekare_brut} m²`, icon: 'ruler' },
     property.metrekare_net > 0
@@ -573,22 +591,33 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
           <p className="sub">Bu evin fiyatını tahmin et</p>
           {!submitted ? (
             <form onSubmit={onSubmit}>
-              <input
-                type="number"
-                value={guess}
-                onChange={e => setGuess(e.target.value)}
-                placeholder="₺ Tutar gir"
-                min="1"
-                className="lr-guess-input"
-              />
-              <div className="lr-quick-row">
-                {[1_000_000, 2_000_000, 5_000_000, 10_000_000].map(v => (
-                  <button type="button" key={v} className="lr-quick" onClick={() => setGuess(String(v))}>
-                    {v >= 10_000_000 ? '10M+' : `${v / 1_000_000}M`}
-                  </button>
-                ))}
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="number"
+                  value={guess}
+                  onChange={e => setGuess(e.target.value)}
+                  placeholder="₺ Tutar gir"
+                  min="1"
+                  className="lr-guess-input"
+                />
+                {parseFloat(guess) > 0 && (
+                  <div className="lr-guess-live-badge">
+                    ₺{fmt(parseFloat(guess))}
+                  </div>
+                )}
               </div>
-              <button type="submit" className="hr-btn hr-btn-primary hr-btn-lg" style={{ width: '100%' }}>
+              <div className="lr-quick-grid">
+                <button type="button" className="lr-quick" onClick={() => handleAddGuess(100_000)}>+100K</button>
+                <button type="button" className="lr-quick" onClick={() => handleAddGuess(250_000)}>+250K</button>
+                <button type="button" className="lr-quick" onClick={() => handleAddGuess(500_000)}>+500K</button>
+                <button type="button" className="lr-quick lr-quick-clear" onClick={handleClearGuess}>Temizle</button>
+                
+                <button type="button" className="lr-quick" onClick={() => handleAddGuess(1_000_000)}>+1M</button>
+                <button type="button" className="lr-quick" onClick={() => handleAddGuess(2_000_000)}>+2M</button>
+                <button type="button" className="lr-quick" onClick={() => handleAddGuess(5_000_000)}>+5M</button>
+                <button type="button" className="lr-quick" onClick={() => handleAddGuess(10_000_000)}>+10M</button>
+              </div>
+              <button type="submit" className="hr-btn hr-btn-primary hr-btn-lg" style={{ width: '100%', marginTop: 12 }}>
                 <Icon name="send" size={16} />
                 Tahmini Gönder
               </button>
@@ -624,24 +653,47 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
 
 function ResultScreen({ data, property, nickname, totalRounds, voteState, voted, onVoteNext, players, youId }) {
   const { round, actual_price, player_results = [], ai_predictions = {} } = data
-  const winner = player_results[0]
-  const me = player_results.find(p => p.nickname === nickname) ?? player_results[0]
-  const isWinner = winner?.nickname === nickname
 
   const allPreds = useMemo(() => [
-    ...player_results.map(p => ({ name: p.nickname, type: 'Oyuncu', price: p.guess, dev: p.deviation_pct })),
+    ...player_results.map(p => ({
+      name: p.nickname,
+      type: 'Oyuncu',
+      price: p.guess,
+      dev: p.deviation_pct,
+      points: p.points_earned,
+      hasSubmitted: p.guess > 0
+    })),
     ...Object.entries(ai_predictions).map(([name, pred]) => ({
       name: name.toUpperCase(),
       type: 'AI',
       price: pred.price_try,
       dev: pred.deviation_pct,
+      points: pred.points_earned,
+      hasSubmitted: pred.price_try > 0
     })),
-  ].sort((a, b) => Math.abs(a.dev ?? 0) - Math.abs(b.dev ?? 0)), [player_results, ai_predictions])
+  ].sort((a, b) => {
+    if (a.hasSubmitted !== b.hasSubmitted) {
+      return a.hasSubmitted ? -1 : 1
+    }
+    return Math.abs(a.dev ?? 0) - Math.abs(b.dev ?? 0)
+  }), [player_results, ai_predictions])
 
-  const avgDev = allPreds.length
-    ? (allPreds.reduce((s, p) => s + Math.abs(p.dev ?? 0), 0) / allPreds.length).toFixed(2)
+  const hasAnyWinner = allPreds[0]?.hasSubmitted
+  const winnerName = allPreds[0]?.name ?? '—'
+  const winnerType = allPreds[0]?.type ?? 'Oyuncu'
+  const isWinner = hasAnyWinner && winnerType === 'Oyuncu' && winnerName === nickname
+
+  const meResult = player_results.find(p => p.nickname === nickname)
+
+  const opponent = allPreds.length > 1
+    ? (allPreds[0].name === nickname && allPreds[0].type === 'Oyuncu' ? allPreds[1] : allPreds[0])
+    : null
+  const hasOpponent = opponent && opponent.hasSubmitted
+
+  const avgDev = allPreds.filter(p => p.hasSubmitted).length
+    ? (allPreds.filter(p => p.hasSubmitted).reduce((s, p) => s + Math.abs(p.dev ?? 0), 0) / allPreds.filter(p => p.hasSubmitted).length).toFixed(2)
     : '—'
-  const bestDev = allPreds[0]?.dev?.toFixed?.(2) ?? '—'
+  const bestDev = (hasAnyWinner && allPreds[0]?.dev?.toFixed?.(2)) ?? '—'
   const totalPts = player_results.reduce((s, p) => s + (p.points_earned ?? 0), 0)
 
   const isFinalRound = totalRounds && round >= totalRounds
@@ -678,22 +730,52 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
 
         <div>
           <div className="lr-winbanner">
-            <h2>{isWinner ? '🎉 Kazandın!' : `🏆 ${winner?.nickname ?? '—'} kazandı`}</h2>
+            <h2>
+              {!hasAnyWinner
+                ? 'Tutan Tahmin Yok'
+                : isWinner
+                  ? '🎉 Kazandın!'
+                  : winnerType === 'AI'
+                    ? `🤖 ${winnerName} Kazandı`
+                    : `🏆 ${winnerName} Kazandı`
+              }
+            </h2>
             <div className="sub">Bu turda en yakın tahmini yaptı</div>
           </div>
-          <div className="lr-vs">
-            <div className="lr-vs-card you">
-              <div className="n">{me?.nickname ?? 'Sen'}</div>
-              <div className="g">₺{fmt(me?.guess)}</div>
-              <div className="d">%{me?.deviation_pct ?? '—'} sapma · +{me?.points_earned ?? 0}p</div>
+
+          {hasOpponent ? (
+            <div className="lr-vs">
+              <div className={`lr-vs-card you ${isWinner ? 'winner-card' : ''}`}>
+                <div className="n">{nickname}</div>
+                <div className="g">{meResult && meResult.guess > 0 ? `₺${fmt(meResult.guess)}` : '—'}</div>
+                <div className="d">
+                  {meResult && meResult.guess > 0 ? `%${meResult.deviation_pct} sapma` : 'Tahmin yok'} 
+                  {meResult && ` · +${meResult.points_earned}p`}
+                </div>
+              </div>
+              <div className="sep">VS</div>
+              <div className={`lr-vs-card ${!isWinner ? 'winner-card' : ''}`}>
+                <div className="n">
+                  {opponent.name}
+                  <span className="tag">{opponent.type}</span>
+                </div>
+                <div className="g">₺{fmt(opponent.price)}</div>
+                <div className="d">%{opponent.dev?.toFixed(2) ?? opponent.dev} sapma · +{opponent.points ?? 0}p</div>
+              </div>
             </div>
-            <div className="sep">VS</div>
-            <div className="lr-vs-card">
-              <div className="n">{winner?.nickname ?? '—'}</div>
-              <div className="g">₺{fmt(winner?.guess)}</div>
-              <div className="d">%{winner?.deviation_pct ?? '—'} sapma · +{winner?.points_earned ?? 0}p</div>
+          ) : (
+            <div className="lr-vs-single">
+              <div className={`lr-vs-card you ${isWinner ? 'winner-card' : ''}`} style={{ margin: '16px auto 0', maxWidth: '320px' }}>
+                <div className="n">{nickname}</div>
+                <div className="g">{meResult && meResult.guess > 0 ? `₺${fmt(meResult.guess)}` : '—'}</div>
+                <div className="d">
+                  {meResult && meResult.guess > 0 ? `%${meResult.deviation_pct} sapma` : 'Tahmin yok'} 
+                  {meResult && ` · +${meResult.points_earned}p`}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
           <div className="lr-summary">
             <div><div className="l">Ort. Sapma</div><div className="v">%{avgDev}</div></div>
             <div><div className="l">En İyi</div><div className="v">%{bestDev}</div></div>
@@ -706,7 +788,7 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
             <div className="lr-panel-header"><h3>Tüm Tahminler</h3></div>
             <div className="lr-panel-body">
               {allPreds.map((p, i) => (
-                <div className="lr-pred-row" key={`${p.type}-${p.name}-${i}`}>
+                <div className={`lr-pred-row${p.name === nickname && p.type === 'Oyuncu' ? ' me-row' : ''}`} key={`${p.type}-${p.name}-${i}`}>
                   {p.type === 'AI'
                     ? <ModelBadge name={p.name} size={26} />
                     : <span className="lr-pavatar" style={{ width: 26, height: 26, fontSize: 10 }}>{initials(p.name)}</span>}
@@ -714,9 +796,9 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
                     {p.name}
                     <span className="tag">{p.type}</span>
                   </span>
-                  <span className="pr">₺{fmt(p.price)}</span>
-                  <span className={`dv ${Math.abs(p.dev ?? 0) < 5 ? 'good' : 'bad'}`}>
-                    %{p.dev?.toFixed?.(2) ?? p.dev}
+                  <span className="pr">{p.hasSubmitted ? `₺${fmt(p.price)}` : '—'}</span>
+                  <span className={`dv ${!p.hasSubmitted ? '' : Math.abs(p.dev ?? 0) < 5 ? 'good' : 'bad'}`}>
+                    {p.hasSubmitted ? `%${p.dev?.toFixed(2) ?? p.dev}` : '—'}
                   </span>
                 </div>
               ))}
@@ -781,9 +863,22 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
 const ROUND_MEDALS = ['🥇', '🥈', '🥉']
 
 function FinalLeaderboard({ data, roundHistory, onExit }) {
+  const [currentRoundIdx, setCurrentRoundIdx] = useState(0)
   const players = data?.players ?? []
   const top3 = players.slice(0, 3)
   const rest = players.slice(3)
+
+  const rd = roundHistory[currentRoundIdx]
+  const sorted = rd ? [...(rd.player_results ?? [])].sort((a, b) => {
+    const aSub = a.guess > 0
+    const bSub = b.guess > 0
+    if (aSub !== bSub) {
+      return aSub ? -1 : 1
+    }
+    return a.deviation_pct - b.deviation_pct
+  }) : []
+  const aiEntries = rd ? Object.entries(rd.ai_predictions ?? {}) : []
+
   return (
     <div className="lr-final">
       <h2>🏆 Oyun Bitti — Final Sıralaması</h2>
@@ -792,7 +887,7 @@ function FinalLeaderboard({ data, roundHistory, onExit }) {
           {[1, 0, 2].map(i => {
             const p = top3[i]
             if (!p) return <div key={i} />
-            const cls = i === 0 ? 'first' : i === 1 ? 'second' : 'third'
+            const cls = i === 0 ? 'first animate-podium' : i === 1 ? 'second animate-podium' : 'third animate-podium'
             return (
               <div className={`lr-podium-step ${cls}`} key={p.player_id}>
                 <div className="rank">{p.rank}</div>
@@ -819,72 +914,95 @@ function FinalLeaderboard({ data, roundHistory, onExit }) {
         ))}
       </div>
 
-      {roundHistory.length > 0 && (
+      {roundHistory.length > 0 && rd && (
         <div className="lr-round-breakdown">
-          <h3 className="lr-breakdown-title">Tur Özeti</h3>
-          {roundHistory.map(rd => {
-            const sorted = [...(rd.player_results ?? [])].sort((a, b) => a.deviation_pct - b.deviation_pct)
-            const aiEntries = Object.entries(rd.ai_predictions ?? {})
-            return (
-              <div className="lr-round-card" key={rd.round}>
-                <div className="lr-round-card-header">
-                  <span className="lr-round-label">Tur {rd.round}</span>
-                  <span className="lr-round-price">Gerçek Fiyat: <strong>₺{fmt(rd.actual_price)}</strong></span>
+          <h3 className="lr-breakdown-title">Tur Özetleri</h3>
+          
+          <div className="lr-slider-nav">
+            <button 
+              type="button" 
+              className="hr-btn hr-btn-outline lr-slider-btn"
+              onClick={() => setCurrentRoundIdx(i => Math.max(0, i - 1))} 
+              disabled={currentRoundIdx === 0}
+            >
+              ◀
+            </button>
+            <span className="lr-slider-title">Tur {rd.round} Özeti</span>
+            <button 
+              type="button" 
+              className="hr-btn hr-btn-outline lr-slider-btn"
+              onClick={() => setCurrentRoundIdx(i => Math.min(roundHistory.length - 1, i + 1))} 
+              disabled={currentRoundIdx === roundHistory.length - 1}
+            >
+              ▶
+            </button>
+          </div>
+
+          <div className="lr-round-card animate-round-card">
+            <div className="lr-round-card-header">
+              <span className="lr-round-label">Tur {rd.round}</span>
+              <span className="lr-round-price">Gerçek Fiyat: <strong>₺{fmt(rd.actual_price)}</strong></span>
+            </div>
+            <div className="lr-breakdown-section">
+              <div className="lr-breakdown-section-title">Oyuncular</div>
+              <div className="lr-breakdown-table">
+                <div className="lr-breakdown-row lr-breakdown-header">
+                  <span>Oyuncu</span>
+                  <span>Tahmin</span>
+                  <span>Sapma</span>
+                  <span>Puan</span>
                 </div>
-                <div className="lr-breakdown-section">
-                  <div className="lr-breakdown-section-title">Oyuncular</div>
-                  <div className="lr-breakdown-table">
-                    <div className="lr-breakdown-row lr-breakdown-header">
-                      <span>Oyuncu</span>
-                      <span>Tahmin</span>
-                      <span>Sapma</span>
-                      <span>Puan</span>
-                    </div>
-                    {sorted.map((pr, idx) => (
-                      <div className={`lr-breakdown-row${idx === 0 ? ' winner' : ''}`} key={pr.player_id}>
-                        <span className="lr-breakdown-nick">
-                          {idx < 3 && <span className="lr-breakdown-medal">{ROUND_MEDALS[idx]}</span>}
-                          {pr.nickname}
-                        </span>
-                        <span>{pr.guess > 0 ? `₺${fmt(pr.guess)}` : '—'}</span>
-                        <span className={`lr-deviation${idx === 0 ? ' best' : ''}`}>
-                          %{pr.deviation_pct?.toFixed(1) ?? '—'}
-                        </span>
-                        <span className="lr-points">{pr.points_earned > 0 ? `+${pr.points_earned}` : '0'}</span>
-                      </div>
-                    ))}
+                {sorted.map((pr, idx) => (
+                  <div className={`lr-breakdown-row${idx === 0 && pr.guess > 0 ? ' winner' : ''}`} key={pr.player_id}>
+                    <span className="lr-breakdown-nick">
+                      {idx < 3 && pr.guess > 0 && <span className="lr-breakdown-medal">{ROUND_MEDALS[idx]}</span>}
+                      {pr.nickname}
+                    </span>
+                    <span>{pr.guess > 0 ? `₺${fmt(pr.guess)}` : '—'}</span>
+                    <span className={`lr-deviation${idx === 0 && pr.guess > 0 ? ' best' : ''}`}>
+                      {pr.guess > 0 ? `%${pr.deviation_pct?.toFixed(1)}` : '—'}
+                    </span>
+                    <span className="lr-points">{pr.points_earned > 0 ? `+${pr.points_earned}` : '0'}</span>
                   </div>
-                </div>
-                {aiEntries.length > 0 && (
-                  <div className="lr-breakdown-section">
-                    <div className="lr-breakdown-section-title">AI Tahminleri</div>
-                    <div className="lr-breakdown-table">
-                      <div className="lr-breakdown-row lr-breakdown-header">
-                        <span>Model</span>
-                        <span>Tahmin</span>
-                        <span>Sapma</span>
-                        <span>Puan</span>
-                      </div>
-                      {aiEntries.map(([model, pred]) => (
-                        <div className="lr-breakdown-row ai" key={model}>
-                          <span className="lr-breakdown-nick lr-ai-model">{model}</span>
-                          <span>₺{fmt(pred.price_try)}</span>
-                          <span className="lr-deviation">%{pred.deviation_pct?.toFixed(1) ?? '—'}</span>
-                          <span className="lr-points">{pred.points_earned > 0 ? `+${pred.points_earned}` : '0'}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                ))}
               </div>
-            )
-          })}
+            </div>
+            {aiEntries.length > 0 && (
+              <div className="lr-breakdown-section">
+                <div className="lr-breakdown-section-title">AI Tahminleri</div>
+                <div className="lr-breakdown-table">
+                  <div className="lr-breakdown-row lr-breakdown-header">
+                    <span>Model</span>
+                    <span>Tahmin</span>
+                    <span>Sapma</span>
+                    <span>Puan</span>
+                  </div>
+                  {aiEntries.map(([model, pred]) => (
+                    <div className="lr-breakdown-row ai" key={model}>
+                      <span className="lr-breakdown-nick lr-ai-model">{model}</span>
+                      <span>₺{fmt(pred.price_try)}</span>
+                      <span className="lr-deviation">%{pred.deviation_pct?.toFixed(1) ?? '—'}</span>
+                      <span className="lr-points">{pred.points_earned > 0 ? `+${pred.points_earned}` : '0'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="lr-slider-dots">
+            {roundHistory.map((_, idx) => (
+              <button
+                type="button"
+                key={idx} 
+                className={`lr-slider-dot${idx === currentRoundIdx ? ' active' : ''}`}
+                onClick={() => setCurrentRoundIdx(idx)}
+                aria-label={`Tur ${idx + 1}`}
+              />
+            ))}
+          </div>
         </div>
       )}
-
-      <button className="hr-btn hr-btn-primary hr-btn-lg" onClick={onExit}>
-        Lobiye Dön
-      </button>
     </div>
   )
 }
