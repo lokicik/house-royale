@@ -2,63 +2,83 @@
 
 /* Header section */
 .lp-header {
+  background: linear-gradient(135deg, var(--hr-blue) 0%, var(--hr-blue-darker) 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
   margin-bottom: 32px;
   flex-wrap: wrap;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.35);
+  transition: all 0.3s ease;
+}
+
+html[data-theme='dark'] .lp-header {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1px solid var(--hr-border);
+  box-shadow: var(--hr-shadow);
+}
+
+.lp-header::after {
+  content: '🏠';
+  font-size: 96px;
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.12;
 }
 
 .lp-header h1 {
-  font-size: 32px;
-  letter-spacing: -0.8px;
-  margin: 0 0 6px;
-  font-weight: 800;
-  color: var(--hr-text);
+  font-size: 28px;
+  letter-spacing: -0.5px;
+  margin: 0 0 4px;
+  font-weight: 700;
+  color: #fff;
 }
 
 .lp-header p {
-  color: var(--hr-muted);
-  font-size: 14.5px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
   margin: 0;
   line-height: 1.4;
 }
 
-/* League Card Overhaul (Glassmorphism & Glow) */
+/* League Card — glassmorphism inside gradient banner */
 .lp-league-card {
   display: flex;
   align-items: center;
   gap: 16px;
   padding: 16px 22px;
-  border-radius: 16px;
-  border: 1px solid var(--hr-border);
-  background: var(--hr-card);
-  box-shadow: var(--hr-shadow);
-  min-width: 260px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  min-width: 220px;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease;
+}
+
+html[data-theme='dark'] .lp-league-card {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .lp-league-card:hover {
   transform: translateY(-2px);
 }
 
-.lp-league-bronze { 
-  border-color: rgba(180, 83, 9, 0.3); 
-  background: linear-gradient(135deg, rgba(180, 83, 9, 0.08) 0%, var(--hr-card) 100%); 
-  box-shadow: 0 8px 24px rgba(180, 83, 9, 0.05), var(--hr-shadow);
-}
-
-.lp-league-gold { 
-  border-color: rgba(202, 138, 4, 0.35); 
-  background: linear-gradient(135deg, rgba(202, 138, 4, 0.1) 0%, var(--hr-card) 100%); 
-  box-shadow: 0 8px 24px rgba(202, 138, 4, 0.06), var(--hr-shadow);
-}
-
-.lp-league-diamond { 
-  border-color: rgba(6, 182, 212, 0.35); 
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, var(--hr-card) 100%); 
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.08), var(--hr-shadow);
+.lp-league-bronze,
+.lp-league-gold,
+.lp-league-diamond {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: none;
 }
 
 .lp-league-emoji { 
@@ -80,15 +100,15 @@
   flex-grow: 1;
 }
 
-.lp-league-name { 
-  font-weight: 800; 
-  font-size: 14.5px; 
-  color: var(--hr-text);
+.lp-league-name {
+  font-weight: 800;
+  font-size: 14.5px;
+  color: #fff;
 }
 
-.lp-league-lp { 
-  font-size: 12px; 
-  color: var(--hr-muted); 
+.lp-league-lp {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
   font-weight: 600;
 }
 

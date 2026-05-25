@@ -1,24 +1,44 @@
 .mc-header {
+  background: linear-gradient(135deg, var(--hr-blue) 0%, var(--hr-blue-darker) 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  background: var(--hr-card);
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.35);
+  transition: all 0.3s ease;
+}
+
+html[data-theme='dark'] .mc-header {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
   border: 1px solid var(--hr-border);
-  border-radius: 14px;
-  padding: 20px 24px;
-  margin-bottom: 16px;
   box-shadow: var(--hr-shadow);
 }
+
+.mc-header::after {
+  content: '📊';
+  font-size: 96px;
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.12;
+}
+
 .mc-header h1 {
-  font-size: 24px;
+  font-size: 28px;
   margin: 0 0 4px;
   font-weight: 700;
   letter-spacing: -0.5px;
-  color: var(--hr-text);
+  color: #fff;
 }
-.mc-header p { margin: 0; color: var(--hr-muted); font-size: 13px; }
+.mc-header p { margin: 0; color: #fff; opacity: 0.85; font-size: 14px; }
 .mc-filter {
   display: flex;
   gap: 8px;
