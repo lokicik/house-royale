@@ -204,9 +204,9 @@ html[data-theme='dark'] .login-page {
 
 .login-house {
   position: absolute;
-  left: -2%;
-  bottom: 156px;
-  width: min(1160px, 114%);
+  left: 1%;
+  bottom: 144px;
+  width: min(980px, 98%);
   transform: none;
   overflow: visible;
   background: transparent;
@@ -216,11 +216,11 @@ html[data-theme='dark'] .login-page {
 .login-house img {
   width: 100%;
   height: auto;
-  max-height: clamp(640px, 70vh, 880px);
+  max-height: clamp(520px, 58vh, 700px);
   object-fit: contain;
   object-position: center bottom;
   display: block;
-  transform: scale(1.38);
+  transform: scale(1.08);
   transform-origin: center bottom;
   filter: drop-shadow(0 42px 62px rgba(31, 67, 132, 0.23));
 }
@@ -635,7 +635,7 @@ html[data-theme='dark'] .login-success {
 @media (min-width: 1600px) {
   .login-page { grid-template-columns: minmax(820px, 1.12fr) minmax(520px, 0.92fr); }
   .login-hero { width: min(100%, 1200px); }
-  .login-house { width: min(1240px, 118%); }
+  .login-house { width: min(1080px, 102%); }
   .login-mini-stats { width: min(860px, 90%); }
 }
 
@@ -656,8 +656,8 @@ html[data-theme='dark'] .login-success {
   .login-hero { min-height: 500px; margin-top: clamp(-88px, -8vh, -56px); }
   .login-hero::before { width: 520px; height: 400px; bottom: 10%; }
   .login-hero::after { width: 110px; height: 110px; opacity: 0.2; }
-  .login-house { left: -3%; bottom: 126px; width: min(880px, 102%); }
-  .login-house img { max-height: 455px; transform: scale(1.29); }
+  .login-house { left: 0; bottom: 118px; width: min(760px, 94%); }
+  .login-house img { max-height: 390px; transform: scale(1.03); }
   .login-mini-stats {
     left: 36px;
     width: min(670px, 90%);
