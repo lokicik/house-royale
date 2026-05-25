@@ -20,7 +20,6 @@ const STATS = [
   { l: 'R²', v: '0.960', sub: 'En yüksek (model_0)' },
   { l: 'Yanıt Süresi', v: '32ms', sub: 'En hızlı (model_8)' },
   { l: 'Parametreler', v: '8.4M', sub: 'En büyük model (model_0)' },
-  { l: 'Eğitim Süresi', v: '10s', sub: 'En hızlı eğitim (model_8)' },
 ]
 
 const INSIGHTS = [
