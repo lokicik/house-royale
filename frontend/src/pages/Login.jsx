@@ -268,56 +268,43 @@ export default function Login() {
 
         <div className="login-left-content">
           <div className="login-copy">
+            <div className="login-copy-kicker">
+              <span className="login-copy-kicker-pill">
+                <Icon name="sparkle" size={14} />
+                Gerçek veriyle canlı tahmin turları
+              </span>
+            </div>
             <h1>Tekrar hoş geldin!</h1>
             <p className="lead">
-              Yolculuğuna devam et ve yapay zekaya karşı fiyat tahminlerinde öne geç.
+              Yapay zekaya karşı tahmin turlarına kaldığın yerden devam et.
             </p>
           </div>
 
-          <div className="login-features">
-            <div className="login-feature">
-              <span className="login-feature-icon"><Icon name="trophy" size={30} /></span>
-              <div>
-                <strong>Yarış</strong>
-                <span className="small">Gerçek oyuncular ve AI modellerine karşı tahmin yap.</span>
-              </div>
+          <div className="login-hero">
+            <div className="login-house">
+              <img
+                src="/assets/login-page-house-image.png"
+                alt="Modern ev"
+                onError={(e) => { e.currentTarget.src = '/assets/landing-page-house-img.png' }}
+              />
             </div>
-            <div className="login-feature">
-              <span className="login-feature-icon"><Icon name="trend" size={30} /></span>
-              <div>
-                <strong>Gelişim</strong>
-                <span className="small">Doğruluğunu takip et ve sıralamada yüksel.</span>
-              </div>
-            </div>
-            <div className="login-feature">
-              <span className="login-feature-icon"><Icon name="shield" size={30} /></span>
-              <div>
-                <strong>Gerçek Veri</strong>
-                <span className="small">Türkiye'den gerçek emlak ilanlarıyla oyna.</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <div className="login-visual">
-          <div className="login-house">
-            <img src="/assets/login-page-house-image.png" alt="Modern ev" onError={(e) => { e.currentTarget.src = '/assets/landing-page-house-img.png' }} />
-          </div>
-          <div className="login-mini-stats">
-            <div className="login-mini-stat">
-              <Icon name="users" size={25} />
-              <div className="v">1.250+</div>
-              <div className="l">Aktif Oyuncu</div>
-            </div>
-            <div className="login-mini-stat">
-              <Icon name="trophy" size={25} />
-              <div className="v">15.842</div>
-              <div className="l">Oynanan Tur</div>
-            </div>
-            <div className="login-mini-stat">
-              <Icon name="brain" size={25} />
-              <div className="v">6</div>
-              <div className="l">AI Modeli</div>
+            <div className="login-mini-stats">
+              <div className="login-mini-stat">
+                <Icon name="users" size={24} />
+                <div className="v">1.250+</div>
+                <div className="l">Aktif Oyuncu</div>
+              </div>
+              <div className="login-mini-stat">
+                <Icon name="trophy" size={24} />
+                <div className="v">15.842</div>
+                <div className="l">Oynanan Tur</div>
+              </div>
+              <div className="login-mini-stat">
+                <Icon name="brain" size={24} />
+                <div className="v">6</div>
+                <div className="l">AI Modeli</div>
+              </div>
             </div>
           </div>
         </div>
