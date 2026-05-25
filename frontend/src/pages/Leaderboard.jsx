@@ -17,19 +17,20 @@ function initials(name) {
   return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase()
 }
 
+// League comes from the backend as "bronze" | "gold" | "diamond". Normalize
+// to title-case so it matches the tab IDs and LeagueBadge labels. Rows that
+// pre-date the league field will have an empty string and are filtered out
+// of league-specific tabs.
 function getRowLeague(row) {
-  if (row.is_ai) {
-    if (['model_0', 'model_1', 'model_2'].includes(row.id)) return 'Diamond'
-    if (['model_3', 'model_4', 'model_5'].includes(row.id)) return 'Gold'
-    return 'Bronze'
-  } else {
-    if (row.score >= 50) return 'Diamond'
-    if (row.score >= 15) return 'Gold'
-    return 'Bronze'
-  }
+  const raw = (row.league || '').toLowerCase()
+  if (raw === 'diamond') return 'Diamond'
+  if (raw === 'gold') return 'Gold'
+  if (raw === 'bronze') return 'Bronze'
+  return ''
 }
 
 function LeagueBadge({ league }) {
+  if (!league) return <span style={{ color: 'var(--hr-muted)', fontSize: 12 }}>—</span>
   const labels = { Bronze: 'Bronz', Gold: 'Altın', Diamond: 'Elmas' }
   const emojis = { Bronze: '🥉', Gold: '🥇', Diamond: '💎' }
   return (

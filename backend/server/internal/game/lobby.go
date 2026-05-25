@@ -65,6 +65,17 @@ func ModelsForLeague(l league.League) []AIModelMeta {
 	return out
 }
 
+// ModelLeague returns the permanent league assigned to an AI model ID, or an
+// empty string if the ID is not in the registry.
+func ModelLeague(modelID string) league.League {
+	for _, m := range AvailableAIModels {
+		if m.ID == modelID {
+			return m.League
+		}
+	}
+	return ""
+}
+
 func defaultAIModels(lobbyLeague league.League) map[string]bool {
 	models := ModelsForLeague(lobbyLeague)
 	m := make(map[string]bool, len(models))

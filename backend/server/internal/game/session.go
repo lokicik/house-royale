@@ -45,6 +45,7 @@ type RoundSummaryEntry struct {
 	ID           string
 	Name         string
 	IsAI         bool
+	League       string
 	DeviationPct float64
 	PointsEarned int
 }
@@ -177,12 +178,27 @@ func (s *Session) Run() {
 			s.aiScores[name] += ar.PointsEarned
 		}
 
+		playerLeagues := s.applyLPDeltas(results, aiResults)
+
 		roundRow := make([]RoundSummaryEntry, 0, len(results)+len(aiResults))
 		for _, r := range results {
-			roundRow = append(roundRow, RoundSummaryEntry{ID: r.PlayerID, Name: r.Nickname, DeviationPct: r.DeviationPct, PointsEarned: r.PointsEarned})
+			roundRow = append(roundRow, RoundSummaryEntry{
+				ID:           r.PlayerID,
+				Name:         r.Nickname,
+				League:       string(playerLeagues[r.PlayerID]),
+				DeviationPct: r.DeviationPct,
+				PointsEarned: r.PointsEarned,
+			})
 		}
 		for name, ar := range aiResults {
-			roundRow = append(roundRow, RoundSummaryEntry{ID: "ai:" + name, Name: name, IsAI: true, DeviationPct: ar.DeviationPct, PointsEarned: ar.PointsEarned})
+			roundRow = append(roundRow, RoundSummaryEntry{
+				ID:           "ai:" + name,
+				Name:         name,
+				IsAI:         true,
+				League:       string(ModelLeague(name)),
+				DeviationPct: ar.DeviationPct,
+				PointsEarned: ar.PointsEarned,
+			})
 		}
 		s.RoundSummaries = append(s.RoundSummaries, roundRow)
 
@@ -193,8 +209,6 @@ func (s *Session) Run() {
 			PlayerResults: results,
 			AIPredictions: aiResults,
 		})
-
-		s.applyLPDeltas(results, aiResults)
 
 		if round < roundCount {
 			s.waitForNextRoundVotes(round)
@@ -277,9 +291,15 @@ func (s *Session) broadcastVoteState(round int, deadline time.Time) {
 // applyLPDeltas computes per-player LP deltas for the round, persists the
 // updated UserLeague, and broadcasts a LEAGUE_UPDATE message for each affected
 // player (so the frontend can render LP bar + promotion/demotion toasts).
-func (s *Session) applyLPDeltas(results []PlayerResult, aiResults map[string]AIResult) {
+//
+// Returns a map of player_id -> resulting league (post-delta), populated for
+// every player in results — including non-submitters whose LP didn't change.
+// The caller uses this to stamp the player's current league onto the
+// leaderboard record for the round.
+func (s *Session) applyLPDeltas(results []PlayerResult, aiResults map[string]AIResult) map[string]league.League {
+	leagues := make(map[string]league.League, len(results))
 	if s.LeagueStore == nil {
-		return
+		return leagues
 	}
 	// Build modelID -> tier map for the AI models in this round.
 	aiTiers := make(map[string]int, len(aiResults))
@@ -295,15 +315,18 @@ func (s *Session) applyLPDeltas(results []PlayerResult, aiResults map[string]AIR
 
 	ctx := context.Background()
 	for _, r := range results {
+		current, err := s.LeagueStore.Get(ctx, r.PlayerID)
+		if err != nil {
+			log.Printf("session %s league.Get failed player=%s err=%v", s.lobbyID, r.PlayerID, err)
+			continue
+		}
+		// Record the current league for every player, even if no LP change.
+		leagues[r.PlayerID] = current.League
+
 		delta := deltas[r.PlayerID]
 		// Skip both empty deltas and players who didn't submit at all
 		// (deltas already returns 0 for non-submitters).
 		if delta == 0 && r.Guess <= 0 {
-			continue
-		}
-		current, err := s.LeagueStore.Get(ctx, r.PlayerID)
-		if err != nil {
-			log.Printf("session %s league.Get failed player=%s err=%v", s.lobbyID, r.PlayerID, err)
 			continue
 		}
 		promoted, demoted := current.ApplyDelta(delta)
@@ -311,6 +334,8 @@ func (s *Session) applyLPDeltas(results []PlayerResult, aiResults map[string]AIR
 			log.Printf("session %s league.Upsert failed player=%s err=%v", s.lobbyID, r.PlayerID, err)
 			continue
 		}
+		// Refresh to the post-delta league in case a promotion/demotion occurred.
+		leagues[r.PlayerID] = current.League
 		s.broadcast(MsgLeagueUpdate, LeagueUpdatePayload{
 			PlayerID: r.PlayerID,
 			League:   current.League,
@@ -320,6 +345,7 @@ func (s *Session) applyLPDeltas(results []PlayerResult, aiResults map[string]AIR
 			Demoted:  demoted,
 		})
 	}
+	return leagues
 }
 
 func (s *Session) broadcastLeaderboard() {

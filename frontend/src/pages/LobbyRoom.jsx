@@ -384,16 +384,18 @@ function WaitingScreen({
   availableAI, aiModels, aiActiveCount, onToggleAI, activity, lobbyLeague,
 }) {
   const connectedPlayers = players.filter(p => p.connected !== false)
+  const enabledAI = availableAI.filter(m => aiModels[m.id])
+  const totalParticipants = connectedPlayers.length + enabledAI.length
   return (
     <div className="lr-wait-grid">
       <div>
         <div className="lr-panel">
           <div className="lr-panel-header">
-            <h3>Oyuncular ({connectedPlayers.length})</h3>
+            <h3>Oyuncular ({totalParticipants})</h3>
             <span className="lr-pill ready">Canlı</span>
           </div>
           <div className="lr-panel-body">
-            {connectedPlayers.length === 0 && (
+            {totalParticipants === 0 && (
               <div className="lr-player-row empty">Oyuncu bekleniyor…</div>
             )}
             {connectedPlayers.map(p => (
@@ -401,6 +403,19 @@ function WaitingScreen({
                 <span className="lr-pavatar">{initials(p.nickname)}</span>
                 <span className="lr-player-name">{p.nickname}</span>
                 <span className="lr-pill ready">Hazır</span>
+              </div>
+            ))}
+            {enabledAI.map(m => (
+              <div className="lr-player-row" key={`ai-${m.id}`}>
+                <ModelBadge name={m.name} size={28} />
+                <span className="lr-player-name">
+                  {m.name}
+                  <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--hr-muted)' }}>· {m.type}</span>
+                </span>
+                <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <LeagueBadge league={m.league} />
+                  <span className="lr-pill ai">AI</span>
+                </span>
               </div>
             ))}
           </div>

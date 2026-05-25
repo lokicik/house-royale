@@ -65,7 +65,7 @@ func main() {
 
 	lobbyHandler := handlers.NewLobbyHandler(store, lg)
 	wsHandler := handlers.NewWSHandler(h, store, sessions, predictor, lb, hs, lg)
-	lbHandler := &handlers.LeaderboardHandler{LB: lb}
+	lbHandler := &handlers.LeaderboardHandler{LB: lb, League: lg}
 	historyHandler := handlers.NewHistoryHandler(hs)
 	leagueHandler := handlers.NewLeagueHandler(lg)
 

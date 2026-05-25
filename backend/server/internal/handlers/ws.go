@@ -238,7 +238,7 @@ func (h *WSHandler) handleReady(c *hub.Client) {
 			for i, round := range session.RoundSummaries {
 				lbRound := make([]leaderboard.RoundEntry, len(round))
 				for j, e := range round {
-					lbRound[j] = leaderboard.RoundEntry{ID: e.ID, Name: e.Name, IsAI: e.IsAI, DeviationPct: e.DeviationPct, PointsEarned: e.PointsEarned}
+					lbRound[j] = leaderboard.RoundEntry{ID: e.ID, Name: e.Name, IsAI: e.IsAI, League: e.League, DeviationPct: e.DeviationPct, PointsEarned: e.PointsEarned}
 				}
 				lbRounds[i] = lbRound
 			}
