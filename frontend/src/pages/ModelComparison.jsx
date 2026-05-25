@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import AppShell from '../components/AppShell'
 import ParticleBanner from '../components/ParticleBanner'
 import { Icon, ModelBadge } from '../components/icons'
@@ -54,6 +55,18 @@ function radarPoints(values, cx, cy, r) {
 }
 
 export default function ModelComparison() {
+  useEffect(() => {
+    const els = document.querySelectorAll('[data-chart]')
+    const obs = new IntersectionObserver(
+      entries => entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target) }
+      }),
+      { threshold: 0.2 }
+    )
+    els.forEach(el => obs.observe(el))
+    return () => obs.disconnect()
+  }, [])
+
   return (
     <AppShell>
       <ParticleBanner className="mc-header">
@@ -124,38 +137,25 @@ export default function ModelComparison() {
               <p style={{ margin: '0 0 8px', color: 'var(--hr-muted)', fontSize: 13 }}>
                 Modellerin fiyat tahminlerindeki öznitelik ağırlıklarıdır.
               </p>
-              <svg className="mc-feature-importance" viewBox="0 0 450 220">
-                {/* Y-axis baseline */}
+              <svg className="mc-feature-importance" data-chart viewBox="0 0 450 220">
                 <line x1="140" y1="10" x2="140" y2="200" stroke="var(--hr-border)" strokeWidth="1.5" />
-                
-                {/* Bar 1 */}
                 <text x="130" y="28" fontSize="10" fontWeight="600" textAnchor="end" fill="var(--hr-text)">Net Alan (Metrekare)</text>
-                <rect x="140" y="16" width="118" height="18" fill="#2563eb" rx="3" />
+                <rect className="fi-bar" x="140" y="16" width="118" height="18" fill="#2563eb" rx="3" style={{ transitionDelay: '0ms' }} />
                 <text x="264" y="29" fontSize="10" fontWeight="700" fill="#2563eb">%42.0</text>
-
-                {/* Bar 2 */}
                 <text x="130" y="60" fontSize="10" fontWeight="600" textAnchor="end" fill="var(--hr-text)">Lokasyon (Mahalle)</text>
-                <rect x="140" y="48" width="73" height="18" fill="#06b6d4" rx="3" />
+                <rect className="fi-bar" x="140" y="48" width="73" height="18" fill="#06b6d4" rx="3" style={{ transitionDelay: '80ms' }} />
                 <text x="219" y="61" fontSize="10" fontWeight="700" fill="#06b6d4">%26.0</text>
-
-                {/* Bar 3 */}
                 <text x="130" y="92" fontSize="10" fontWeight="600" textAnchor="end" fill="var(--hr-text)">Kat Oranı (Kat / Toplam)</text>
-                <rect x="140" y="80" width="39" height="18" fill="#10b981" rx="3" />
+                <rect className="fi-bar" x="140" y="80" width="39" height="18" fill="#10b981" rx="3" style={{ transitionDelay: '160ms' }} />
                 <text x="185" y="93" fontSize="10" fontWeight="700" fill="#10b981">%14.0</text>
-
-                {/* Bar 4 */}
-                <text x="130" y="124" fontSize="10" fontWeight="600" textAnchor="end" fill="var(--hr-text)">Oda & Salon Sayısı</text>
-                <rect x="140" y="112" width="25" height="18" fill="#8b5cf6" rx="3" />
+                <text x="130" y="124" fontSize="10" fontWeight="600" textAnchor="end" fill="var(--hr-text)">Oda &amp; Salon Sayısı</text>
+                <rect className="fi-bar" x="140" y="112" width="25" height="18" fill="#8b5cf6" rx="3" style={{ transitionDelay: '240ms' }} />
                 <text x="171" y="125" fontSize="10" fontWeight="700" fill="#8b5cf6">%9.0</text>
-
-                {/* Bar 5 */}
                 <text x="130" y="156" fontSize="10" fontWeight="600" textAnchor="end" fill="var(--hr-text)">Bina Yaşı</text>
-                <rect x="140" y="144" width="17" height="18" fill="#fbbf24" rx="3" />
+                <rect className="fi-bar" x="140" y="144" width="17" height="18" fill="#fbbf24" rx="3" style={{ transitionDelay: '320ms' }} />
                 <text x="163" y="157" fontSize="10" fontWeight="700" fill="#fbbf24">%6.0</text>
-
-                {/* Bar 6 */}
                 <text x="130" y="188" fontSize="10" fontWeight="600" textAnchor="end" fill="var(--hr-text)">Isıtma Türü</text>
-                <rect x="140" y="176" width="8" height="18" fill="#f97316" rx="3" />
+                <rect className="fi-bar" x="140" y="176" width="8" height="18" fill="#f97316" rx="3" style={{ transitionDelay: '400ms' }} />
                 <text x="154" y="189" fontSize="10" fontWeight="700" fill="#f97316">%3.0</text>
               </svg>
             </div>
@@ -169,7 +169,7 @@ export default function ModelComparison() {
               <p style={{ margin: '0 0 8px', color: 'var(--hr-muted)', fontSize: 13 }}>
                 Modellerin 100 Epoch eğitim hata payı yakınsama eğrisidir.
               </p>
-              <svg className="mc-loss-chart" viewBox="0 0 450 220">
+              <svg className="mc-loss-chart" data-chart viewBox="0 0 450 220">
                 {/* Grid Lines */}
                 <line x1="45" y1="30" x2="410" y2="30" stroke="var(--hr-border)" strokeWidth="1" strokeDasharray="3,3" />
                 <line x1="45" y1="110" x2="410" y2="110" stroke="var(--hr-border)" strokeWidth="1" strokeDasharray="3,3" />
@@ -188,28 +188,23 @@ export default function ModelComparison() {
                 <text x="337" y="206" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">80</text>
                 <text x="410" y="206" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">100</text>
 
-                {/* model_8 Line (Stub) */}
                 <path
+                  className="loss-line"
                   d="M 45 33.2 L 81.5 70 L 118 81.2 L 154.5 84.4 L 191 86 L 227.5 86 L 264 87.6 L 337 86 L 410 87.6"
-                  fill="none"
-                  stroke="#f97316"
-                  strokeWidth="2.5"
+                  fill="none" stroke="#f97316" strokeWidth="2.5"
+                  pathLength="1" style={{ transitionDelay: '0ms' }}
                 />
-
-                {/* model_3 Line (MLP Pro) */}
                 <path
+                  className="loss-line"
                   d="M 45 38 L 81.5 70 L 118 102 L 154.5 126 L 191 142 L 227.5 154.8 L 264 161.2 L 337 167.6 L 410 170.8"
-                  fill="none"
-                  stroke="#10b981"
-                  strokeWidth="2.5"
+                  fill="none" stroke="#10b981" strokeWidth="2.5"
+                  pathLength="1" style={{ transitionDelay: '200ms' }}
                 />
-
-                {/* model_0 Line (ResNet Pro) */}
                 <path
+                  className="loss-line"
                   d="M 45 46 L 81.5 110 L 118 150 L 154.5 170.8 L 191 177.2 L 227.5 182 L 264 183.6 L 337 185.2 L 410 186.8"
-                  fill="none"
-                  stroke="#2563eb"
-                  strokeWidth="2.5"
+                  fill="none" stroke="#2563eb" strokeWidth="2.5"
+                  pathLength="1" style={{ transitionDelay: '400ms' }}
                 />
               </svg>
               <div className="mc-legend" style={{ marginTop: 8 }}>
@@ -227,7 +222,7 @@ export default function ModelComparison() {
               <h3>Metrik Karşılaştırma</h3>
             </div>
             <div className="mc-card-body">
-              <svg className="mc-bar-chart" viewBox="0 0 320 390">
+              <svg className="mc-bar-chart" data-chart viewBox="0 0 320 390">
                 {/* Horizontal Grid Lines */}
                 <line x1="25" y1="40" x2="310" y2="40" stroke="var(--hr-border)" strokeWidth="1" strokeDasharray="3,3" />
                 <line x1="25" y1="195" x2="310" y2="195" stroke="var(--hr-border)" strokeWidth="1" strokeDasharray="3,3" />
@@ -255,6 +250,7 @@ export default function ModelComparison() {
                             height={h}
                             fill={d.color}
                             rx="2"
+                            style={{ transitionDelay: `${(mi * 3 + di) * 55}ms` }}
                           />
                         )
                       })}
@@ -279,7 +275,7 @@ export default function ModelComparison() {
               <h3>Performans Radarı</h3>
             </div>
             <div className="mc-card-body">
-              <svg className="mc-radar" viewBox="0 0 280 240">
+              <svg className="mc-radar" data-chart viewBox="0 0 280 240">
                 <g transform="translate(140 120)">
                   {[0.25, 0.5, 0.75, 1].map(scale => (
                     <polygon
@@ -306,7 +302,7 @@ export default function ModelComparison() {
                       </g>
                     )
                   })}
-                  {RADAR_DATA.map(d => (
+                  {RADAR_DATA.map((d, i) => (
                     <polygon
                       key={d.name}
                       points={radarPoints(d.values, 0, 0, 90)}
@@ -314,6 +310,8 @@ export default function ModelComparison() {
                       fillOpacity="0.18"
                       stroke={d.color}
                       strokeWidth="2"
+                      className="radar-poly"
+                      style={{ transitionDelay: `${i * 120}ms` }}
                     />
                   ))}
                 </g>
@@ -333,7 +331,7 @@ export default function ModelComparison() {
               <h3>Hız ve Doğruluk Dengesi</h3>
             </div>
             <div className="mc-card-body">
-              <svg className="mc-scatter" viewBox="0 0 320 220">
+              <svg className="mc-scatter" data-chart viewBox="0 0 320 220">
                 {/* Y-axis grid lines (R2) */}
                 <line x1="40" y1="25" x2="300" y2="25" stroke="var(--hr-border)" strokeWidth="1" strokeDasharray="3,3" />
                 <line x1="40" y1="93" x2="300" y2="93" stroke="var(--hr-border)" strokeWidth="1" strokeDasharray="3,3" />
@@ -367,41 +365,22 @@ export default function ModelComparison() {
                 />
 
                 {/* All 9 points */}
-                {/* model_8 (Stub) */}
-                <circle cx="68" cy="169" r="5" fill="#f97316" />
-                <text x="68" y="161" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_8</text>
-
-                {/* model_7 (Tiny) */}
-                <circle cx="83" cy="124" r="5" fill="#f97316" />
-                <text x="83" y="116" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_7</text>
-
-                {/* model_6 (Mini) */}
-                <circle cx="99" cy="93" r="5" fill="#f97316" />
-                <text x="99" y="85" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_6</text>
-
-                {/* model_5 (MLP Lite) */}
-                <circle cx="116" cy="44" r="5" fill="#fbbf24" />
-                <text x="116" y="36" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_5</text>
-
-                {/* model_4 (MLP Plus) */}
-                <circle cx="144" cy="40" r="5" fill="#fbbf24" />
-                <text x="144" y="32" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_4</text>
-
-                {/* model_3 (MLP Pro) */}
-                <circle cx="163" cy="36" r="5" fill="#fbbf24" />
-                <text x="163" y="28" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_3</text>
-
-                {/* model_2 (ResNet Lite) */}
-                <circle cx="194" cy="29" r="5" fill="#06b6d4" />
-                <text x="194" y="21" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_2</text>
-
-                {/* model_1 (ResNet Plus) */}
-                <circle cx="248" cy="28" r="5" fill="#06b6d4" />
-                <text x="248" y="20" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_1</text>
-
-                {/* model_0 (ResNet Pro) */}
-                <circle cx="286" cy="25" r="5" fill="#06b6d4" />
-                <text x="286" y="17" fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">model_0</text>
+                {[
+                  { cx: 68,  cy: 169, fill: '#f97316', label: 'model_8', ly: 161 },
+                  { cx: 83,  cy: 124, fill: '#f97316', label: 'model_7', ly: 116 },
+                  { cx: 99,  cy: 93,  fill: '#f97316', label: 'model_6', ly: 85  },
+                  { cx: 116, cy: 44,  fill: '#fbbf24', label: 'model_5', ly: 36  },
+                  { cx: 144, cy: 40,  fill: '#fbbf24', label: 'model_4', ly: 32  },
+                  { cx: 163, cy: 36,  fill: '#fbbf24', label: 'model_3', ly: 28  },
+                  { cx: 194, cy: 29,  fill: '#06b6d4', label: 'model_2', ly: 21  },
+                  { cx: 248, cy: 28,  fill: '#06b6d4', label: 'model_1', ly: 20  },
+                  { cx: 286, cy: 25,  fill: '#06b6d4', label: 'model_0', ly: 17  },
+                ].map((pt, i) => (
+                  <g key={pt.label}>
+                    <circle cx={pt.cx} cy={pt.cy} r="5" fill={pt.fill} className="sc-dot" style={{ transitionDelay: `${i * 60}ms` }} />
+                    <text x={pt.cx} y={pt.ly} fontSize="7" textAnchor="middle" fontWeight="bold" fill="var(--hr-text)">{pt.label}</text>
+                  </g>
+                ))}
               </svg>
               
               <div className="mc-legend" style={{ marginTop: 12 }}>

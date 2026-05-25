@@ -239,3 +239,59 @@ html[data-theme='dark'] .mc-header {
   .mc-insights { grid-template-columns: 1fr; }
   .mc-table th:nth-child(n+5), .mc-table td:nth-child(n+5) { display: none; }
 }
+
+/* ===== Chart entrance animations ===== */
+
+/* Horizontal bars (feature importance) */
+.mc-feature-importance .fi-bar {
+  transform-box: fill-box;
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mc-feature-importance.visible .fi-bar {
+  transform: scaleX(1);
+}
+
+/* Vertical bars (metric comparison) */
+.mc-bar-chart rect {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  transform: scaleY(0);
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mc-bar-chart.visible rect {
+  transform: scaleY(1);
+}
+
+/* Radar polygons */
+.mc-radar .radar-poly {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mc-radar.visible .radar-poly {
+  transform: scale(1);
+}
+
+/* Loss convergence lines */
+.mc-loss-chart .loss-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mc-loss-chart.visible .loss-line {
+  stroke-dashoffset: 0;
+}
+
+/* Scatter dots */
+.mc-scatter .sc-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  transition: transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.mc-scatter.visible .sc-dot {
+  transform: scale(1);
+}
