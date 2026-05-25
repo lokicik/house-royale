@@ -86,7 +86,7 @@ func defaultAIModels(lobbyLeague league.League) map[string]bool {
 }
 
 func defaultSettings() LobbySettings {
-	return LobbySettings{RoundCount: 3, RoundDurationSec: 15}
+	return LobbySettings{RoundCount: 3, RoundDurationSec: 30}
 }
 
 type Lobby struct {
@@ -222,8 +222,8 @@ func (l *Lobby) ApplyUpdate(roundCount, roundDurationSec int, aiModels map[strin
 		l.Settings.RoundCount = roundCount
 	}
 	if roundDurationSec != 0 {
-		if roundDurationSec != 15 && roundDurationSec != 30 {
-			return errors.New("round_duration_sec must be 15 or 30")
+		if roundDurationSec != 30 && roundDurationSec != 60 {
+			return errors.New("round_duration_sec must be 30 or 60")
 		}
 		l.Settings.RoundDurationSec = roundDurationSec
 	}

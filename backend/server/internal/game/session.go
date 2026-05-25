@@ -15,7 +15,7 @@ import (
 
 const (
 	DefaultRoundCount    = 3
-	DefaultRoundDuration = 15 * time.Second
+	DefaultRoundDuration = 30 * time.Second
 	VoteTimeout          = 90 * time.Second
 )
 

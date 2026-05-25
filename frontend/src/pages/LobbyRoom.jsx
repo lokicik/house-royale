@@ -9,7 +9,7 @@ import DistrictMap from '../components/DistrictMap'
 import './LobbyRoom.css'
 
 const ROUND_COUNT_OPTIONS = [3, 6]
-const ROUND_DURATION_OPTIONS = [15, 30]
+const ROUND_DURATION_OPTIONS = [30, 60]
 const ACTIVITY_MAX = 20
 
 const ACTIVITY_VERBS = {
@@ -84,7 +84,7 @@ export default function LobbyRoom() {
   const timerRef = useRef(null)
 
   // Lobby state hydrated from the server.
-  const [settings, setSettings] = useState({ round_count: 3, round_duration_sec: 15 })
+  const [settings, setSettings] = useState({ round_count: 3, round_duration_sec: 30 })
   const [aiModels, setAIModels] = useState({})
   const [availableAI, setAvailableAI] = useState([])
   const [hostId, setHostId] = useState(null)
@@ -425,7 +425,7 @@ function WaitingScreen({
           <div className="lr-panel-header">
             <h3>Lobi Aktivitesi</h3>
           </div>
-          <div className="lr-panel-body">
+          <div className="lr-panel-body lr-activity-scroll">
             {activity.length === 0 && (
               <div className="lr-activity" style={{ fontStyle: 'italic' }}>Henüz aktivite yok.</div>
             )}
