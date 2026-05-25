@@ -400,3 +400,21 @@ html[data-theme='dark'] .lb-league-badge.lb-league-bronze {
   .lb-table th:nth-child(4), .lb-table td:nth-child(4),
   .lb-table th:nth-child(5), .lb-table td:nth-child(5) { display: none; }
 }
+
+@keyframes lb-row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes lb-medal-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  65% { transform: scale(1.25); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.lb-table tbody tr {
+  animation: lb-row-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--row-i, 0) * 35ms);
+}
+.lb-table tbody tr:nth-child(-n+3) .lb-rank {
+  animation: lb-medal-pop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  animation-delay: calc(var(--row-i, 0) * 35ms + 60ms);
+}

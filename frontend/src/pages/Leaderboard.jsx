@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import AppShell from '../components/AppShell'
+import ParticleBanner from '../components/ParticleBanner'
 import { Icon, ModelBadge } from '../components/icons'
 import { useAuth } from '../contexts/authContextValue'
 import { getLeaderboard } from '../lib/api'
@@ -75,7 +76,7 @@ export default function Leaderboard() {
 
   return (
     <AppShell>
-      <div className="lb-header">
+      <ParticleBanner className="lb-header">
         <div style={{ position: 'relative', zIndex: 1 }}>
           <h1>Liderlik Tablosu</h1>
           <p>En iyi oyuncuları ve AI modellerini gör. Hedef #1.</p>
@@ -99,7 +100,7 @@ export default function Leaderboard() {
             </div>
           </div>
         </div>
-      </div>
+      </ParticleBanner>
 
       <div className="lb-grid">
         <div className="lb-main">
@@ -133,8 +134,8 @@ export default function Leaderboard() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(r => (
-                  <tr key={r.id} className={r.id === user?.uid ? 'you' : ''}>
+                {filtered.map((r, i) => (
+                  <tr key={r.id} className={r.id === user?.uid ? 'you' : ''} style={{ '--row-i': i }}>
                     <td><span className="lb-rank">{medal(r.rank)}</span></td>
                     <td>
                       <div className="lb-name-cell">

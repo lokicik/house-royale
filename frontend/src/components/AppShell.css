@@ -96,6 +96,7 @@ html[data-theme='dark'] .hr-shell {
   display: flex;
   gap: 6px;
   flex: 1;
+  position: relative;
 }
 .hr-tab {
   padding: 8px 14px;
@@ -108,11 +109,22 @@ html[data-theme='dark'] .hr-shell {
   background: transparent;
   border: 0;
   font-family: inherit;
+  position: relative;
+  z-index: 1;
 }
-.hr-tab:hover { background: var(--hr-subtle); color: var(--hr-text); }
-.hr-tab.active {
+.hr-tab:hover { color: var(--hr-text); }
+.hr-tab.active { color: var(--hr-blue); }
+.hr-tab-pill {
+  position: absolute;
+  top: 0;
+  height: 100%;
   background: var(--hr-soft-blue);
-  color: var(--hr-blue);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 0;
+}
+.hr-tab-pill.ready {
+  transition: left 0.28s cubic-bezier(0.16, 1, 0.3, 1), width 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
 .hr-user {
   display: flex;

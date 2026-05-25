@@ -1,11 +1,30 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { updateProfile } from 'firebase/auth'
 import AppShell from '../components/AppShell'
+import ParticleBanner from '../components/ParticleBanner'
 import { useAuth } from '../contexts/authContextValue'
 import { getLeaderboard, getMyHistory } from '../lib/api'
 import './Profile.css'
 
 const RANK_MEDALS = ['🥇', '🥈', '🥉']
+
+function CountUp({ value, format = v => Math.round(v).toString(), duration = 750 }) {
+  const [display, setDisplay] = useState(0)
+  const rafRef = useRef(null)
+  useEffect(() => {
+    if (value == null) return
+    cancelAnimationFrame(rafRef.current)
+    const start = performance.now()
+    const tick = now => {
+      const t = Math.min((now - start) / duration, 1)
+      setDisplay(value * (1 - (1 - t) ** 3))
+      if (t < 1) rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [value, duration])
+  return format(display)
+}
 
 function initials(name) {
   if (!name) return '?'
@@ -111,12 +130,12 @@ export default function Profile() {
 
   return (
     <AppShell>
-      <div className="pf-header">
+      <ParticleBanner className="pf-header">
         <div style={{ position: 'relative', zIndex: 1 }}>
           <h1>Profilim</h1>
           <p>Hesap bilgilerini ve oyun istatistiklerini görüntüle.</p>
         </div>
-      </div>
+      </ParticleBanner>
 
       <div className="pf-grid">
         <aside className="pf-sidebar">
@@ -182,19 +201,19 @@ export default function Profile() {
               <div className="pf-stat-grid">
                 <div className="pf-stat">
                   <div className="pf-stat-label">Tur</div>
-                  <div className="pf-stat-value">{myStats.rounds}</div>
+                  <div className="pf-stat-value"><CountUp value={myStats.rounds} /></div>
                 </div>
                 <div className="pf-stat">
                   <div className="pf-stat-label">Ort. Hata</div>
-                  <div className="pf-stat-value">%{myStats.avg_err.toFixed(2)}</div>
+                  <div className="pf-stat-value">%<CountUp value={myStats.avg_err} format={v => v.toFixed(2)} /></div>
                 </div>
                 <div className="pf-stat">
                   <div className="pf-stat-label">Kazanma</div>
-                  <div className="pf-stat-value">%{myStats.win_rate.toFixed(1)}</div>
+                  <div className="pf-stat-value">%<CountUp value={myStats.win_rate} format={v => v.toFixed(1)} /></div>
                 </div>
                 <div className="pf-stat">
                   <div className="pf-stat-label">Puan</div>
-                  <div className="pf-stat-value">{myStats.score.toLocaleString('tr-TR')}</div>
+                  <div className="pf-stat-value"><CountUp value={myStats.score} format={v => Math.round(v).toLocaleString('tr-TR')} /></div>
                 </div>
               </div>
             </div>

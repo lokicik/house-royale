@@ -476,3 +476,28 @@ html[data-theme='dark'] .lp-card:hover {
   .lp-info-row { grid-template-columns: 1fr; gap: 16px; }
   .lp-lobby-row { flex-wrap: wrap; }
 }
+
+@keyframes lp-slide-in {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes lp-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.lp-card {
+  animation: lp-fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+.lp-info {
+  animation: lp-fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+.lp-lobby-row {
+  animation: lp-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+.lp-history-row {
+  animation: lp-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}

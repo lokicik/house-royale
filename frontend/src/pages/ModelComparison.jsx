@@ -1,4 +1,5 @@
 import AppShell from '../components/AppShell'
+import ParticleBanner from '../components/ParticleBanner'
 import { Icon, ModelBadge } from '../components/icons'
 import './ModelComparison.css'
 
@@ -55,12 +56,12 @@ function radarPoints(values, cx, cy, r) {
 export default function ModelComparison() {
   return (
     <AppShell>
-      <div className="mc-header">
+      <ParticleBanner className="mc-header">
         <div>
           <h1>Model Karşılaştırma</h1>
           <p>Gerçek emlak fiyat tahmin performansını metrikler üzerinden karşılaştır.</p>
         </div>
-      </div>
+      </ParticleBanner>
 
       <div className="mc-stats">
         {STATS.map(s => (

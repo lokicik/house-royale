@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Icon } from '../components/icons'
 import ThemeToggle from '../components/ThemeToggle'
@@ -16,6 +17,27 @@ const compareRows = [
 export default function Landing() {
   const navigate = useNavigate()
   const goLogin = () => navigate('/login')
+  const [barsVisible, setBarsVisible] = useState(false)
+  const compareRef = useRef(null)
+
+  useEffect(() => {
+    const fadeEls = document.querySelectorAll('[data-fade]')
+    const fadeObs = new IntersectionObserver(
+      entries => entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('visible'); fadeObs.unobserve(e.target) }
+      }),
+      { threshold: 0.12 }
+    )
+    fadeEls.forEach(el => fadeObs.observe(el))
+
+    const barObs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setBarsVisible(true); barObs.disconnect() } },
+      { threshold: 0.3 }
+    )
+    if (compareRef.current) barObs.observe(compareRef.current)
+
+    return () => { fadeObs.disconnect(); barObs.disconnect() }
+  }, [])
 
   return (
     <div className="landing">
@@ -78,7 +100,7 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="landing-hero-visual">
+          <div className="landing-hero-visual" data-fade>
             <div className="landing-hero-image-wrap">
               <img src="/assets/landing-page-house-img.png" alt="Modern ev" />
               <div className="landing-price-badge">
@@ -86,15 +108,15 @@ export default function Landing() {
                 <span className="value">₺3.750.000</span>
               </div>
             </div>
-            <div className="landing-compare-card">
+            <div className="landing-compare-card" ref={compareRef}>
               <h4>Kim daha yakın tahmin eder?</h4>
-              {compareRows.map((r) => (
+              {compareRows.map((r, i) => (
                 <div key={r.name} className="landing-bar-row">
                   <span className={`name${r.you ? ' you' : ''}`}>{r.name}</span>
                   <span className="landing-bar-track">
                     <span
                       className={`landing-bar-fill${r.you ? '' : ' muted'}`}
-                      style={{ width: `${r.pct}%` }}
+                      style={{ width: barsVisible ? `${r.pct}%` : '0%', transitionDelay: `${i * 80}ms` }}
                     />
                   </span>
                   <span className="pct">%{r.pct}</span>
@@ -108,21 +130,17 @@ export default function Landing() {
       <section className="landing-features" id="features">
         <div className="landing-container">
           <div className="landing-features-grid">
-            <div className="landing-feature">
-              <div className="landing-feature-icon"><Icon name="home" size={22} /></div>
-              <h3>Gerçek İlanlar</h3>
-              <p>Türkiye genelinden seçilmiş gerçek emlak ilanlarıyla turlar oyna. Her ev gerçek, her fiyat doğrulanmış.</p>
-            </div>
-            <div className="landing-feature">
-              <div className="landing-feature-icon"><Icon name="brain" size={22} /></div>
-              <h3>AI Modelleri</h3>
-              <p>GPT-4, Claude, Gemini ve daha fazlasıyla yarış. Hangisinin emlak sezgisi daha iyi, sen karar ver.</p>
-            </div>
-            <div className="landing-feature">
-              <div className="landing-feature-icon"><Icon name="trophy" size={22} /></div>
-              <h3>Çok Oyunculu Turlar</h3>
-              <p>Arkadaşlarınla aynı lobide yarış, her turda kim AI'ya en yakın geldi, anında gör.</p>
-            </div>
+            {[
+              { icon: 'home', title: 'Gerçek İlanlar', desc: 'Türkiye genelinden seçilmiş gerçek emlak ilanlarıyla turlar oyna. Her ev gerçek, her fiyat doğrulanmış.' },
+              { icon: 'brain', title: 'AI Modelleri', desc: 'GPT-4, Claude, Gemini ve daha fazlasıyla yarış. Hangisinin emlak sezgisi daha iyi, sen karar ver.' },
+              { icon: 'trophy', title: 'Çok Oyunculu Turlar', desc: 'Arkadaşlarınla aynı lobide yarış, her turda kim AI\'ya en yakın geldi, anında gör.' },
+            ].map((f, i) => (
+              <div key={f.title} className="landing-feature" data-fade style={{ transitionDelay: `${i * 90}ms` }}>
+                <div className="landing-feature-icon"><Icon name={f.icon} size={22} /></div>
+                <h3>{f.title}</h3>
+                <p>{f.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -131,26 +149,18 @@ export default function Landing() {
         <div className="landing-container">
           <h2 className="landing-section-title">Nasıl Çalışır</h2>
           <div className="landing-steps">
-            <div className="landing-step">
-              <div className="landing-step-num">1</div>
-              <h4>Ev Gör</h4>
-              <p>Gerçek bir ilanı, fotoğraflarını ve detaylarını incele.</p>
-            </div>
-            <div className="landing-step">
-              <div className="landing-step-num">2</div>
-              <h4>Tahmin Et</h4>
-              <p>Evin gerçek fiyatına dair en iyi tahminini gir.</p>
-            </div>
-            <div className="landing-step">
-              <div className="landing-step-num">3</div>
-              <h4>AI Tahmin Eder</h4>
-              <p>Yapay zeka modelleri de aynı anda kendi tahminlerini yapar.</p>
-            </div>
-            <div className="landing-step">
-              <div className="landing-step-num">4</div>
-              <h4>En Yakın Kazanır</h4>
-              <p>Gerçek fiyata en yakın tahmin tur puanlarını alır.</p>
-            </div>
+            {[
+              { num: 1, title: 'Ev Gör', desc: 'Gerçek bir ilanı, fotoğraflarını ve detaylarını incele.' },
+              { num: 2, title: 'Tahmin Et', desc: 'Evin gerçek fiyatına dair en iyi tahminini gir.' },
+              { num: 3, title: 'AI Tahmin Eder', desc: 'Yapay zeka modelleri de aynı anda kendi tahminlerini yapar.' },
+              { num: 4, title: 'En Yakın Kazanır', desc: 'Gerçek fiyata en yakın tahmin tur puanlarını alır.' },
+            ].map((s, i) => (
+              <div key={s.num} className="landing-step" data-fade style={{ transitionDelay: `${i * 80}ms` }}>
+                <div className="landing-step-num">{s.num}</div>
+                <h4>{s.title}</h4>
+                <p>{s.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -158,34 +168,20 @@ export default function Landing() {
       <section className="landing-stats">
         <div className="landing-container">
           <div className="landing-stats-grid">
-            <div className="landing-stat">
-              <div className="landing-stat-icon"><Icon name="users" size={22} /></div>
-              <div>
-                <div className="value">1.250+</div>
-                <div className="label">Aktif Oyuncu</div>
+            {[
+              { icon: 'users', value: '1.250+', label: 'Aktif Oyuncu' },
+              { icon: 'clock', value: '15.840+', label: 'Oynanan Tur' },
+              { icon: 'brain', value: '6', label: 'AI Modeli' },
+              { icon: 'home', value: '892', label: 'Bugünkü Ev' },
+            ].map((s, i) => (
+              <div key={s.label} className="landing-stat" data-fade style={{ transitionDelay: `${i * 70}ms` }}>
+                <div className="landing-stat-icon"><Icon name={s.icon} size={22} /></div>
+                <div>
+                  <div className="value">{s.value}</div>
+                  <div className="label">{s.label}</div>
+                </div>
               </div>
-            </div>
-            <div className="landing-stat">
-              <div className="landing-stat-icon"><Icon name="clock" size={22} /></div>
-              <div>
-                <div className="value">15.840+</div>
-                <div className="label">Oynanan Tur</div>
-              </div>
-            </div>
-            <div className="landing-stat">
-              <div className="landing-stat-icon"><Icon name="brain" size={22} /></div>
-              <div>
-                <div className="value">6</div>
-                <div className="label">AI Modeli</div>
-              </div>
-            </div>
-            <div className="landing-stat">
-              <div className="landing-stat-icon"><Icon name="home" size={22} /></div>
-              <div>
-                <div className="value">892</div>
-                <div className="label">Bugünkü Ev</div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>

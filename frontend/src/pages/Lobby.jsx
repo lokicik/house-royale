@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/authContextValue'
 import { createLobby, getLobby, getMyLobbies, getMyHistory, getLeaderboard, getMyLeague } from '../lib/api'
 import AppShell from '../components/AppShell'
+import ParticleBanner from '../components/ParticleBanner'
 import { Icon } from '../components/icons'
 import './Lobby.css'
 
@@ -87,7 +88,7 @@ export default function Lobby() {
 
   return (
     <AppShell>
-      <div className="lp-header">
+      <ParticleBanner className="lp-header">
         <div>
           <h1>Hoş geldin, {displayName} 👋</h1>
           <p>Bir oda oluştur ve arkadaşlarını davet et ya da var olan bir odaya katıl.</p>
@@ -107,12 +108,12 @@ export default function Lobby() {
             </div>
           </div>
         )}
-      </div>
+      </ParticleBanner>
 
       {error && <div className="lp-error">{error}</div>}
 
       <div className="lp-grid">
-        <div className="lp-card">
+        <div className="lp-card" style={{ '--i': 0 }}>
           <div className="lp-card-icon"><Icon name="sparkle" size={22} /></div>
           <h2>Yeni Oda Oluştur</h2>
           <p className="lp-card-desc">Hızlı bir oda aç, kodunu paylaş, oyunu yönet.</p>
@@ -139,7 +140,7 @@ export default function Lobby() {
           </form>
         </div>
 
-        <div className="lp-card">
+        <div className="lp-card" style={{ '--i': 1 }}>
           <div className="lp-card-icon"><Icon name="users" size={22} /></div>
           <h2>Mevcut Odaya Katıl</h2>
           <p className="lp-card-desc">Arkadaşından aldığın oda kodunu gir.</p>
@@ -182,10 +183,10 @@ export default function Lobby() {
         <div className="lp-active-lobbies">
           <h3>Aktif Odalarım</h3>
           <ul className="lp-lobby-list">
-            {myLobbies.map(lobby => {
+            {myLobbies.map((lobby, i) => {
               const s = statusLabel(lobby.status)
               return (
-                <li key={lobby.id} className="lp-lobby-row">
+                <li key={lobby.id} className="lp-lobby-row" style={{ '--i': i }}>
                   <span className="lp-lobby-code">{lobby.id}</span>
                   <span className={`lp-status-badge ${s.cls}`}>{s.text}</span>
                   <span className="lp-lobby-meta">{lobby.player_count} oyuncu · {timeAgo(lobby.created_at)}</span>
@@ -203,11 +204,11 @@ export default function Lobby() {
       )}
 
       <div className="lp-info-row">
-        <div className="lp-info">
+        <div className="lp-info" style={{ '--i': 0 }}>
           <h3>Nasıl Oynanır?</h3>
           <p>Ev görselini ve detaylarını incele, fiyatını tahmin et, AI'a karşı yarış. En yakın tahmin tur puanlarını alır.</p>
         </div>
-        <div className="lp-info">
+        <div className="lp-info" style={{ '--i': 1 }}>
           <h3>Liderler</h3>
           {leaderboard.length === 0 ? (
             <p className="lp-empty">Henüz kayıtlı oyun yok.</p>
@@ -222,14 +223,14 @@ export default function Lobby() {
             </ul>
           )}
         </div>
-        <div className="lp-info">
+        <div className="lp-info" style={{ '--i': 2 }}>
           <h3>Oyun Geçmişim</h3>
           {gameHistory.length === 0 ? (
             <p className="lp-empty">Henüz tamamlanmış oyunun yok.</p>
           ) : (
             <ul className="lp-history-list">
               {gameHistory.slice(0, 5).map((rec, i) => (
-                <li key={i} className="lp-history-row">
+                <li key={i} className="lp-history-row" style={{ '--i': i }}>
                   <span className="lp-history-rank">{RANK_MEDALS[rec.rank - 1] ?? `#${rec.rank}`}</span>
                   <span className="lp-history-info">
                     <span className="lp-history-nickname">{rec.nickname}</span>
