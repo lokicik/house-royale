@@ -193,6 +193,16 @@ html[data-theme='dark'] .lr-panel:hover {
   color: var(--hr-text);
 }
 
+.lr-kick-btn {
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--hr-danger-text);
+}
+
+.lr-kick-btn:hover:not(:disabled) {
+  background: var(--hr-danger-bg);
+}
+
 .lr-pill {
   font-size: 10px;
   text-transform: uppercase;

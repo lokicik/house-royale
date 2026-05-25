@@ -141,16 +141,20 @@ html[data-theme='dark'] .landing-nav {
   gap: 36px;
 }
 
-.landing-nav-links a {
+.landing-nav-link {
   color: var(--lp-text);
-  text-decoration: none;
+  font: inherit;
   font-size: 14px;
   font-weight: 500;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
   opacity: 0.76;
   transition: opacity 0.15s ease, color 0.15s ease;
 }
 
-.landing-nav-links a:hover {
+.landing-nav-link:hover {
   opacity: 1;
   color: var(--lp-blue);
 }
@@ -291,26 +295,36 @@ html[data-theme='dark'] .landing-btn-outline {
   align-items: center;
 }
 
-.landing-avatars span {
-  width: 36px;
-  height: 36px;
+.landing-avatar-frame {
+  width: 38px;
+  height: 38px;
   margin-left: -10px;
+  padding: 2px;
   border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.9);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(219, 234, 254, 0.88));
   box-shadow: var(--lp-shadow-soft);
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
-html[data-theme='dark'] .landing-avatars span {
-  border-color: rgba(15, 23, 42, 0.9);
-}
-
-.landing-avatars span:first-child {
+.landing-avatar-frame:first-child {
   margin-left: 0;
+}
+
+.landing-avatar-photo {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center 24%;
+  border-radius: inherit;
+}
+
+html[data-theme='dark'] .landing-avatar-frame {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.92));
+  border-color: rgba(96, 165, 250, 0.2);
+  box-shadow: 0 16px 28px rgba(2, 6, 23, 0.34);
 }
 
 .landing-social-text {
@@ -449,6 +463,16 @@ html[data-theme='dark'] .landing-hero-halo {
   padding: 18px 0 56px;
 }
 
+.landing-scroll-anchor {
+  position: relative;
+  top: -12px;
+  height: 0;
+}
+
+.landing-scroll-anchor-stats {
+  top: -28px;
+}
+
 .landing-features-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -577,7 +601,7 @@ html[data-theme='dark'] .landing-hero-halo {
 }
 
 .landing-stats {
-  padding: 24px 0 40px;
+  padding: 24px 0 82px;
 }
 
 .landing-stats-grid {
@@ -624,7 +648,6 @@ html[data-theme='dark'] .landing-hero-halo {
 }
 
 .landing-footer {
-  margin-top: 42px;
   background: #0f172a;
   color: #cbd5e1;
   border-top: 1px solid #1e293b;
@@ -872,6 +895,15 @@ html[data-theme='dark'] .landing-hero-halo {
 
   .landing-hero-image-wrap {
     width: 100%;
+  }
+
+  .landing-avatar-frame {
+    width: 36px;
+    height: 36px;
+  }
+
+  .landing-social {
+    gap: 12px;
   }
 
   .landing-price-badge {

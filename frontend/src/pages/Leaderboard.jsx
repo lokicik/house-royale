@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import AppShell from '../components/AppShell'
 import ParticleBanner from '../components/ParticleBanner'
-import { Icon, ModelBadge } from '../components/icons'
+import { ModelBadge } from '../components/icons'
 import { useAuth } from '../contexts/authContextValue'
 import { getLeaderboard } from '../lib/api'
 import './Leaderboard.css'

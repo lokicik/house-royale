@@ -4,7 +4,12 @@ import { Icon } from '../components/icons'
 import ThemeToggle from '../components/ThemeToggle'
 import './Landing.css'
 
-const avatarColors = ['#2563eb', '#0f172a', '#60a5fa', '#93c5fd']
+const socialProofPhotos = [
+  '/assets/landing-player-photo.jpg',
+  '/assets/landing-player-photo-2.jpg',
+  '/assets/landing-player-photo-3.jpg',
+  '/assets/landing-player-photo-4.jpg',
+]
 
 const compareRows = [
   { name: 'Sen', pct: 92, you: true, price: '3.68M' },
@@ -50,7 +55,29 @@ export default function Landing() {
   const navigate = useNavigate()
   const goLogin = () => navigate('/login')
   const [barsVisible, setBarsVisible] = useState(false)
+  const navRef = useRef(null)
   const compareRef = useRef(null)
+  const featuresRef = useRef(null)
+  const howRef = useRef(null)
+  const statsRef = useRef(null)
+
+  const scrollToSection = sectionKey => {
+    const sections = {
+      features: featuresRef,
+      how: howRef,
+      stats: statsRef,
+    }
+    const targetRef = sections[sectionKey]
+    if (!targetRef?.current) return
+
+    const navHeight = navRef.current?.offsetHeight ?? 0
+    const top = targetRef.current.getBoundingClientRect().top + window.scrollY - navHeight - 16
+
+    window.scrollTo({
+      top: Math.max(top, 0),
+      behavior: 'smooth',
+    })
+  }
 
   useEffect(() => {
     const fadeEls = document.querySelectorAll('[data-fade]')
@@ -87,7 +114,7 @@ export default function Landing() {
       <div className="landing-bg-orb landing-bg-orb-a" />
       <div className="landing-bg-orb landing-bg-orb-b" />
 
-      <header className="landing-nav">
+      <header className="landing-nav" ref={navRef}>
         <div className="landing-nav-inner">
           <Link to="/" className="landing-brand" aria-label="House Royale">
             <img src="/house-royale-logo.png" alt="House Royale" className="landing-brand-logo" />
@@ -95,9 +122,9 @@ export default function Landing() {
           </Link>
 
           <nav className="landing-nav-links" aria-label="Landing navigation">
-            <a href="#how">Nasıl Oynanır</a>
-            <a href="#features">Özellikler</a>
-            <a href="#stats">İstatistikler</a>
+            <button type="button" className="landing-nav-link" onClick={() => scrollToSection('how')}>Nasıl Oynanır</button>
+            <button type="button" className="landing-nav-link" onClick={() => scrollToSection('features')}>Özellikler</button>
+            <button type="button" className="landing-nav-link" onClick={() => scrollToSection('stats')}>İstatistikler</button>
           </nav>
 
           <div className="landing-nav-actions">
@@ -134,8 +161,10 @@ export default function Landing() {
 
               <div className="landing-social">
                 <div className="landing-avatars" aria-hidden="true">
-                  {avatarColors.map((color, index) => (
-                    <span key={color} style={{ background: color }}>{String.fromCharCode(65 + index)}</span>
+                  {socialProofPhotos.map(photo => (
+                    <span key={photo} className="landing-avatar-frame">
+                      <img src={photo} alt="" className="landing-avatar-photo" />
+                    </span>
                   ))}
                 </div>
                 <div className="landing-social-text">
@@ -173,7 +202,9 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="landing-features" id="features">
+        <div ref={featuresRef} className="landing-scroll-anchor" aria-hidden="true" />
+
+        <section className="landing-features">
           <div className="landing-container">
             <div className="landing-features-grid">
               {featureCards.map((feature, index) => (
@@ -194,7 +225,9 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="landing-how" id="how">
+        <div ref={howRef} className="landing-scroll-anchor" aria-hidden="true" />
+
+        <section className="landing-how">
           <div className="landing-container">
             <h2 className="landing-section-title">Nasıl Çalışır</h2>
             <div className="landing-section-line" aria-hidden="true" />
@@ -221,7 +254,9 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="landing-stats" id="stats">
+        <div ref={statsRef} className="landing-scroll-anchor landing-scroll-anchor-stats" aria-hidden="true" />
+
+        <section className="landing-stats">
           <div className="landing-container">
             <div className="landing-stats-grid">
               {stats.map((stat, index) => (
@@ -252,9 +287,9 @@ export default function Landing() {
             </Link>
 
             <nav className="landing-footer-nav" aria-label="Footer navigation">
-              <a href="#how">Nasıl Oynanır</a>
-              <a href="#features">Özellikler</a>
-              <a href="#stats">İstatistikler</a>
+              <button type="button" className="landing-footer-link-btn" onClick={() => scrollToSection('how')}>Nasıl Oynanır</button>
+              <button type="button" className="landing-footer-link-btn" onClick={() => scrollToSection('features')}>Özellikler</button>
+              <button type="button" className="landing-footer-link-btn" onClick={() => scrollToSection('stats')}>İstatistikler</button>
               <button type="button" className="landing-footer-link-btn" onClick={goLogin}>Giriş Yap</button>
             </nav>
           </div>

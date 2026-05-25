@@ -313,6 +313,18 @@ html[data-theme='dark'] .lp-card:hover {
   border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
+.lp-status-finished {
+  background: var(--hr-soft-blue);
+  color: var(--hr-blue);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+}
+
+.lp-status-role {
+  background: var(--hr-subtle);
+  color: var(--hr-text);
+  border: 1px solid var(--hr-border);
+}
+
 /* Dashboard Lower Panels */
 .lp-info-row {
   margin-top: 28px;
@@ -463,6 +475,17 @@ html[data-theme='dark'] .lp-card:hover {
   background: var(--hr-danger-bg);
   border: 1px solid var(--hr-danger-border);
   color: var(--hr-danger-text);
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.lp-notice {
+  background: var(--hr-soft-blue);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  color: var(--hr-blue);
   padding: 12px 16px;
   border-radius: 12px;
   font-size: 13.5px;

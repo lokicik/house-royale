@@ -17,12 +17,12 @@ import (
 	"github.com/lokicik/house-royale/backend/server/internal/mlclient"
 )
 
-const (
-	writeWait    = 10 * time.Second
-	pongWait     = 60 * time.Second
-	pingPeriod   = (pongWait * 9) / 10
-	maxMsgSize   = 4096
-	cleanupDelay = 30 * time.Second // grace period after game ends before store cleanup
+var (
+	writeWait          = 10 * time.Second
+	pongWait           = 60 * time.Second
+	pingPeriod         = (pongWait * 9) / 10
+	maxMsgSize   int64 = 4096
+	cleanupDelay       = 30 * time.Second // grace period after game ends before store cleanup
 )
 
 var upgrader = websocket.Upgrader{
@@ -39,17 +39,27 @@ type WSHandler struct {
 	LB           leaderboard.Storer
 	HistoryStore history.Storer
 	Leagues      league.Storer
+	Lifecycle    *LobbyLifecycle
 }
 
-func NewWSHandler(h *hub.Hub, store *LobbyStore, sessions *SessionStore, predictor mlclient.Predictor, lb leaderboard.Storer, hs history.Storer, lg league.Storer) *WSHandler {
-	return &WSHandler{Hub: h, Store: store, Sessions: sessions, Predictor: predictor, LB: lb, HistoryStore: hs, Leagues: lg}
+func NewWSHandler(h *hub.Hub, store *LobbyStore, sessions *SessionStore, predictor mlclient.Predictor, lb leaderboard.Storer, hs history.Storer, lg league.Storer, lifecycle *LobbyLifecycle) *WSHandler {
+	return &WSHandler{
+		Hub:          h,
+		Store:        store,
+		Sessions:     sessions,
+		Predictor:    predictor,
+		LB:           lb,
+		HistoryStore: hs,
+		Leagues:      lg,
+		Lifecycle:    lifecycle,
+	}
 }
 
 func (h *WSHandler) ServeWS(c *gin.Context) {
 	lobbyID := c.Param("id")
 	lobby, ok := h.Store.Get(lobbyID)
 	if !ok {
-		c.JSON(http.StatusNotFound, gin.H{"error": "lobby not found"})
+		writeAccessError(c, http.StatusNotFound, errCodeLobbyNotFound, "lobby not found")
 		return
 	}
 
@@ -59,11 +69,13 @@ func (h *WSHandler) ServeWS(c *gin.Context) {
 		playerID = "anonymous"
 	}
 
-	// Reject newcomers once the game is in progress — only existing players may
-	// reconnect.
+	if lobby.IsBlocked(playerID) {
+		writeAccessError(c, http.StatusForbidden, errCodeRemovedFromLobby, "you were removed from this lobby")
+		return
+	}
 	if status := lobby.CurrentStatus(); status != game.StatusWaiting {
-		if !lobby.HasPlayer(playerID) {
-			c.JSON(http.StatusConflict, gin.H{"error": "game already in progress"})
+		if !lobby.HasPlayer(playerID) && playerID != lobby.HostID {
+			writeAccessError(c, http.StatusConflict, errCodeGameInProgress, "game already in progress")
 			return
 		}
 	}
@@ -75,50 +87,14 @@ func (h *WSHandler) ServeWS(c *gin.Context) {
 	}
 
 	client := hub.NewClient(lobbyID, playerID, conn)
-	h.Hub.Register <- client
-
-	// Hydrate this socket with the current lobby snapshot so it can render the
-	// waiting room without waiting for the next event.
-	h.sendLobbyState(client, lobby)
+	h.Hub.Register(client)
 
 	go h.writePump(client)
 	go h.readPump(client)
 }
 
 func (h *WSHandler) readPump(c *hub.Client) {
-	defer func() {
-		// Collect nickname before marking player as disconnected.
-		nickname := ""
-		if lobby, ok := h.Store.Get(c.LobbyID); ok {
-			if p, ok := lobby.GetPlayer(c.PlayerID); ok {
-				nickname = p.Nickname
-			}
-			// If the game has not started yet, fully remove the player so the
-			// waiting room reflects who's actually there. Once a game is in
-			// progress (or finished), preserve their slot so they can rejoin
-			// and keep their score.
-			if lobby.CurrentStatus() == game.StatusWaiting {
-				lobby.RemovePlayer(c.PlayerID)
-			} else {
-				lobby.MarkConnected(c.PlayerID, false)
-			}
-		}
-
-		// Unregister from hub first: closes c.Send so writePump exits,
-		// and ensures the departed player won't receive their own PLAYER_LEFT.
-		h.Hub.Unregister <- c
-		c.Conn.Close()
-
-		// Notify the session so a vote-wait can re-evaluate (the disconnected
-		// player no longer needs to vote).
-		if session, ok := h.Sessions.Get(c.LobbyID); ok {
-			session.NotifyPlayerDisconnected(c.PlayerID)
-		}
-
-		// Broadcast after unregister so only remaining clients receive it.
-		h.broadcastPlayerLeft(c.LobbyID, c.PlayerID, nickname)
-		h.broadcastActivity(c.LobbyID, "left", c.PlayerID, nickname)
-	}()
+	defer h.handleDisconnect(c)
 
 	c.Conn.SetReadLimit(maxMsgSize)
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -133,7 +109,7 @@ func (h *WSHandler) readPump(c *hub.Client) {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("ws read error [%s]: %v", c.PlayerID, err)
 			}
-			break
+			return
 		}
 
 		var msg game.Message
@@ -153,11 +129,57 @@ func (h *WSHandler) readPump(c *hub.Client) {
 			h.handleUpdateSettings(c, msg)
 		case game.MsgNextRoundVote:
 			h.handleNextRoundVote(c)
+		case game.MsgKickPlayer:
+			h.handleKickPlayer(c, msg)
+		case game.MsgCloseRoom:
+			h.handleCloseRoom(c)
 		case game.MsgLeave:
+			c.SetCloseReason("left")
 			return
 		default:
 			h.sendError(c, "unknown message type")
 		}
+	}
+}
+
+func (h *WSHandler) handleDisconnect(c *hub.Client) {
+	reason := c.CloseReason()
+	if reason == "" {
+		reason = "disconnect"
+	}
+	h.Hub.Unregister(c)
+	c.CloseConn()
+
+	if skipDisconnectCleanup(reason) {
+		if h.Lifecycle != nil {
+			h.Lifecycle.Refresh(c.LobbyID)
+		}
+		return
+	}
+
+	nickname := ""
+	remove := false
+	if lobby, ok := h.Store.Get(c.LobbyID); ok {
+		if p, ok := lobby.GetPlayer(c.PlayerID); ok {
+			nickname = p.Nickname
+		}
+		if lobby.CurrentStatus() == game.StatusWaiting {
+			lobby.RemovePlayer(c.PlayerID)
+			remove = true
+		} else {
+			lobby.MarkConnected(c.PlayerID, false)
+		}
+	}
+
+	if session, ok := h.Sessions.Get(c.LobbyID); ok {
+		session.NotifyPlayerDisconnected(c.PlayerID)
+	}
+
+	h.broadcastPlayerLeft(c.LobbyID, c.PlayerID, nickname, remove, reason)
+	h.broadcastActivity(c.LobbyID, "left", c.PlayerID, nickname)
+
+	if h.Lifecycle != nil {
+		h.Lifecycle.Refresh(c.LobbyID)
 	}
 }
 
@@ -169,9 +191,17 @@ func (h *WSHandler) handleJoin(c *hub.Client, msg game.Message) {
 	}
 	lobby, ok := h.Store.Get(c.LobbyID)
 	if !ok {
+		h.sendError(c, "lobby not found")
 		return
 	}
+	if lobby.IsBlocked(c.PlayerID) {
+		h.sendError(c, "you were removed from this lobby")
+		c.SetCloseReason("kicked")
+		return
+	}
+
 	reconnect := lobby.AddOrReconnectPlayer(&game.Player{ID: c.PlayerID, Nickname: p.Nickname})
+	h.sendLobbyState(c, lobby)
 	h.broadcastPlayerJoined(c, p.Nickname)
 	if reconnect {
 		h.broadcastActivity(c.LobbyID, "rejoined", c.PlayerID, p.Nickname)
@@ -179,21 +209,14 @@ func (h *WSHandler) handleJoin(c *hub.Client, msg game.Message) {
 		h.broadcastActivity(c.LobbyID, "joined", c.PlayerID, p.Nickname)
 	}
 
-	// Send each existing player to the newly joined client so their
-	// waiting-room list is complete regardless of join order.
-	for _, existing := range lobby.Snapshot() {
-		if existing.ID == c.PlayerID {
-			continue
-		}
-		payload, _ := json.Marshal(map[string]string{
-			"player_id": existing.ID,
-			"nickname":  existing.Nickname,
+	if h.Lifecycle != nil {
+		h.Lifecycle.Refresh(c.LobbyID)
+	}
+
+	if session, ok := h.Sessions.Get(c.LobbyID); ok {
+		session.ReplayTo(func(t game.MessageType, payload any) {
+			h.sendToClient(c, t, payload)
 		})
-		out, _ := json.Marshal(game.Message{Type: game.MsgPlayerJoined, Payload: payload})
-		select {
-		case c.Send <- out:
-		default:
-		}
 	}
 }
 
@@ -225,20 +248,41 @@ func (h *WSHandler) handleReady(c *hub.Client) {
 	}
 	h.broadcastActivity(c.LobbyID, "ready", c.PlayerID, hostNickname)
 
+	lobby.SetStatus(game.StatusPlaying)
 	session := game.NewSession(c.LobbyID, lobby, h.Hub, h.Predictor, game.DefaultConfig)
 	session.HistoryStore = h.HistoryStore
 	session.LeagueStore = h.Leagues
 	h.Sessions.Set(c.LobbyID, session)
+	if h.Lifecycle != nil {
+		h.Lifecycle.Refresh(c.LobbyID)
+	}
+
 	log.Printf("session.start lobby=%s host=%s players=%d", c.LobbyID, c.PlayerID, lobby.PlayerCount())
 	go func(lobbyID string) {
 		session.Run()
+		if session.Aborted() {
+			log.Printf("session.abort lobby=%s rounds=%d", lobbyID, len(session.RoundSummaries))
+			return
+		}
+
+		if h.Lifecycle != nil {
+			h.Lifecycle.Refresh(lobbyID)
+		}
+
 		log.Printf("session.end lobby=%s rounds=%d", lobbyID, len(session.RoundSummaries))
 		if h.LB != nil {
 			lbRounds := make([][]leaderboard.RoundEntry, len(session.RoundSummaries))
 			for i, round := range session.RoundSummaries {
 				lbRound := make([]leaderboard.RoundEntry, len(round))
 				for j, e := range round {
-					lbRound[j] = leaderboard.RoundEntry{ID: e.ID, Name: e.Name, IsAI: e.IsAI, League: e.League, DeviationPct: e.DeviationPct, PointsEarned: e.PointsEarned}
+					lbRound[j] = leaderboard.RoundEntry{
+						ID:           e.ID,
+						Name:         e.Name,
+						IsAI:         e.IsAI,
+						League:       e.League,
+						DeviationPct: e.DeviationPct,
+						PointsEarned: e.PointsEarned,
+					}
 				}
 				lbRounds[i] = lbRound
 			}
@@ -247,9 +291,13 @@ func (h *WSHandler) handleReady(c *hub.Client) {
 		} else {
 			log.Printf("leaderboard.record.skip lobby=%s reason=LB-nil", lobbyID)
 		}
+
 		time.Sleep(cleanupDelay)
 		h.Sessions.Delete(lobbyID)
 		h.Store.Delete(lobbyID)
+		if h.Lifecycle != nil {
+			h.Lifecycle.Refresh(lobbyID)
+		}
 	}(c.LobbyID)
 }
 
@@ -317,19 +365,97 @@ func (h *WSHandler) handleNextRoundVote(c *hub.Client) {
 	}
 }
 
+func (h *WSHandler) handleKickPlayer(c *hub.Client, msg game.Message) {
+	var p game.KickPlayerPayload
+	if err := json.Unmarshal(msg.Payload, &p); err != nil {
+		h.sendError(c, "invalid KICK_PLAYER payload")
+		return
+	}
+
+	lobby, ok := h.Store.Get(c.LobbyID)
+	if !ok {
+		h.sendError(c, "lobby not found")
+		return
+	}
+	if c.PlayerID != lobby.HostID {
+		h.sendError(c, "only the host can kick players")
+		return
+	}
+	if lobby.CurrentStatus() != game.StatusWaiting {
+		h.sendError(c, "players can only be kicked before the game starts")
+		return
+	}
+	if p.PlayerID == "" || p.PlayerID == c.PlayerID {
+		h.sendError(c, "the host cannot kick this player")
+		return
+	}
+
+	target, ok := lobby.GetPlayer(p.PlayerID)
+	if !ok {
+		h.sendError(c, "player not found")
+		return
+	}
+
+	hostNickname := ""
+	if host, ok := lobby.GetPlayer(c.PlayerID); ok {
+		hostNickname = host.Nickname
+	}
+
+	lobby.BlockPlayer(p.PlayerID)
+	if h.Lifecycle != nil {
+		h.Lifecycle.Refresh(c.LobbyID)
+	}
+
+	h.sendToPlayer(c.LobbyID, p.PlayerID, game.MsgPlayerKicked, game.PlayerKickedPayload{
+		PlayerID: p.PlayerID,
+		Reason:   "kicked",
+		Message:  "Host seni odadan çıkardı.",
+	})
+	h.broadcastPlayerLeft(c.LobbyID, p.PlayerID, target.Nickname, true, "kicked")
+	h.broadcastActivity(c.LobbyID, "kicked", c.PlayerID, hostNickname)
+
+	time.AfterFunc(roomCloseNotifyDelay, func() {
+		h.Hub.ClosePlayer(c.LobbyID, p.PlayerID, "kicked")
+	})
+}
+
+func (h *WSHandler) handleCloseRoom(c *hub.Client) {
+	lobby, ok := h.Store.Get(c.LobbyID)
+	if !ok {
+		h.sendError(c, "lobby not found")
+		return
+	}
+	if c.PlayerID != lobby.HostID {
+		h.sendError(c, "only the host can close the room")
+		return
+	}
+	status := lobby.CurrentStatus()
+	if status != game.StatusWaiting && status != game.StatusFinished {
+		h.sendError(c, "the room can only be closed while waiting or after the game ends")
+		return
+	}
+
+	if h.Lifecycle != nil {
+		h.Lifecycle.CloseRoom(c.LobbyID, "host_closed")
+	}
+}
+
 func (h *WSHandler) writePump(c *hub.Client) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		c.Conn.Close()
+		c.CloseConn()
 	}()
 
 	for {
 		select {
 		case data, ok := <-c.Send:
+			if c.Conn == nil {
+				return
+			}
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				_ = c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 			if err := c.Conn.WriteMessage(websocket.TextMessage, data); err != nil {
@@ -337,6 +463,9 @@ func (h *WSHandler) writePump(c *hub.Client) {
 			}
 
 		case <-ticker.C:
+			if c.Conn == nil {
+				return
+			}
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
@@ -346,12 +475,7 @@ func (h *WSHandler) writePump(c *hub.Client) {
 }
 
 func (h *WSHandler) sendError(c *hub.Client, msg string) {
-	payload, _ := json.Marshal(game.ErrorPayload{Message: msg})
-	out, _ := json.Marshal(game.Message{Type: game.MsgError, Payload: payload})
-	select {
-	case c.Send <- out:
-	default:
-	}
+	h.sendToClient(c, game.MsgError, game.ErrorPayload{Message: msg})
 }
 
 func (h *WSHandler) sendLobbyState(c *hub.Client, lobby *game.Lobby) {
@@ -372,36 +496,50 @@ func (h *WSHandler) sendLobbyState(c *hub.Client, lobby *game.Lobby) {
 		AvailableAIModels: game.ModelsForLeague(lobby.League),
 		YouID:             c.PlayerID,
 	}
-	data, err := json.Marshal(payload)
+	h.sendToClient(c, game.MsgLobbyState, payload)
+}
+
+func (h *WSHandler) sendBroadcast(lobbyID string, t game.MessageType, payload any) {
+	data, err := encodeWSMessage(t, payload)
 	if err != nil {
 		return
 	}
-	out, _ := json.Marshal(game.Message{Type: game.MsgLobbyState, Payload: json.RawMessage(data)})
+	h.Hub.SendToLobby(lobbyID, data)
+}
+
+func (h *WSHandler) sendToPlayer(lobbyID, playerID string, t game.MessageType, payload any) {
+	data, err := encodeWSMessage(t, payload)
+	if err != nil {
+		return
+	}
+	h.Hub.SendToPlayer(lobbyID, playerID, data)
+}
+
+func (h *WSHandler) sendToClient(c *hub.Client, t game.MessageType, payload any) {
+	data, err := encodeWSMessage(t, payload)
+	if err != nil {
+		return
+	}
 	select {
-	case c.Send <- out:
+	case c.Send <- data:
 	default:
 	}
 }
 
-func (h *WSHandler) sendBroadcast(lobbyID string, t game.MessageType, payload any) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		return
-	}
-	out, _ := json.Marshal(game.Message{Type: t, Payload: json.RawMessage(data)})
-	h.Hub.SendToLobby(lobbyID, out)
-}
-
 func (h *WSHandler) broadcastPlayerJoined(c *hub.Client, nickname string) {
-	payload, _ := json.Marshal(map[string]string{"player_id": c.PlayerID, "nickname": nickname})
-	out, _ := json.Marshal(game.Message{Type: game.MsgPlayerJoined, Payload: payload})
-	h.Hub.SendToLobby(c.LobbyID, out)
+	h.sendBroadcast(c.LobbyID, game.MsgPlayerJoined, map[string]string{
+		"player_id": c.PlayerID,
+		"nickname":  nickname,
+	})
 }
 
-func (h *WSHandler) broadcastPlayerLeft(lobbyID, playerID, nickname string) {
-	payload, _ := json.Marshal(map[string]string{"player_id": playerID, "nickname": nickname})
-	out, _ := json.Marshal(game.Message{Type: game.MsgPlayerLeft, Payload: payload})
-	h.Hub.SendToLobby(lobbyID, out)
+func (h *WSHandler) broadcastPlayerLeft(lobbyID, playerID, nickname string, remove bool, reason string) {
+	h.sendBroadcast(lobbyID, game.MsgPlayerLeft, game.PlayerLeftPayload{
+		PlayerID: playerID,
+		Nickname: nickname,
+		Remove:   remove,
+		Reason:   reason,
+	})
 }
 
 func (h *WSHandler) broadcastActivity(lobbyID, kind, actorID, actorNickname string) {
@@ -412,4 +550,21 @@ func (h *WSHandler) broadcastActivity(lobbyID, kind, actorID, actorNickname stri
 		UnixMillis:    time.Now().UnixMilli(),
 	}
 	h.sendBroadcast(lobbyID, game.MsgLobbyActivity, payload)
+}
+
+func encodeWSMessage(t game.MessageType, payload any) ([]byte, error) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(game.Message{Type: t, Payload: json.RawMessage(data)})
+}
+
+func skipDisconnectCleanup(reason string) bool {
+	switch reason {
+	case "replaced", "kicked", "host_closed", "host_absent", "stale_empty":
+		return true
+	default:
+		return false
+	}
 }

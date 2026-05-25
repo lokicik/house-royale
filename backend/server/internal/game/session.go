@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"log"
 	"sort"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/lokicik/house-royale/backend/server/internal/history"
@@ -66,6 +68,15 @@ type Session struct {
 	// voteSig wakes the vote-wait loop when a vote arrives or a player
 	// disconnects. Buffered/non-blocking sends.
 	voteSig chan struct{}
+
+	abortCh    chan struct{}
+	abortOnce  sync.Once
+	aborted    atomic.Bool
+	stateMu    sync.RWMutex
+	liveRound  *RoundStartPayload
+	liveResult *RoundResultPayload
+	liveVote   *RoundVoteStatePayload
+	liveBoard  map[string]any
 }
 
 func NewSession(lobbyID string, lobby *Lobby, b Broadcaster, p mlclient.Predictor, cfg SessionConfig) *Session {
@@ -78,6 +89,7 @@ func NewSession(lobbyID string, lobby *Lobby, b Broadcaster, p mlclient.Predicto
 		GuessCh:     make(chan playerGuess, 32),
 		aiScores:    make(map[string]int),
 		voteSig:     make(chan struct{}, 32),
+		abortCh:     make(chan struct{}),
 	}
 }
 
@@ -91,6 +103,9 @@ func (s *Session) SubmitGuess(playerID string, price float64) {
 
 // VoteNextRound records a player's vote and nudges the vote-wait loop.
 func (s *Session) VoteNextRound(playerID string) {
+	if s.Aborted() {
+		return
+	}
 	if s.lobby.RecordVote(playerID) {
 		s.poke()
 	}
@@ -108,11 +123,76 @@ func (s *Session) poke() {
 	}
 }
 
+func (s *Session) Abort() {
+	s.aborted.Store(true)
+	s.abortOnce.Do(func() {
+		close(s.abortCh)
+	})
+	s.poke()
+}
+
+func (s *Session) Aborted() bool {
+	return s.aborted.Load()
+}
+
+func (s *Session) ReplayTo(send func(MessageType, any)) {
+	s.stateMu.RLock()
+	defer s.stateMu.RUnlock()
+
+	if s.Aborted() {
+		return
+	}
+	if s.liveBoard != nil {
+		send(MsgLeaderboard, cloneMapAny(s.liveBoard))
+		return
+	}
+	if s.liveResult != nil {
+		send(MsgRoundResult, *s.liveResult)
+		if s.liveVote != nil {
+			send(MsgRoundVoteState, *s.liveVote)
+		}
+		return
+	}
+	if s.liveRound != nil {
+		send(MsgRoundStart, *s.liveRound)
+	}
+}
+
+func (s *Session) setLiveRound(payload RoundStartPayload) {
+	s.stateMu.Lock()
+	defer s.stateMu.Unlock()
+	s.liveRound = cloneRoundStartPayload(payload)
+	s.liveResult = nil
+	s.liveVote = nil
+	s.liveBoard = nil
+}
+
+func (s *Session) setLiveResult(payload RoundResultPayload) {
+	s.stateMu.Lock()
+	defer s.stateMu.Unlock()
+	s.liveResult = cloneRoundResultPayload(payload)
+	s.liveVote = nil
+	s.liveBoard = nil
+}
+
+func (s *Session) setLiveVote(payload RoundVoteStatePayload) {
+	s.stateMu.Lock()
+	defer s.stateMu.Unlock()
+	copyPayload := payload
+	copyPayload.Voted = append([]string(nil), payload.Voted...)
+	copyPayload.Needed = append([]string(nil), payload.Needed...)
+	s.liveVote = &copyPayload
+}
+
+func (s *Session) setLiveBoard(payload map[string]any) {
+	s.stateMu.Lock()
+	defer s.stateMu.Unlock()
+	s.liveBoard = cloneMapAny(payload)
+}
+
 // Run executes the full game loop. Call as a goroutine.
 func (s *Session) Run() {
-	s.lobby.mu.Lock()
-	s.lobby.Status = StatusPlaying
-	s.lobby.mu.Unlock()
+	s.lobby.SetStatus(StatusPlaying)
 
 	settings, _ := s.lobby.SettingsSnapshot()
 	roundCount := settings.RoundCount
@@ -128,6 +208,9 @@ func (s *Session) Run() {
 	used := make(map[string]bool)
 
 	for round := 1; round <= roundCount; round++ {
+		if s.Aborted() {
+			return
+		}
 		prop := pickUnused(props, used)
 		used[prop.ID] = true
 
@@ -154,14 +237,21 @@ func (s *Session) Run() {
 			<-s.GuessCh
 		}
 
-		s.broadcast(MsgRoundStart, roundStartPayload{
+		deadline := time.Now().Add(roundDuration)
+		startPayload := RoundStartPayload{
 			Round:        round,
 			TotalRounds:  roundCount,
 			TimeLimitSec: int(roundDuration.Seconds()),
+			DeadlineTS:   deadline.UnixMilli(),
 			Property:     prop.Public(),
-		})
+		}
+		s.setLiveRound(startPayload)
+		s.broadcast(MsgRoundStart, startPayload)
 
-		guesses := s.collectGuesses(roundDuration)
+		guesses, ok := s.collectGuesses(roundDuration)
+		if !ok {
+			return
+		}
 
 		players := s.lobby.Snapshot()
 		results, aiResults := scoreRound(players, guesses, aiResp.Predictions, prop.PriceTRY)
@@ -202,48 +292,56 @@ func (s *Session) Run() {
 		}
 		s.RoundSummaries = append(s.RoundSummaries, roundRow)
 
-		s.broadcast(MsgRoundResult, roundResultPayload{
+		resultPayload := RoundResultPayload{
 			Round:         round,
 			PropertyID:    prop.ID,
 			ActualPrice:   prop.PriceTRY,
 			PlayerResults: results,
 			AIPredictions: aiResults,
-		})
+		}
+		s.setLiveResult(resultPayload)
+		s.broadcast(MsgRoundResult, resultPayload)
 
 		if round < roundCount {
-			s.waitForNextRoundVotes(round)
+			if !s.waitForNextRoundVotes(round) {
+				return
+			}
 		}
 	}
 
 	s.broadcastLeaderboard()
+	if s.Aborted() {
+		return
+	}
 	s.recordHistory()
 
-	s.lobby.mu.Lock()
-	s.lobby.Status = StatusFinished
-	s.lobby.mu.Unlock()
+	s.lobby.SetStatus(StatusFinished)
 }
 
-func (s *Session) collectGuesses(duration time.Duration) map[string]float64 {
+func (s *Session) collectGuesses(duration time.Duration) (map[string]float64, bool) {
 	guesses := make(map[string]float64)
-	deadline := time.After(duration)
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
 
 	for {
 		// Re-snapshot on every iteration so disconnected players are excluded.
 		if allSubmitted(guesses, s.lobby.Snapshot()) {
-			return guesses
+			return guesses, true
 		}
 		select {
 		case g := <-s.GuessCh:
 			guesses[g.PlayerID] = g.Price
-		case <-deadline:
-			return guesses
+		case <-timer.C:
+			return guesses, true
+		case <-s.abortCh:
+			return guesses, false
 		}
 	}
 }
 
 // waitForNextRoundVotes blocks until every currently-connected real player has
 // voted to advance, or VoteTimeout elapses, whichever comes first.
-func (s *Session) waitForNextRoundVotes(round int) {
+func (s *Session) waitForNextRoundVotes(round int) bool {
 	s.lobby.ResetVotes()
 	// Drain stale signals from a prior round.
 	for len(s.voteSig) > 0 {
@@ -260,14 +358,16 @@ func (s *Session) waitForNextRoundVotes(round int) {
 		_, needed := s.lobby.VoteState()
 		// If no connected players remain, or all connected have voted, advance.
 		if len(needed) == 0 {
-			return
+			return true
 		}
 		select {
 		case <-s.voteSig:
 			s.broadcastVoteState(round, deadline)
 		case <-timer.C:
 			s.broadcastVoteState(round, deadline)
-			return
+			return true
+		case <-s.abortCh:
+			return false
 		}
 	}
 }
@@ -281,6 +381,12 @@ func (s *Session) broadcastVoteState(round int, deadline time.Time) {
 		needed = []string{}
 	}
 	s.broadcast(MsgRoundVoteState, RoundVoteStatePayload{
+		Round:      round,
+		Voted:      voted,
+		Needed:     needed,
+		DeadlineTS: deadline.UnixMilli(),
+	})
+	s.setLiveVote(RoundVoteStatePayload{
 		Round:      round,
 		Voted:      voted,
 		Needed:     needed,
@@ -368,7 +474,9 @@ func (s *Session) broadcastLeaderboard() {
 	for i := range entries {
 		entries[i].Rank = i + 1
 	}
-	s.broadcast(MsgLeaderboard, map[string]any{"players": entries})
+	payload := map[string]any{"players": entries}
+	s.setLiveBoard(payload)
+	s.broadcast(MsgLeaderboard, payload)
 }
 
 func (s *Session) recordHistory() {
@@ -443,17 +551,47 @@ func pickUnused(props []property.Property, used map[string]bool) property.Proper
 
 // --- payload types ---
 
-type roundStartPayload struct {
+type RoundStartPayload struct {
 	Round        int                 `json:"round"`
 	TotalRounds  int                 `json:"total_rounds"`
 	TimeLimitSec int                 `json:"time_limit_sec"`
+	DeadlineTS   int64               `json:"deadline_ts,omitempty"`
 	Property     property.PublicView `json:"property"`
 }
 
-type roundResultPayload struct {
+type RoundResultPayload struct {
 	Round         int                 `json:"round"`
 	PropertyID    string              `json:"property_id"`
 	ActualPrice   float64             `json:"actual_price"`
 	PlayerResults []PlayerResult      `json:"player_results"`
 	AIPredictions map[string]AIResult `json:"ai_predictions"`
+}
+
+func cloneRoundStartPayload(payload RoundStartPayload) *RoundStartPayload {
+	copyPayload := payload
+	copyPayload.Property.ImageURLs = append([]string(nil), payload.Property.ImageURLs...)
+	return &copyPayload
+}
+
+func cloneRoundResultPayload(payload RoundResultPayload) *RoundResultPayload {
+	copyPayload := payload
+	copyPayload.PlayerResults = append([]PlayerResult(nil), payload.PlayerResults...)
+	if payload.AIPredictions != nil {
+		copyPayload.AIPredictions = make(map[string]AIResult, len(payload.AIPredictions))
+		for k, v := range payload.AIPredictions {
+			copyPayload.AIPredictions[k] = v
+		}
+	}
+	return &copyPayload
+}
+
+func cloneMapAny(src map[string]any) map[string]any {
+	if src == nil {
+		return nil
+	}
+	out := make(map[string]any, len(src))
+	for k, v := range src {
+		out[k] = v
+	}
+	return out
 }

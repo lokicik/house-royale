@@ -66,9 +66,9 @@ export default function Profile() {
 
   useEffect(() => {
     if (!user) return
-    setLoading(true)
-    setError(null)
     user.getIdToken().then(idToken => {
+      setLoading(true)
+      setError(null)
       Promise.all([
         getLeaderboard().then(d => ({ ok: true, d })).catch(e => ({ ok: false, e })),
         getMyHistory(user, idToken).then(d => ({ ok: true, d })).catch(e => ({ ok: false, e })),

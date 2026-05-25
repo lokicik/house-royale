@@ -32,10 +32,10 @@ func main() {
 	}
 
 	h := hub.New()
-	go h.Run()
 
 	store := handlers.NewLobbyStore()
 	sessions := handlers.NewSessionStore()
+	lifecycle := handlers.NewLobbyLifecycle(store, sessions, h)
 	predictor := mlclient.New(cfg.MLInfraURL)
 	log.Printf("ml-infra client targeting %s", cfg.MLInfraURL)
 
@@ -63,8 +63,8 @@ func main() {
 	log.Printf("storage backend: leaderboard=%T history=%T league=%T appEnv=%s firebaseProject=%s corsOrigins=%v",
 		lb, hs, lg, cfg.AppEnv, cfg.FirebaseProjectID, cfg.CORSOrigins)
 
-	lobbyHandler := handlers.NewLobbyHandler(store, lg)
-	wsHandler := handlers.NewWSHandler(h, store, sessions, predictor, lb, hs, lg)
+	lobbyHandler := handlers.NewLobbyHandler(store, lg, lifecycle)
+	wsHandler := handlers.NewWSHandler(h, store, sessions, predictor, lb, hs, lg, lifecycle)
 	lbHandler := &handlers.LeaderboardHandler{LB: lb, League: lg}
 	historyHandler := handlers.NewHistoryHandler(hs)
 	leagueHandler := handlers.NewLeagueHandler(lg)
@@ -88,7 +88,7 @@ func main() {
 	auth := middleware.Auth()
 	r.POST("/lobbies", auth, lobbyHandler.Create)
 	r.GET("/lobbies", auth, lobbyHandler.List)
-	r.GET("/lobbies/:id", lobbyHandler.Get)
+	r.GET("/lobbies/:id", auth, lobbyHandler.Get)
 	r.GET("/history", auth, historyHandler.Get)
 	r.GET("/me/league", auth, leagueHandler.GetMine)
 	r.GET("/ws/lobby/:id", auth, wsHandler.ServeWS)

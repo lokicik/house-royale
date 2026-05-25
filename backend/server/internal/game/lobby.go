@@ -99,6 +99,7 @@ type Lobby struct {
 	Settings       LobbySettings      `json:"settings"`
 	AIModels       map[string]bool    `json:"ai_models"`
 	NextRoundVotes map[string]bool    `json:"-"`
+	BlockedPlayers map[string]bool    `json:"-"`
 	mu             sync.RWMutex
 }
 
@@ -115,6 +116,7 @@ func NewLobby(id, hostID string, hostLeague league.League) *Lobby {
 		Settings:       defaultSettings(),
 		AIModels:       defaultAIModels(hostLeague),
 		NextRoundVotes: make(map[string]bool),
+		BlockedPlayers: make(map[string]bool),
 	}
 }
 
@@ -145,6 +147,7 @@ func (l *Lobby) RemovePlayer(playerID string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	delete(l.Players, playerID)
+	delete(l.NextRoundVotes, playerID)
 }
 
 func (l *Lobby) MarkConnected(playerID string, connected bool) {
@@ -161,6 +164,18 @@ func (l *Lobby) PlayerCount() int {
 	return len(l.Players)
 }
 
+func (l *Lobby) ConnectedPlayerCount() int {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	count := 0
+	for _, p := range l.Players {
+		if p.Connected {
+			count++
+		}
+	}
+	return count
+}
+
 func (l *Lobby) GetPlayer(playerID string) (*Player, bool) {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
@@ -171,6 +186,49 @@ func (l *Lobby) GetPlayer(playerID string) (*Player, bool) {
 func (l *Lobby) HasPlayer(playerID string) bool {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
+	_, ok := l.Players[playerID]
+	return ok
+}
+
+func (l *Lobby) IsBlocked(playerID string) bool {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	return l.BlockedPlayers[playerID]
+}
+
+func (l *Lobby) BlockPlayer(playerID string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.BlockedPlayers[playerID] = true
+	delete(l.Players, playerID)
+	delete(l.NextRoundVotes, playerID)
+}
+
+func (l *Lobby) AccessibleBy(playerID string) bool {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	if l.BlockedPlayers[playerID] {
+		return false
+	}
+	if playerID == l.HostID {
+		return true
+	}
+	if l.Status == StatusWaiting {
+		return true
+	}
+	_, ok := l.Players[playerID]
+	return ok
+}
+
+func (l *Lobby) ListedFor(playerID string) bool {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	if l.BlockedPlayers[playerID] {
+		return false
+	}
+	if playerID == l.HostID {
+		return true
+	}
 	_, ok := l.Players[playerID]
 	return ok
 }
@@ -204,6 +262,12 @@ func (l *Lobby) CurrentStatus() Status {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 	return l.Status
+}
+
+func (l *Lobby) SetStatus(status Status) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.Status = status
 }
 
 // ApplyUpdate merges a partial settings/AI update under a single lock.

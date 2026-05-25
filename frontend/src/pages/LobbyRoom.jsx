@@ -1,34 +1,35 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../contexts/authContextValue'
 import { useWebSocket } from '../hooks/useWebSocket'
-import { wsUrl } from '../lib/api'
+import { probeLobbyAccess, wsUrl } from '../lib/api'
 import AppShell from '../components/AppShell'
 import { Icon, ModelBadge } from '../components/icons'
 import DistrictMap from '../components/DistrictMap'
 import './LobbyRoom.css'
+
+void React
 
 const ROUND_COUNT_OPTIONS = [3, 6]
 const ROUND_DURATION_OPTIONS = [30, 60]
 const ACTIVITY_MAX = 20
 
 const ACTIVITY_VERBS = {
-  joined: 'lobiye katıldı',
-  rejoined: 'lobiye geri döndü',
-  left: 'lobiden ayrıldı',
-  ready: 'oyunu başlattı',
-  settings_changed: 'oyun ayarlarını güncelledi',
-  ai_toggled: 'AI rakiplerini güncelledi',
-  submitted: 'tahminini gönderdi',
-  voted_next: 'sonraki tura hazır',
-  round_advanced: 'sonraki tura geçildi',
+  joined: 'lobiye katildi',
+  rejoined: 'lobiye geri dondu',
+  left: 'lobiden ayrildi',
+  kicked: 'bir oyuncuyu odadan cikardi',
+  ready: 'oyunu baslatti',
+  settings_changed: 'oyun ayarlarini guncelledi',
+  ai_toggled: 'AI rakiplerini guncelledi',
+  submitted: 'tahminini gonderdi',
+  voted_next: 'sonraki tura hazir',
+  round_advanced: 'sonraki tura gecti',
 }
-
-const fmt = (n) => n?.toLocaleString('tr-TR') ?? '—'
 
 const LEAGUE_LABEL = {
   bronze: 'Bronz',
-  gold: 'Altın',
+  gold: 'Altin',
   diamond: 'Elmas',
 }
 
@@ -37,6 +38,10 @@ const LEAGUE_EMOJI = {
   gold: '🥇',
   diamond: '💎',
 }
+
+const ROUND_MEDALS = ['🥇', '🥈', '🥉']
+
+const fmt = (n) => n?.toLocaleString('tr-TR') ?? '-'
 
 function LeagueBadge({ league }) {
   if (!league) return null
@@ -57,10 +62,46 @@ function initials(name) {
 function relativeTime(ts) {
   if (!ts) return ''
   const diff = Math.max(0, Date.now() - ts)
-  if (diff < 10_000) return 'az önce'
-  if (diff < 60_000) return `${Math.floor(diff / 1000)}sn önce`
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}dk önce`
-  return `${Math.floor(diff / 3_600_000)}sa önce`
+  if (diff < 10_000) return 'az once'
+  if (diff < 60_000) return `${Math.floor(diff / 1000)}sn once`
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}dk once`
+  return `${Math.floor(diff / 3_600_000)}sa once`
+}
+
+function computeRoundTimeLeft(payload) {
+  if (!payload) return 0
+  if (payload.deadline_ts) {
+    return Math.max(0, Math.ceil((payload.deadline_ts - Date.now()) / 1000))
+  }
+  return payload.time_limit_sec ?? 0
+}
+
+function roomClosedMessage(reason) {
+  if (reason === 'host_closed') return 'Oda host tarafindan kapatildi.'
+  if (reason === 'host_absent') return 'Host geri donmedigi icin oda kapatildi.'
+  if (reason === 'stale_empty') return 'Oda sure asimi nedeniyle kapatildi.'
+  return 'Oda kapatildi.'
+}
+
+function terminalMessageFromErrorCode(errorCode, fallbackMessage) {
+  if (errorCode === 'removed_from_lobby') {
+    return 'Host seni odadan cikardi.'
+  }
+  if (errorCode === 'lobby_not_found') {
+    return 'Oda artik mevcut degil.'
+  }
+  if (errorCode === 'game_in_progress') {
+    return 'Bu oyuna artik baglanamiyorsun.'
+  }
+  return fallbackMessage || 'Odaya su anda ulasilamiyor.'
+}
+
+function connectionStatusLabel(connectionState, connectionError) {
+  if (connectionState === 'connected') return 'Bagli'
+  if (connectionState === 'reconnecting') return connectionError ?? 'Yeniden baglaniliyor...'
+  if (connectionState === 'terminal') return 'Oda erisilemez hale geldi.'
+  if (connectionState === 'connecting') return 'Baglaniliyor...'
+  return connectionError ?? 'Baglanti bekleniyor...'
 }
 
 export default function LobbyRoom() {
@@ -73,6 +114,7 @@ export default function LobbyRoom() {
   const nickname = state?.nickname ?? fallbackNick
 
   const [screen, setScreen] = useState('waiting')
+  const [roomStatus, setRoomStatus] = useState('waiting')
   const [players, setPlayers] = useState([])
   const [roundData, setRoundData] = useState(null)
   const [resultData, setResultData] = useState(null)
@@ -81,9 +123,6 @@ export default function LobbyRoom() {
   const [timeLeft, setTimeLeft] = useState(0)
   const [guess, setGuess] = useState('')
   const [submitted, setSubmitted] = useState(false)
-  const timerRef = useRef(null)
-
-  // Lobby state hydrated from the server.
   const [settings, setSettings] = useState({ round_count: 3, round_duration_sec: 30 })
   const [aiModels, setAIModels] = useState({})
   const [availableAI, setAvailableAI] = useState([])
@@ -92,14 +131,19 @@ export default function LobbyRoom() {
   const [lobbyLeague, setLobbyLeague] = useState(null)
   const [leagueToast, setLeagueToast] = useState(null)
   const [activity, setActivity] = useState([])
-  const [voteState, setVoteState] = useState({ round: 0, voted: [], needed: [] })
+  const [voteState, setVoteState] = useState({ round: 0, voted: [], needed: [], deadline_ts: 0 })
   const [voted, setVoted] = useState(false)
   const [error, setError] = useState(null)
+  const [url, setUrl] = useState(null)
+
+  const timerRef = useRef(null)
+  const joinedRef = useRef(false)
+  const noticeTimeoutRef = useRef(null)
+  const redirectingRef = useRef(false)
+  const leavingRef = useRef(false)
 
   const isHost = !!youId && youId === hostId
 
-  const [url, setUrl] = useState(null)
-  const [urlKey, setUrlKey] = useState(0)
   useEffect(() => {
     if (!user) return
     let cancelled = false
@@ -110,7 +154,6 @@ export default function LobbyRoom() {
       user.getIdToken(true).then(token => {
         if (!cancelled) {
           setUrl(wsUrl(lobbyId, token))
-          setUrlKey(k => k + 1)
         }
       })
     }, 50 * 60 * 1000)
@@ -124,12 +167,28 @@ export default function LobbyRoom() {
     setActivity(prev => [entry, ...prev].slice(0, ACTIVITY_MAX))
   }, [])
 
+  const showError = useCallback((message) => {
+    setError(message)
+    window.clearTimeout(noticeTimeoutRef.current)
+    noticeTimeoutRef.current = window.setTimeout(() => setError(null), 4000)
+  }, [])
+
+  const handleTerminalClose = useCallback((message) => {
+    if (redirectingRef.current || leavingRef.current) return
+    redirectingRef.current = true
+    navigate('/lobby', { state: { notice: message } })
+  }, [navigate])
+
   const onMessage = useCallback((msg) => {
     switch (msg.type) {
       case 'LOBBY_STATE': {
         const p = msg.payload || {}
         setHostId(p.host_id ?? null)
         setYouId(p.you_id ?? null)
+        setRoomStatus(p.status ?? 'waiting')
+        if (p.status === 'waiting') {
+          setScreen('waiting')
+        }
         if (p.league) setLobbyLeague(p.league)
         if (p.settings) setSettings(p.settings)
         if (p.ai_models) setAIModels(p.ai_models)
@@ -148,8 +207,12 @@ export default function LobbyRoom() {
         setPlayers(prev => {
           const id = msg.payload?.player_id
           if (!id) return prev
-          if (prev.find(p => p.player_id === id)) {
-            return prev.map(p => p.player_id === id ? { ...p, connected: true, nickname: msg.payload.nickname ?? p.nickname } : p)
+          if (prev.some(p => p.player_id === id)) {
+            return prev.map(p => (
+              p.player_id === id
+                ? { ...p, connected: true, nickname: msg.payload.nickname ?? p.nickname }
+                : p
+            ))
           }
           return [...prev, { ...msg.payload, connected: true }]
         })
@@ -158,9 +221,17 @@ export default function LobbyRoom() {
         setPlayers(prev => {
           const id = msg.payload?.player_id
           if (!id) return prev
-          // Mark disconnected during a game; drop entirely during waiting.
-          return prev.map(p => p.player_id === id ? { ...p, connected: false } : p)
+          if (msg.payload?.remove) {
+            return prev.filter(p => p.player_id !== id)
+          }
+          return prev.map(p => (p.player_id === id ? { ...p, connected: false } : p))
         })
+        break
+      case 'PLAYER_KICKED':
+        handleTerminalClose(msg.payload?.message || 'Host seni odadan cikardi.')
+        break
+      case 'ROOM_CLOSED':
+        handleTerminalClose(roomClosedMessage(msg.payload?.reason))
         break
       case 'SETTINGS_UPDATED':
         if (msg.payload?.settings) setSettings(msg.payload.settings)
@@ -177,18 +248,22 @@ export default function LobbyRoom() {
       case 'ROUND_START':
         if (msg.payload?.round === 1) setRoundHistory([])
         clearInterval(timerRef.current)
+        setRoomStatus('playing')
         setRoundData(msg.payload)
         setSubmitted(false)
         setGuess('')
         setScreen('round')
-        setTimeLeft(msg.payload.time_limit_sec)
+        setTimeLeft(computeRoundTimeLeft(msg.payload))
         setVoted(false)
-        setVoteState({ round: 0, voted: [], needed: [] })
+        setVoteState({ round: 0, voted: [], needed: [], deadline_ts: 0 })
         break
       case 'ROUND_RESULT':
         clearInterval(timerRef.current)
         setResultData(msg.payload)
-        setRoundHistory(prev => [...prev, msg.payload])
+        setRoundHistory(prev => {
+          const next = prev.filter(entry => entry.round !== msg.payload?.round)
+          return [...next, msg.payload]
+        })
         setScreen('result')
         setVoted(false)
         break
@@ -197,9 +272,11 @@ export default function LobbyRoom() {
           round: msg.payload?.round ?? 0,
           voted: msg.payload?.voted ?? [],
           needed: msg.payload?.needed ?? [],
+          deadline_ts: msg.payload?.deadline_ts ?? 0,
         })
         break
       case 'LEADERBOARD':
+        setRoomStatus('finished')
         setLeaderboardData(msg.payload)
         setScreen('leaderboard')
         break
@@ -207,21 +284,55 @@ export default function LobbyRoom() {
         const p = msg.payload || {}
         if (youId && p.player_id && p.player_id !== youId) break
         setLeagueToast(p)
-        setTimeout(() => setLeagueToast(null), 6000)
+        window.setTimeout(() => setLeagueToast(null), 6000)
         break
       }
       case 'ERROR':
-        setError(msg.payload?.message ?? 'Bir hata oluştu')
-        setTimeout(() => setError(null), 4000)
+        showError(msg.payload?.message ?? 'Bir hata olustu.')
         break
       default:
         break
     }
-  }, [pushActivity])
+  }, [handleTerminalClose, pushActivity, showError, youId])
 
-  const { connected, connectionError, send } = useWebSocket(url, onMessage)
+  const resolveTerminalState = useCallback(async () => {
+    if (!user) {
+      return {
+        terminal: true,
+        errorCode: 'lobby_not_found',
+        message: 'Oturum bulunamadi.',
+      }
+    }
 
-  const joinedRef = useRef(false)
+    try {
+      const idToken = await user.getIdToken()
+      const access = await probeLobbyAccess(user, idToken, lobbyId)
+      if (access.ok) {
+        return { terminal: false }
+      }
+      if ([403, 404, 409].includes(access.status)) {
+        return {
+          terminal: true,
+          errorCode: access.errorCode,
+          message: terminalMessageFromErrorCode(access.errorCode, access.message),
+        }
+      }
+    } catch {
+      return { terminal: false }
+    }
+
+    return { terminal: false }
+  }, [lobbyId, user])
+
+  const {
+    connected,
+    connectionState,
+    connectionError,
+    terminalState,
+    send,
+    disconnect,
+  } = useWebSocket(url, onMessage, { resolveTerminalState })
+
   useEffect(() => {
     if (connected && !joinedRef.current) {
       joinedRef.current = true
@@ -230,21 +341,32 @@ export default function LobbyRoom() {
     if (!connected) {
       joinedRef.current = false
     }
-  }, [connected, nickname, send, urlKey])
+  }, [connected, nickname, send])
 
   useEffect(() => {
-    if (screen !== 'round') return
+    if (!terminalState?.terminal) return
+    disconnect(false)
+    handleTerminalClose(terminalState.message || 'Odaya su anda ulasilamiyor.')
+  }, [disconnect, handleTerminalClose, terminalState])
+
+  useEffect(() => {
+    if (screen !== 'round' || !roundData) return
     timerRef.current = setInterval(() => {
-      setTimeLeft(t => (t <= 1 ? 0 : t - 1))
+      setTimeLeft(computeRoundTimeLeft(roundData))
     }, 1000)
     return () => clearInterval(timerRef.current)
-  }, [roundData?.round, screen])
+  }, [roundData, screen])
 
-  // Keep activity timestamps fresh.
-  const [, forceRerender] = useState(0)
   useEffect(() => {
-    const i = setInterval(() => forceRerender(x => x + 1), 15_000)
+    const i = setInterval(() => {
+      setActivity(prev => [...prev])
+    }, 15_000)
     return () => clearInterval(i)
+  }, [])
+
+  useEffect(() => () => {
+    clearInterval(timerRef.current)
+    window.clearTimeout(noticeTimeoutRef.current)
   }, [])
 
   function handleStartGame() {
@@ -275,6 +397,23 @@ export default function LobbyRoom() {
     setVoted(true)
   }
 
+  function handleKickPlayer(playerId) {
+    if (!isHost || !playerId || playerId === youId) return
+    send('KICK_PLAYER', { player_id: playerId })
+  }
+
+  function handleCloseRoom() {
+    if (!isHost) return
+    send('CLOSE_ROOM', {})
+  }
+
+  function handleExitGame() {
+    leavingRef.current = true
+    send('LEAVE', {})
+    disconnect(false)
+    navigate('/lobby', { state: { notice: 'Oyundan ayrildin.' } })
+  }
+
   if (!user) {
     navigate('/login')
     return null
@@ -287,6 +426,8 @@ export default function LobbyRoom() {
       : null
 
   const aiActiveCount = availableAI.filter(m => aiModels[m.id]).length
+  const connectedPlayerCount = players.filter(p => p.connected !== false).length
+  const canCloseRoom = isHost && (roomStatus === 'waiting' || roomStatus === 'finished' || screen === 'leaderboard')
 
   return (
     <AppShell>
@@ -295,26 +436,29 @@ export default function LobbyRoom() {
         <div className="lr-subnav-item">Mod <strong>Multiplayer</strong></div>
         {subnavRound && <div className="lr-subnav-item">{subnavRound.label} <strong>{subnavRound.value}</strong></div>}
         {screen === 'round' && (
-          <div className="lr-subnav-item">Süre <strong style={{ color: timeLeft <= 10 ? '#fca5a5' : '#fff' }}>{timeLeft}s</strong></div>
+          <div className="lr-subnav-item">Sure <strong style={{ color: timeLeft <= 10 ? '#fca5a5' : '#fff' }}>{timeLeft}s</strong></div>
         )}
         <div className="lr-subnav-item">Host <strong>{
-          (hostId && players.find(p => p.player_id === hostId)?.nickname) || (isHost ? nickname : '—')
+          (hostId && players.find(p => p.player_id === hostId)?.nickname) || (isHost ? nickname : '-')
         }</strong></div>
-        <div className="lr-subnav-item">Oyuncular <strong>{players.filter(p => p.connected !== false).length} / 8</strong></div>
+        <div className="lr-subnav-item">Oyuncular <strong>{connectedPlayerCount} / 8</strong></div>
         <div className="lr-subnav-spacer" />
+        {canCloseRoom && (
+          <button className="hr-btn hr-btn-outline" onClick={handleCloseRoom}>
+            Odayi Kapat
+          </button>
+        )}
         {screen === 'leaderboard' ? (
           <button className="hr-btn hr-btn-primary" onClick={() => navigate('/lobby')}>
-            Lobiye Dön
+            Lobiye Don
           </button>
         ) : (
           <>
             <span className={`lr-conn ${connected ? 'ok' : 'bad'}`}>
-              {connected ? 'Bağlı' : connectionError ?? 'Bağlanılıyor…'}
+              {connectionStatusLabel(connectionState, connectionError)}
             </span>
-            {/* "Oyundan Çık" just disconnects the WS — the server keeps your slot
-                (and score) so navigating back to /lobby/<id> reconnects you. */}
-            <button className="hr-btn hr-btn-danger" onClick={() => navigate('/lobby')}>
-              Oyundan Çık
+            <button className="hr-btn hr-btn-danger" onClick={handleExitGame}>
+              Oyundan Cik
             </button>
           </>
         )}
@@ -325,8 +469,8 @@ export default function LobbyRoom() {
         <div className={`lr-league-toast ${leagueToast.promoted ? 'promoted' : leagueToast.demoted ? 'demoted' : ''}`}>
           <LeagueBadge league={leagueToast.league} />
           <span className="lr-league-toast-text">
-            {leagueToast.promoted && 'Yükseldin! '}
-            {leagueToast.demoted && 'Düştün. '}
+            {leagueToast.promoted && 'Yukseldin! '}
+            {leagueToast.demoted && 'Dustun. '}
             LP: <strong>{leagueToast.lp}</strong>
             <span className="delta"> ({leagueToast.lp_delta >= 0 ? '+' : ''}{leagueToast.lp_delta})</span>
           </span>
@@ -337,6 +481,8 @@ export default function LobbyRoom() {
         <WaitingScreen
           players={players}
           isHost={isHost}
+          youId={youId}
+          onKickPlayer={handleKickPlayer}
           onStart={handleStartGame}
           settings={settings}
           onChangeSetting={handleUpdateSetting}
@@ -373,36 +519,60 @@ export default function LobbyRoom() {
         />
       )}
       {screen === 'leaderboard' && leaderboardData && (
-        <FinalLeaderboard data={leaderboardData} roundHistory={roundHistory} onExit={() => navigate('/lobby')} />
+        <FinalLeaderboard
+          data={leaderboardData}
+          roundHistory={roundHistory}
+          onExit={() => navigate('/lobby')}
+          isHost={isHost}
+          onCloseRoom={handleCloseRoom}
+        />
       )}
     </AppShell>
   )
 }
 
 function WaitingScreen({
-  players, isHost, onStart, settings, onChangeSetting,
-  availableAI, aiModels, aiActiveCount, onToggleAI, activity, lobbyLeague,
+  players,
+  isHost,
+  youId,
+  onKickPlayer,
+  onStart,
+  settings,
+  onChangeSetting,
+  availableAI,
+  aiModels,
+  aiActiveCount,
+  onToggleAI,
+  activity,
+  lobbyLeague,
 }) {
   const connectedPlayers = players.filter(p => p.connected !== false)
   const enabledAI = availableAI.filter(m => aiModels[m.id])
   const totalParticipants = connectedPlayers.length + enabledAI.length
+
   return (
     <div className="lr-wait-grid">
       <div>
         <div className="lr-panel">
           <div className="lr-panel-header">
             <h3>Oyuncular ({totalParticipants})</h3>
-            <span className="lr-pill ready">Canlı</span>
+            <span className="lr-pill ready">Canli</span>
           </div>
           <div className="lr-panel-body">
             {totalParticipants === 0 && (
-              <div className="lr-player-row empty">Oyuncu bekleniyor…</div>
+              <div className="lr-player-row empty">Oyuncu bekleniyor...</div>
             )}
             {connectedPlayers.map(p => (
               <div className="lr-player-row" key={p.player_id}>
                 <span className="lr-pavatar">{initials(p.nickname)}</span>
                 <span className="lr-player-name">{p.nickname}</span>
-                <span className="lr-pill ready">Hazır</span>
+                {isHost && p.player_id !== youId ? (
+                  <button type="button" className="hr-btn hr-btn-ghost lr-kick-btn" onClick={() => onKickPlayer(p.player_id)}>
+                    At
+                  </button>
+                ) : (
+                  <span className="lr-pill ready">Hazir</span>
+                )}
               </div>
             ))}
             {enabledAI.map(m => (
@@ -427,7 +597,7 @@ function WaitingScreen({
           </div>
           <div className="lr-panel-body lr-activity-scroll">
             {activity.length === 0 && (
-              <div className="lr-activity" style={{ fontStyle: 'italic' }}>Henüz aktivite yok.</div>
+              <div className="lr-activity" style={{ fontStyle: 'italic' }}>Henuz aktivite yok.</div>
             )}
             {activity.map(a => (
               <div key={a.id} className="lr-activity">
@@ -442,12 +612,12 @@ function WaitingScreen({
       <div>
         <div className="lr-panel">
           <div className="lr-panel-header">
-            <h3>Oyun Ayarları</h3>
-            {!isHost && <span style={{ fontSize: 11, color: 'var(--hr-muted)' }}>Sadece host değiştirebilir</span>}
+            <h3>Oyun Ayarlari</h3>
+            {!isHost && <span style={{ fontSize: 11, color: 'var(--hr-muted)' }}>Sadece host degistirebilir</span>}
           </div>
           <div className="lr-panel-body">
             <SettingRow
-              label="Tur Sayısı"
+              label="Tur Sayisi"
               options={ROUND_COUNT_OPTIONS}
               active={settings.round_count}
               disabled={!isHost}
@@ -455,7 +625,7 @@ function WaitingScreen({
               renderOption={(v) => v}
             />
             <SettingRow
-              label="Tur Süresi"
+              label="Tur Suresi"
               options={ROUND_DURATION_OPTIONS}
               active={settings.round_duration_sec}
               disabled={!isHost}
@@ -467,15 +637,15 @@ function WaitingScreen({
 
         {isHost ? (
           <div className="lr-start-card">
-            <h4>Hazır mısın?</h4>
-            <p>Tüm oyuncular katıldıktan sonra oyunu başlat.</p>
-            <button onClick={onStart}>▶ Oyuna Başla</button>
+            <h4>Hazir misin?</h4>
+            <p>Tum oyuncular katildiktan sonra oyunu baslat.</p>
+            <button onClick={onStart}>▶ Oyuna Basla</button>
           </div>
         ) : (
           <div className="lr-start-card">
             <h4>Host'u bekliyoruz</h4>
-            <p>Oyun ayarları tamamlandığında host oyunu başlatacak.</p>
-            <div className="wait">Bekleniyor…</div>
+            <p>Oyun ayarlari tamamlandiginda host oyunu baslatacak.</p>
+            <div className="wait">Bekleniyor...</div>
           </div>
         )}
       </div>
@@ -493,7 +663,7 @@ function WaitingScreen({
           </div>
           <div className="lr-panel-body">
             {availableAI.length === 0 && (
-              <div className="lr-player-row empty">Modeller yükleniyor…</div>
+              <div className="lr-player-row empty">Modeller yukleniyor...</div>
             )}
             {availableAI.map(m => {
               const on = !!aiModels[m.id]
@@ -507,7 +677,7 @@ function WaitingScreen({
                   <button
                     type="button"
                     className={`lr-toggle${on ? ' on' : ''}${isHost ? '' : ' disabled'}`}
-                    aria-label={`${m.name} ${on ? 'açık' : 'kapalı'}`}
+                    aria-label={`${m.name} ${on ? 'acik' : 'kapali'}`}
                     onClick={() => onToggleAI(m.id, !on)}
                     disabled={!isHost}
                   />
@@ -520,8 +690,8 @@ function WaitingScreen({
         <div className="lr-preview">
           <img src="/assets/landing-page-house-img.png" alt="Sample listing" />
           <div className="cap">
-            <strong>Örnek İlan</strong>
-            120 m² · 3+1 · Kadıköy/İstanbul
+            <strong>Ornek Ilan</strong>
+            120 m² · 3+1 · Kadikoy/Istanbul
           </div>
         </div>
       </div>
@@ -563,18 +733,15 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
   }
 
   const fields = [
-    { l: 'Brüt Alan', v: `${property.metrekare_brut} m²`, icon: 'ruler' },
-    property.metrekare_net > 0
-      ? { l: 'Net Alan', v: `${property.metrekare_net} m²`, icon: 'ruler' }
-      : null,
+    { l: 'Brut Alan', v: `${property.metrekare_brut} m²`, icon: 'ruler' },
+    property.metrekare_net > 0 ? { l: 'Net Alan', v: `${property.metrekare_net} m²`, icon: 'ruler' } : null,
     { l: 'Oda', v: property.oda_salon, icon: 'bed' },
-    property.banyo_sayisi
-      ? { l: 'Banyo', v: property.banyo_sayisi, icon: 'bed' }
-      : null,
-    { l: 'Yaş', v: property.bina_yasi, icon: 'building' },
+    property.banyo_sayisi ? { l: 'Banyo', v: property.banyo_sayisi, icon: 'bed' } : null,
+    { l: 'Yas', v: property.bina_yasi, icon: 'building' },
     { l: 'Kat', v: `${property.kat} / ${property.kat_sayisi}`, icon: 'floor' },
-    { l: 'Isıtma', v: property.isitma, icon: 'heater' },
+    { l: 'Isitma', v: property.isitma, icon: 'heater' },
   ].filter(Boolean)
+
   return (
     <div className="lr-round-grid">
       <div>
@@ -592,7 +759,7 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
                 <div className="lr-spec" key={f.l}>
                   <span className="lr-spec-icon"><Icon name={f.icon} size={16} /></span>
                   <div className="l">{f.l}</div>
-                  <div className="v">{f.v ?? '—'}</div>
+                  <div className="v">{f.v ?? '-'}</div>
                 </div>
               ))}
             </div>
@@ -602,8 +769,8 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
 
       <div>
         <div className="lr-guess-card">
-          <h4>Sıra Sende!</h4>
-          <p className="sub">Bu evin fiyatını tahmin et</p>
+          <h4>Sira Sende!</h4>
+          <p className="sub">Bu evin fiyatini tahmin et</p>
           {!submitted ? (
             <form onSubmit={onSubmit}>
               <div style={{ position: 'relative' }}>
@@ -626,7 +793,6 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
                 <button type="button" className="lr-quick" onClick={() => handleAddGuess(250_000)}>+250K</button>
                 <button type="button" className="lr-quick" onClick={() => handleAddGuess(500_000)}>+500K</button>
                 <button type="button" className="lr-quick lr-quick-clear" onClick={handleClearGuess}>Temizle</button>
-                
                 <button type="button" className="lr-quick" onClick={() => handleAddGuess(1_000_000)}>+1M</button>
                 <button type="button" className="lr-quick" onClick={() => handleAddGuess(2_000_000)}>+2M</button>
                 <button type="button" className="lr-quick" onClick={() => handleAddGuess(5_000_000)}>+5M</button>
@@ -634,31 +800,31 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
               </div>
               <button type="submit" className="hr-btn hr-btn-primary hr-btn-lg" style={{ width: '100%', marginTop: 12 }}>
                 <Icon name="send" size={16} />
-                Tahmini Gönder
+                Tahmini Gonder
               </button>
               <div className="lr-tip">
-                💡 İpucu: konum, alan, bina yaşı en yakın tahmini yapmana yardımcı olur.
+                Ipuclari: konum, alan ve bina yasi en yakin tahmini yapmana yardimci olur.
               </div>
             </form>
           ) : (
-            <div className="lr-submitted">✓ Tahminin gönderildi — sonuç bekleniyor…</div>
+            <div className="lr-submitted">✓ Tahminin gonderildi, sonuc bekleniyor...</div>
           )}
         </div>
 
         <div className="lr-progress">
-          <h4>Canlı İlerleme</h4>
+          <h4>Canli Ilerleme</h4>
           {(players.length ? players.filter(p => p.connected !== false) : [{ player_id: 'self', nickname }]).map(p => (
             <div className="lr-player-row" key={p.player_id}>
               <span className="lr-pavatar">{initials(p.nickname)}</span>
               <span className="lr-player-name">{p.nickname}</span>
               <span className={`lr-pill ${p.nickname === nickname && submitted ? 'ready' : 'waiting'}`}>
-                {p.nickname === nickname && submitted ? 'Gönderildi' : 'Düşünüyor'}
+                {p.nickname === nickname && submitted ? 'Gonderildi' : 'Dusunuyor'}
               </span>
             </div>
           ))}
           <div className="lr-think">
             <span className="dots"><span /><span /><span /></span>
-            AI modelleri düşünüyor…
+            AI modelleri dusunuyor...
           </div>
         </div>
       </div>
@@ -676,7 +842,7 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
       price: p.guess,
       dev: p.deviation_pct,
       points: p.points_earned,
-      hasSubmitted: p.guess > 0
+      hasSubmitted: p.guess > 0,
     })),
     ...Object.entries(ai_predictions).map(([name, pred]) => ({
       name: name.toUpperCase(),
@@ -684,7 +850,7 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
       price: pred.price_try,
       dev: pred.deviation_pct,
       points: pred.points_earned,
-      hasSubmitted: pred.price_try > 0
+      hasSubmitted: pred.price_try > 0,
     })),
   ].sort((a, b) => {
     if (a.hasSubmitted !== b.hasSubmitted) {
@@ -694,10 +860,9 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
   }), [player_results, ai_predictions])
 
   const hasAnyWinner = allPreds[0]?.hasSubmitted
-  const winnerName = allPreds[0]?.name ?? '—'
+  const winnerName = allPreds[0]?.name ?? '-'
   const winnerType = allPreds[0]?.type ?? 'Oyuncu'
   const isWinner = hasAnyWinner && winnerType === 'Oyuncu' && winnerName === nickname
-
   const meResult = player_results.find(p => p.nickname === nickname)
 
   const opponent = allPreds.length > 1
@@ -707,8 +872,8 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
 
   const avgDev = allPreds.filter(p => p.hasSubmitted).length
     ? (allPreds.filter(p => p.hasSubmitted).reduce((s, p) => s + Math.abs(p.dev ?? 0), 0) / allPreds.filter(p => p.hasSubmitted).length).toFixed(2)
-    : '—'
-  const bestDev = (hasAnyWinner && allPreds[0]?.dev?.toFixed?.(2)) ?? '—'
+    : '-'
+  const bestDev = hasAnyWinner && allPreds[0]?.dev?.toFixed?.(2) ? allPreds[0].dev.toFixed(2) : '-'
   const totalPts = player_results.reduce((s, p) => s + (p.points_earned ?? 0), 0)
 
   const isFinalRound = totalRounds && round >= totalRounds
@@ -737,7 +902,7 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
                 Tur {round} sonucu
               </div>
               <div className="lr-actual">
-                Gerçek Fiyat <span className="v">₺{fmt(actual_price)}</span>
+                Gercek Fiyat <span className="v">₺{fmt(actual_price)}</span>
               </div>
             </div>
           </div>
@@ -749,22 +914,21 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
               {!hasAnyWinner
                 ? 'Tutan Tahmin Yok'
                 : isWinner
-                  ? '🎉 Kazandın!'
+                  ? '🎉 Kazandin!'
                   : winnerType === 'AI'
-                    ? `🤖 ${winnerName} Kazandı`
-                    : `🏆 ${winnerName} Kazandı`
-              }
+                    ? `🤖 ${winnerName} Kazandi`
+                    : `🏆 ${winnerName} Kazandi`}
             </h2>
-            <div className="sub">Bu turda en yakın tahmini yaptı</div>
+            <div className="sub">Bu turda en yakin tahmini yapti</div>
           </div>
 
           {hasOpponent ? (
             <div className="lr-vs">
               <div className={`lr-vs-card you ${isWinner ? 'winner-card' : ''}`}>
                 <div className="n">{nickname}</div>
-                <div className="g">{meResult && meResult.guess > 0 ? `₺${fmt(meResult.guess)}` : '—'}</div>
+                <div className="g">{meResult && meResult.guess > 0 ? `₺${fmt(meResult.guess)}` : '-'}</div>
                 <div className="d">
-                  {meResult && meResult.guess > 0 ? `%${meResult.deviation_pct} sapma` : 'Tahmin yok'} 
+                  {meResult && meResult.guess > 0 ? `%${meResult.deviation_pct} sapma` : 'Tahmin yok'}
                   {meResult && ` · +${meResult.points_earned}p`}
                 </div>
               </div>
@@ -782,9 +946,9 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
             <div className="lr-vs-single">
               <div className={`lr-vs-card you ${isWinner ? 'winner-card' : ''}`} style={{ margin: '16px auto 0', maxWidth: '320px' }}>
                 <div className="n">{nickname}</div>
-                <div className="g">{meResult && meResult.guess > 0 ? `₺${fmt(meResult.guess)}` : '—'}</div>
+                <div className="g">{meResult && meResult.guess > 0 ? `₺${fmt(meResult.guess)}` : '-'}</div>
                 <div className="d">
-                  {meResult && meResult.guess > 0 ? `%${meResult.deviation_pct} sapma` : 'Tahmin yok'} 
+                  {meResult && meResult.guess > 0 ? `%${meResult.deviation_pct} sapma` : 'Tahmin yok'}
                   {meResult && ` · +${meResult.points_earned}p`}
                 </div>
               </div>
@@ -793,14 +957,14 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
 
           <div className="lr-summary">
             <div><div className="l">Ort. Sapma</div><div className="v">%{avgDev}</div></div>
-            <div><div className="l">En İyi</div><div className="v">%{bestDev}</div></div>
+            <div><div className="l">En Iyi</div><div className="v">%{bestDev}</div></div>
             <div><div className="l">Toplam Puan</div><div className="v">+{totalPts}</div></div>
           </div>
         </div>
 
         <div>
           <div className="lr-panel">
-            <div className="lr-panel-header"><h3>Tüm Tahminler</h3></div>
+            <div className="lr-panel-header"><h3>Tum Tahminler</h3></div>
             <div className="lr-panel-body">
               {allPreds.map((p, i) => (
                 <div className={`lr-pred-row${p.name === nickname && p.type === 'Oyuncu' ? ' me-row' : ''}`} key={`${p.type}-${p.name}-${i}`}>
@@ -811,9 +975,9 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
                     {p.name}
                     <span className="tag">{p.type}</span>
                   </span>
-                  <span className="pr">{p.hasSubmitted ? `₺${fmt(p.price)}` : '—'}</span>
+                  <span className="pr">{p.hasSubmitted ? `₺${fmt(p.price)}` : '-'}</span>
                   <span className={`dv ${!p.hasSubmitted ? '' : Math.abs(p.dev ?? 0) < 5 ? 'good' : 'bad'}`}>
-                    {p.hasSubmitted ? `%${p.dev?.toFixed(2) ?? p.dev}` : '—'}
+                    {p.hasSubmitted ? `%${p.dev?.toFixed(2) ?? p.dev}` : '-'}
                   </span>
                 </div>
               ))}
@@ -827,7 +991,7 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
           <div className="lr-vote-head">
             <div>
               <h4>Sonraki Tur</h4>
-              <p>Hazır olan tüm oyuncular bekleniyor.</p>
+              <p>Hazir olan tum oyuncular bekleniyor.</p>
             </div>
             <button
               type="button"
@@ -835,12 +999,12 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
               onClick={onVoteNext}
               disabled={youVoted}
             >
-              {youVoted ? '✓ Hazırsın' : 'Sonraki Tur'}
+              {youVoted ? '✓ Hazirsin' : 'Sonraki Tur'}
             </button>
           </div>
           <div className="lr-vote-progress">
             <div className="lr-vote-count">
-              Hazır oyuncular: <strong>{votedCount} / {totalParticipants}</strong>
+              Hazir oyuncular: <strong>{votedCount} / {totalParticipants}</strong>
             </div>
             <div className="lr-vote-chips">
               {voteParticipants.map(p => {
@@ -853,7 +1017,7 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
                   </span>
                 )
               })}
-              {totalParticipants === 0 && <span className="lr-vote-empty">Oyuncu bekleniyor…</span>}
+              {totalParticipants === 0 && <span className="lr-vote-empty">Oyuncu bekleniyor...</span>}
             </div>
           </div>
         </div>
@@ -868,16 +1032,14 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
           })}
         </div>
         {isFinalRound && (
-          <span className="lr-final-pending">Final sıralaması hazırlanıyor…</span>
+          <span className="lr-final-pending">Final siralamasi hazirlaniyor...</span>
         )}
       </div>
     </>
   )
 }
 
-const ROUND_MEDALS = ['🥇', '🥈', '🥉']
-
-function FinalLeaderboard({ data, roundHistory, onExit }) {
+function FinalLeaderboard({ data, roundHistory, onExit, isHost, onCloseRoom }) {
   const [currentRoundIdx, setCurrentRoundIdx] = useState(0)
   const players = data?.players ?? []
   const top3 = players.slice(0, 3)
@@ -896,7 +1058,7 @@ function FinalLeaderboard({ data, roundHistory, onExit }) {
 
   return (
     <div className="lr-final">
-      <h2>🏆 Oyun Bitti — Final Sıralaması</h2>
+      <h2>🏆 Oyun Bitti - Final Siralamasi</h2>
       {top3.length > 0 && (
         <div className="lr-podium">
           {[1, 0, 2].map(i => {
@@ -916,6 +1078,7 @@ function FinalLeaderboard({ data, roundHistory, onExit }) {
           })}
         </div>
       )}
+
       <div className="lr-final-list">
         {rest.map(p => (
           <div className="lr-final-row" key={p.player_id}>
@@ -931,22 +1094,22 @@ function FinalLeaderboard({ data, roundHistory, onExit }) {
 
       {roundHistory.length > 0 && rd && (
         <div className="lr-round-breakdown">
-          <h3 className="lr-breakdown-title">Tur Özetleri</h3>
-          
+          <h3 className="lr-breakdown-title">Tur Ozetleri</h3>
+
           <div className="lr-slider-nav">
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="hr-btn hr-btn-outline lr-slider-btn"
-              onClick={() => setCurrentRoundIdx(i => Math.max(0, i - 1))} 
+              onClick={() => setCurrentRoundIdx(i => Math.max(0, i - 1))}
               disabled={currentRoundIdx === 0}
             >
               ◀
             </button>
-            <span className="lr-slider-title">Tur {rd.round} Özeti</span>
-            <button 
-              type="button" 
+            <span className="lr-slider-title">Tur {rd.round} Ozeti</span>
+            <button
+              type="button"
               className="hr-btn hr-btn-outline lr-slider-btn"
-              onClick={() => setCurrentRoundIdx(i => Math.min(roundHistory.length - 1, i + 1))} 
+              onClick={() => setCurrentRoundIdx(i => Math.min(roundHistory.length - 1, i + 1))}
               disabled={currentRoundIdx === roundHistory.length - 1}
             >
               ▶
@@ -956,8 +1119,9 @@ function FinalLeaderboard({ data, roundHistory, onExit }) {
           <div className="lr-round-card animate-round-card">
             <div className="lr-round-card-header">
               <span className="lr-round-label">Tur {rd.round}</span>
-              <span className="lr-round-price">Gerçek Fiyat: <strong>₺{fmt(rd.actual_price)}</strong></span>
+              <span className="lr-round-price">Gercek Fiyat: <strong>₺{fmt(rd.actual_price)}</strong></span>
             </div>
+
             <div className="lr-breakdown-section">
               <div className="lr-breakdown-section-title">Oyuncular</div>
               <div className="lr-breakdown-table">
@@ -973,15 +1137,16 @@ function FinalLeaderboard({ data, roundHistory, onExit }) {
                       {idx < 3 && pr.guess > 0 && <span className="lr-breakdown-medal">{ROUND_MEDALS[idx]}</span>}
                       {pr.nickname}
                     </span>
-                    <span>{pr.guess > 0 ? `₺${fmt(pr.guess)}` : '—'}</span>
+                    <span>{pr.guess > 0 ? `₺${fmt(pr.guess)}` : '-'}</span>
                     <span className={`lr-deviation${idx === 0 && pr.guess > 0 ? ' best' : ''}`}>
-                      {pr.guess > 0 ? `%${pr.deviation_pct?.toFixed(1)}` : '—'}
+                      {pr.guess > 0 ? `%${pr.deviation_pct?.toFixed(1)}` : '-'}
                     </span>
                     <span className="lr-points">{pr.points_earned > 0 ? `+${pr.points_earned}` : '0'}</span>
                   </div>
                 ))}
               </div>
             </div>
+
             {aiEntries.length > 0 && (
               <div className="lr-breakdown-section">
                 <div className="lr-breakdown-section-title">AI Tahminleri</div>
@@ -996,7 +1161,7 @@ function FinalLeaderboard({ data, roundHistory, onExit }) {
                     <div className="lr-breakdown-row ai" key={model}>
                       <span className="lr-breakdown-nick lr-ai-model">{model}</span>
                       <span>₺{fmt(pred.price_try)}</span>
-                      <span className="lr-deviation">%{pred.deviation_pct?.toFixed(1) ?? '—'}</span>
+                      <span className="lr-deviation">%{pred.deviation_pct?.toFixed(1) ?? '-'}</span>
                       <span className="lr-points">{pred.points_earned > 0 ? `+${pred.points_earned}` : '0'}</span>
                     </div>
                   ))}
@@ -1009,7 +1174,7 @@ function FinalLeaderboard({ data, roundHistory, onExit }) {
             {roundHistory.map((_, idx) => (
               <button
                 type="button"
-                key={idx} 
+                key={idx}
                 className={`lr-slider-dot${idx === currentRoundIdx ? ' active' : ''}`}
                 onClick={() => setCurrentRoundIdx(idx)}
                 aria-label={`Tur ${idx + 1}`}
@@ -1018,6 +1183,17 @@ function FinalLeaderboard({ data, roundHistory, onExit }) {
           </div>
         </div>
       )}
+
+      <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 24 }}>
+        {isHost && (
+          <button type="button" className="hr-btn hr-btn-outline" onClick={onCloseRoom}>
+            Odayi Kapat
+          </button>
+        )}
+        <button type="button" className="hr-btn hr-btn-primary" onClick={onExit}>
+          Lobiye Don
+        </button>
+      </div>
     </div>
   )
 }
