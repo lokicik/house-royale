@@ -1,0 +1,12 @@
+**/.git
+**/.vscode
+**/.idea
+**/node_modules
+**/__pycache__
+**/.venv
+**/venv
+**/*.log
+frontend/
+backend/ml-infra/
+model-training/
+*.md

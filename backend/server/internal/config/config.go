@@ -23,7 +23,7 @@ func Load() *Config {
 	}
 	mlURL := os.Getenv("ML_INFRA_URL")
 	if mlURL == "" {
-		mlURL = "http://localhost:8001"
+		mlURL = "http://localhost:8000"
 	}
 	appEnv := os.Getenv("APP_ENV")
 	if appEnv == "" {

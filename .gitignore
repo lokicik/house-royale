@@ -25,3 +25,7 @@ ehthumbs.db
 *.log
 *.tmp
 .cache/
+
+
+.agent
+.claude

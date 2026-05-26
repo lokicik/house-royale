@@ -1,12 +1,21 @@
 .pf-header {
-  background: var(--hr-blue-darker);
+  background: linear-gradient(135deg, var(--hr-blue) 0%, var(--hr-blue-darker) 100%);
   color: #fff;
-  border-radius: 14px;
-  padding: 28px;
-  margin-bottom: 20px;
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 24px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.35);
+  transition: all 0.3s ease;
 }
+
+html[data-theme='dark'] .pf-header {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1px solid var(--hr-border);
+  box-shadow: var(--hr-shadow);
+}
+
 .pf-header::after {
   content: '👤';
   font-size: 96px;
@@ -14,14 +23,17 @@
   right: 24px;
   top: 50%;
   transform: translateY(-50%);
-  opacity: 0.18;
+  opacity: 0.12;
 }
+
 .pf-header h1 {
   font-size: 28px;
   margin: 0 0 4px;
   letter-spacing: -0.5px;
   font-weight: 700;
+  color: #fff;
 }
+
 .pf-header p { margin: 0; opacity: 0.85; font-size: 14px; }
 
 .pf-grid {

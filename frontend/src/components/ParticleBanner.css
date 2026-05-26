@@ -1,0 +1,18 @@
+.pb-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.pb-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(
+    circle 200px at var(--gx, 50%) var(--gy, 50%),
+    rgba(255, 255, 255, 0.18),
+    transparent 70%
+  );
+}

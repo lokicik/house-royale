@@ -45,8 +45,11 @@ Eğitim süreci 6 ana Jupyter Notebook (`.ipynb`) dosyası üzerinden sırasıyl
 * **Amaç:** Veriyi ölçeklemek, veriyi Eğitim/Doğrulama/Test setlerine bölmek ve yüksek performanslı derin öğrenme mimarileri eğitmek.
 * **Yapılan Çalışmalar:**
   * Hem X girdileri hem de y (hedef fiyat) değişkeni için `StandardScaler` uygulanmıştır. Ölçekleyiciler `scaler_X.pkl` ve `scaler_y.pkl` olarak kaydedilmiştir.
-  * **ResNet mimarisi tabanlı** (Residual bağlantılar içeren gelişmiş derin MLP ağları) modeller tasarlanmış ve eğitilmiştir.
-  * En başarılı 3 model olan **model_0**, **model_1** ve **model_2** (ortalama hata payları **%3 - %5** arasındadır) bu aşamada üretilmiş ve kaydedilmiştir.
+  * Farklı mimarilerde üç model eğitilmiştir:
+    * **model_0** (`Advanced_ResNet_Model`): Gerçek ResNet mimarisi — 2 residual blok, `Add()` kısayol bağlantıları, Swish aktivasyon, AdamW optimizer, Dropout
+    * **model_1** (`Standard_Sequential_Dense_Model`, MLP Pro Plus Max): Standart ardışık derin MLP — residual bağlantı yok, ReLU aktivasyon, Adam optimizer, Dropout
+    * **model_2** (`Standard_Dense_No_Dropout`, MLP Pro Plus): Standart ardışık MLP — residual bağlantı ve Dropout yok, `use_bias=False`, ReLU aktivasyon, Adam optimizer
+  * En başarılı 3 model olan **model_0**, **model_1** ve **model_2** bu aşamada üretilmiş ve kaydedilmiştir.
 
 ### 6️⃣ [5.2.)Moderate_Models.ipynb](file:///C:/Users/Baran/Desktop/YSA_PROJE/house-royale/model-training/5.2.)Moderate_Models.ipynb) — Standart ve Temel Modellerin Eğitimi
 * **Amaç:** Karşılaştırma ve yedekleme amacıyla standart derinlikte modeller (orta ve zayıf modeller) eğitmek.

@@ -1,16 +1,25 @@
+/* Header Overhaul - Different for Light and Dark Modes */
 .lb-header {
-  background: var(--hr-blue-darker);
+  background: linear-gradient(135deg, var(--hr-blue) 0%, var(--hr-blue-darker) 100%);
   color: #fff;
-  border-radius: 14px;
-  padding: 28px;
+  border-radius: 16px;
+  padding: 32px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 20px;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.35);
+  transition: all 0.3s ease;
 }
+
+html[data-theme='dark'] .lb-header {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1px solid var(--hr-border);
+  box-shadow: var(--hr-shadow);
+}
+
 .lb-header::after {
   content: '🏆';
   font-size: 96px;
@@ -18,23 +27,42 @@
   right: 24px;
   top: 50%;
   transform: translateY(-50%);
-  opacity: 0.18;
+  opacity: 0.12;
 }
+
 .lb-header h1 {
   font-size: 28px;
   margin: 0 0 4px;
   letter-spacing: -0.5px;
   font-weight: 700;
+  color: #fff;
 }
+
 .lb-header p { margin: 0; opacity: 0.85; font-size: 14px; }
+
+.lb-tabs-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-top: 10px;
+  z-index: 10;
+  position: relative;
+}
+
 .lb-tabs {
   display: flex;
   gap: 6px;
   background: rgba(255, 255, 255, 0.1);
   padding: 4px;
   border-radius: 10px;
-  margin-top: 14px;
 }
+
+html[data-theme='dark'] .lb-tabs {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--hr-border);
+}
+
 .lb-tabs button {
   border: 0;
   background: transparent;
@@ -42,12 +70,126 @@
   padding: 6px 14px;
   border-radius: 7px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   font-family: inherit;
   opacity: 0.7;
+  transition: all 0.2s ease;
 }
-.lb-tabs button.active { background: var(--hr-card); color: var(--hr-blue-darker); opacity: 1; }
+
+.lb-tabs button:hover {
+  opacity: 1;
+}
+
+.lb-tabs button.active {
+  background: var(--hr-card);
+  color: var(--hr-blue);
+  opacity: 1;
+}
+
+html[data-theme='dark'] .lb-tabs button.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.lb-league-tabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px;
+  border-radius: 10px;
+}
+
+html[data-theme='dark'] .lb-league-tabs {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--hr-border);
+}
+
+.lb-league-tab {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.lb-league-tab:hover {
+  opacity: 1;
+}
+
+.lb-league-tab.active {
+  background: var(--hr-card);
+  color: var(--hr-blue);
+  opacity: 1;
+}
+
+html[data-theme='dark'] .lb-league-tab.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* Custom active colors per league tab */
+.lb-league-tab.active.diamond {
+  color: #06b6d4 !important;
+}
+.lb-league-tab.active.gold {
+  color: #fbbf24 !important;
+}
+.lb-league-tab.active.bronze {
+  color: #f97316 !important;
+}
+
+/* League Badges inside the ranking table */
+.lb-league-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  letter-spacing: 0.2px;
+  z-index: 2;
+}
+
+.lb-league-badge.lb-league-diamond {
+  background: rgba(6, 182, 212, 0.12);
+  color: #0891b2;
+}
+
+html[data-theme='dark'] .lb-league-badge.lb-league-diamond {
+  background: rgba(6, 182, 212, 0.2);
+  color: #22d3ee;
+}
+
+.lb-league-badge.lb-league-gold {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+html[data-theme='dark'] .lb-league-badge.lb-league-gold {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.lb-league-badge.lb-league-bronze {
+  background: rgba(249, 115, 22, 0.12);
+  color: #ea580c;
+}
+
+html[data-theme='dark'] .lb-league-badge.lb-league-bronze {
+  background: rgba(249, 115, 22, 0.2);
+  color: #ff9736;
+}
 
 .lb-grid {
   display: grid;
@@ -257,4 +399,22 @@
   .lb-header { flex-direction: column; align-items: flex-start; }
   .lb-table th:nth-child(4), .lb-table td:nth-child(4),
   .lb-table th:nth-child(5), .lb-table td:nth-child(5) { display: none; }
+}
+
+@keyframes lb-row-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes lb-medal-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  65% { transform: scale(1.25); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.lb-table tbody tr {
+  animation: lb-row-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--row-i, 0) * 35ms);
+}
+.lb-table tbody tr:nth-child(-n+3) .lb-rank {
+  animation: lb-medal-pop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  animation-delay: calc(var(--row-i, 0) * 35ms + 60ms);
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/authContextValue'
 import ThemeToggle from './ThemeToggle'
@@ -22,6 +22,29 @@ export default function AppShell({ children }) {
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
   const menuRef = useRef(null)
+  const navRef = useRef(null)
+  const [pill, setPill] = useState({ left: 0, width: 0, opacity: 0 })
+  const [pillReady, setPillReady] = useState(false)
+
+  useLayoutEffect(() => {
+    const nav = navRef.current
+    if (!nav) return
+    const activeEl = nav.querySelector('.hr-tab.active')
+    if (activeEl) setPill({ left: activeEl.offsetLeft, width: activeEl.offsetWidth, opacity: 1 })
+    requestAnimationFrame(() => setPillReady(true))
+  }, [])
+
+  useEffect(() => {
+    if (!pillReady) return
+    const nav = navRef.current
+    if (!nav) return
+    const activeEl = nav.querySelector('.hr-tab.active')
+    if (activeEl) {
+      setPill({ left: activeEl.offsetLeft, width: activeEl.offsetWidth, opacity: 1 })
+    } else {
+      setPill(p => ({ ...p, opacity: 0 }))
+    }
+  }, [pathname, pillReady])
 
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'Misafir'
 
@@ -46,7 +69,11 @@ export default function AppShell({ children }) {
             <img src="/house-royale-logo.png" alt="House Royale" className="hr-logo-img" />
           </Link>
 
-          <nav className="hr-tabs">
+          <nav className="hr-tabs" ref={navRef}>
+            <span
+              className={`hr-tab-pill${pillReady ? ' ready' : ''}`}
+              style={{ left: pill.left, width: pill.width, opacity: pill.opacity }}
+            />
             {TABS.map(t => {
               const active = t.to === '/'
                 ? false
@@ -73,7 +100,6 @@ export default function AppShell({ children }) {
             </button>
             {open && (
               <div className="hr-menu">
-                <button onClick={() => { setOpen(false); navigate('/lobby') }}>Lobi'ye dön</button>
                 <button onClick={() => { setOpen(false); navigate('/profile') }}>Profilim</button>
                 <button className="danger" onClick={handleLogout}>Çıkış Yap</button>
               </div>

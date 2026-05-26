@@ -1,33 +1,54 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/authContextValue'
-import { createLobby, getLobby, getMyLobbies, getMyHistory, getLeaderboard } from '../lib/api'
+import { createLobby, getLobby, getMyHistory, getMyLeague, getMyLobbies, getLeaderboard } from '../lib/api'
 import AppShell from '../components/AppShell'
+import ParticleBanner from '../components/ParticleBanner'
 import { Icon } from '../components/icons'
 import './Lobby.css'
 
 const RANK_MEDALS = ['🥇', '🥈', '🥉']
 
+const LEAGUE_LABEL = { bronze: 'Bronz', gold: 'Altin', diamond: 'Elmas' }
+const LEAGUE_EMOJI = { bronze: '🥉', gold: '🥇', diamond: '💎' }
+
 function statusLabel(status) {
   if (status === 'waiting') return { text: 'Bekliyor', cls: 'lp-status-waiting' }
-  if (status === 'playing') return { text: 'Oynuyor', cls: 'lp-status-playing' }
+  if (status === 'playing') return { text: 'Oynaniyor', cls: 'lp-status-playing' }
+  if (status === 'finished') return { text: 'Bitti', cls: 'lp-status-finished' }
   return { text: status, cls: '' }
+}
+
+function roleLabel(role) {
+  return role === 'host' ? 'Host' : 'Oyuncu'
+}
+
+function actionLabel(lobby) {
+  if (lobby.status === 'finished') return 'Skora Don'
+  if (lobby.status === 'playing') return 'Oyuna Don'
+  return lobby.role === 'host' ? 'Odaya Git' : 'Bekleme Odasina Don'
 }
 
 function timeAgo(isoString) {
   const diff = Math.floor((Date.now() - new Date(isoString)) / 1000)
-  if (diff < 60) return `${diff}sn önce`
-  if (diff < 3600) return `${Math.floor(diff / 60)}dk önce`
-  return `${Math.floor(diff / 3600)}sa önce`
+  if (diff < 60) return `${diff}sn once`
+  if (diff < 3600) return `${Math.floor(diff / 60)}dk once`
+  return `${Math.floor(diff / 3600)}sa once`
 }
 
 function formatDate(isoString) {
-  return new Date(isoString).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return new Date(isoString).toLocaleDateString('tr-TR', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 export default function Lobby() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { state } = useLocation()
   const [nickname, setNickname] = useState(user?.displayName ?? '')
   const [joinId, setJoinId] = useState('')
   const [error, setError] = useState('')
@@ -36,12 +57,14 @@ export default function Lobby() {
   const [myLobbies, setMyLobbies] = useState([])
   const [gameHistory, setGameHistory] = useState([])
   const [leaderboard, setLeaderboard] = useState([])
+  const [myLeague, setMyLeague] = useState(null)
 
   useEffect(() => {
     if (!user) return
     user.getIdToken().then(idToken => {
       getMyLobbies(user, idToken).then(data => setMyLobbies(Array.isArray(data) ? data : [])).catch(() => {})
       getMyHistory(user, idToken).then(data => setGameHistory(data?.records ?? [])).catch(() => {})
+      getMyLeague(user, idToken).then(data => setMyLeague(data)).catch(() => {})
     })
     getLeaderboard().then(data => setLeaderboard(data?.entries ?? [])).catch(() => {})
   }, [user])
@@ -69,33 +92,51 @@ export default function Lobby() {
     setLoading(true)
     setError('')
     try {
-      await getLobby(code)
+      const idToken = await user.getIdToken()
+      await getLobby(user, idToken, code)
       navigate(`/lobby/${code}`, { state: { nickname: nickname.trim(), isHost: false } })
     } catch (err) {
-      setError('Oda bulunamadı. Kodu kontrol et ve tekrar dene.')
+      setError(err.message || 'Oda bulunamadi.')
     } finally {
       setLoading(false)
     }
   }
 
   const displayName = nickname || user?.displayName || user?.email?.split('@')[0] || 'Oyuncu'
+  const notice = state?.notice ?? ''
 
   return (
     <AppShell>
-      <div className="lp-header">
+      <ParticleBanner className="lp-header">
         <div>
-          <h1>Hoş geldin, {displayName} 👋</h1>
-          <p>Bir oda oluştur ve arkadaşlarını davet et ya da var olan bir odaya katıl.</p>
+          <h1>Hos geldin, {displayName} 👋</h1>
+          <p>Bir oda olustur ve arkadaslarini davet et ya da var olan bir odaya katil.</p>
         </div>
-      </div>
+        {myLeague?.league && (
+          <div className={`lp-league-card lp-league-${myLeague.league}`}>
+            <div className="lp-league-emoji">{LEAGUE_EMOJI[myLeague.league] ?? '🏷️'}</div>
+            <div className="lp-league-info">
+              <div className="lp-league-name">{LEAGUE_LABEL[myLeague.league] ?? myLeague.league} Ligi</div>
+              <div className="lp-league-lp">{myLeague.lp ?? 0} / {myLeague.promote_at ?? 100} LP</div>
+              <div className="lp-league-bar">
+                <div
+                  className="lp-league-bar-fill"
+                  style={{ width: `${Math.max(0, Math.min(100, (myLeague.lp ?? 0) / (myLeague.promote_at ?? 100) * 100))}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </ParticleBanner>
 
+      {notice && <div className="lp-notice">{notice}</div>}
       {error && <div className="lp-error">{error}</div>}
 
       <div className="lp-grid">
-        <div className="lp-card">
+        <div className="lp-card" style={{ '--i': 0 }}>
           <div className="lp-card-icon"><Icon name="sparkle" size={22} /></div>
-          <h2>Yeni Oda Oluştur</h2>
-          <p className="lp-card-desc">Hızlı bir oda aç, kodunu paylaş, oyunu yönet.</p>
+          <h2>Yeni Oda Olustur</h2>
+          <p className="lp-card-desc">Hizli bir oda ac, kodunu paylas, oyunu yonet.</p>
           <form onSubmit={handleCreate}>
             <div className="lp-field">
               <label htmlFor="nick-create">Takma Ad</label>
@@ -104,7 +145,7 @@ export default function Lobby() {
                 className="lp-input"
                 value={nickname}
                 onChange={e => setNickname(e.target.value)}
-                placeholder="Takma adın"
+                placeholder="Takma adin"
                 maxLength={20}
               />
             </div>
@@ -114,15 +155,15 @@ export default function Lobby() {
               className="hr-btn hr-btn-primary hr-btn-lg"
               style={{ width: '100%' }}
             >
-              {loading ? 'Oluşturuluyor…' : 'Oda Oluştur'}
+              {loading ? 'Olusturuluyor...' : 'Oda Olustur'}
             </button>
           </form>
         </div>
 
-        <div className="lp-card">
+        <div className="lp-card" style={{ '--i': 1 }}>
           <div className="lp-card-icon"><Icon name="users" size={22} /></div>
-          <h2>Mevcut Odaya Katıl</h2>
-          <p className="lp-card-desc">Arkadaşından aldığın oda kodunu gir.</p>
+          <h2>Mevcut Odaya Katil</h2>
+          <p className="lp-card-desc">Arkadasindan aldigin oda kodunu gir.</p>
           <form onSubmit={handleJoin}>
             <div className="lp-field">
               <label htmlFor="nick-join">Takma Ad</label>
@@ -131,7 +172,7 @@ export default function Lobby() {
                 className="lp-input"
                 value={nickname}
                 onChange={e => setNickname(e.target.value)}
-                placeholder="Takma adın"
+                placeholder="Takma adin"
                 maxLength={20}
               />
             </div>
@@ -152,7 +193,7 @@ export default function Lobby() {
               className="hr-btn hr-btn-outline hr-btn-lg"
               style={{ width: '100%' }}
             >
-              {loading ? 'Kontrol ediliyor…' : 'Katıl'}
+              {loading ? 'Kontrol ediliyor...' : 'Katil'}
             </button>
           </form>
         </div>
@@ -160,20 +201,26 @@ export default function Lobby() {
 
       {myLobbies.length > 0 && (
         <div className="lp-active-lobbies">
-          <h3>Aktif Odalarım</h3>
+          <h3>Aktif Odalar</h3>
           <ul className="lp-lobby-list">
-            {myLobbies.map(lobby => {
+            {myLobbies.map((lobby, i) => {
               const s = statusLabel(lobby.status)
               return (
-                <li key={lobby.id} className="lp-lobby-row">
+                <li key={lobby.id} className="lp-lobby-row" style={{ '--i': i }}>
                   <span className="lp-lobby-code">{lobby.id}</span>
                   <span className={`lp-status-badge ${s.cls}`}>{s.text}</span>
+                  <span className="lp-status-badge lp-status-role">{roleLabel(lobby.role)}</span>
                   <span className="lp-lobby-meta">{lobby.player_count} oyuncu · {timeAgo(lobby.created_at)}</span>
                   <button
                     className="hr-btn hr-btn-outline"
-                    onClick={() => navigate(`/lobby/${lobby.id}`, { state: { nickname: nickname.trim() || displayName, isHost: true } })}
+                    onClick={() => navigate(`/lobby/${lobby.id}`, {
+                      state: {
+                        nickname: nickname.trim() || displayName,
+                        isHost: lobby.role === 'host',
+                      },
+                    })}
                   >
-                    Odaya Git →
+                    {actionLabel(lobby)} →
                   </button>
                 </li>
               )
@@ -183,14 +230,14 @@ export default function Lobby() {
       )}
 
       <div className="lp-info-row">
-        <div className="lp-info">
-          <h3>Nasıl Oynanır?</h3>
-          <p>Ev görselini ve detaylarını incele, fiyatını tahmin et, AI'a karşı yarış. En yakın tahmin tur puanlarını alır.</p>
+        <div className="lp-info" style={{ '--i': 0 }}>
+          <h3>Nasil Oynanir?</h3>
+          <p>Ev gorselini ve detaylarini incele, fiyatini tahmin et, AI'a karsi yaris. En yakin tahmin tur puanlarini alir.</p>
         </div>
-        <div className="lp-info">
+        <div className="lp-info" style={{ '--i': 1 }}>
           <h3>Liderler</h3>
           {leaderboard.length === 0 ? (
-            <p className="lp-empty">Henüz kayıtlı oyun yok.</p>
+            <p className="lp-empty">Henuz kayitli oyun yok.</p>
           ) : (
             <ul className="lp-info-list">
               {leaderboard.slice(0, 3).map((entry, i) => (
@@ -202,14 +249,14 @@ export default function Lobby() {
             </ul>
           )}
         </div>
-        <div className="lp-info">
-          <h3>Oyun Geçmişim</h3>
+        <div className="lp-info" style={{ '--i': 2 }}>
+          <h3>Oyun Gecmisim</h3>
           {gameHistory.length === 0 ? (
-            <p className="lp-empty">Henüz tamamlanmış oyunun yok.</p>
+            <p className="lp-empty">Henuz tamamlanmis oyunun yok.</p>
           ) : (
             <ul className="lp-history-list">
               {gameHistory.slice(0, 5).map((rec, i) => (
-                <li key={i} className="lp-history-row">
+                <li key={i} className="lp-history-row" style={{ '--i': i }}>
                   <span className="lp-history-rank">{RANK_MEDALS[rec.rank - 1] ?? `#${rec.rank}`}</span>
                   <span className="lp-history-info">
                     <span className="lp-history-nickname">{rec.nickname}</span>

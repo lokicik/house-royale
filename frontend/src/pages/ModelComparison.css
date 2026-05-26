@@ -1,24 +1,44 @@
 .mc-header {
+  background: linear-gradient(135deg, var(--hr-blue) 0%, var(--hr-blue-darker) 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  background: var(--hr-card);
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.35);
+  transition: all 0.3s ease;
+}
+
+html[data-theme='dark'] .mc-header {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
   border: 1px solid var(--hr-border);
-  border-radius: 14px;
-  padding: 20px 24px;
-  margin-bottom: 16px;
   box-shadow: var(--hr-shadow);
 }
+
+.mc-header::after {
+  content: '📊';
+  font-size: 96px;
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.12;
+}
+
 .mc-header h1 {
-  font-size: 24px;
+  font-size: 28px;
   margin: 0 0 4px;
   font-weight: 700;
   letter-spacing: -0.5px;
-  color: var(--hr-text);
+  color: #fff;
 }
-.mc-header p { margin: 0; color: var(--hr-muted); font-size: 13px; }
+.mc-header p { margin: 0; color: #fff; opacity: 0.85; font-size: 14px; }
 .mc-filter {
   display: flex;
   gap: 8px;
@@ -36,7 +56,7 @@
 
 .mc-stats {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -87,7 +107,7 @@
   font-weight: 700;
   color: var(--hr-text);
 }
-.mc-card-body { padding: 18px; }
+.mc-card-body { padding: 16px; }
 
 .mc-table { width: 100%; border-collapse: collapse; }
 .mc-table th, .mc-table td {
@@ -117,12 +137,43 @@
 
 .mc-bar-chart {
   width: 100%;
-  height: 200px;
+  height: 390px;
 }
 .mc-radar {
   width: 100%;
   height: 240px;
   margin-top: 16px;
+}
+.mc-scatter {
+  width: 100%;
+  height: 265px;
+  margin-top: 16px;
+}
+.mc-feature-importance {
+  width: 100%;
+  height: 220px;
+  margin-top: 10px;
+}
+.mc-feature-importance rect {
+  transition: opacity 0.2s, filter 0.2s;
+}
+.mc-feature-importance rect:hover {
+  opacity: 0.85;
+  filter: brightness(1.1);
+  cursor: pointer;
+}
+.mc-loss-chart {
+  width: 100%;
+  height: 220px;
+  margin-top: 10px;
+}
+.mc-loss-chart path {
+  transition: stroke-width 0.2s, opacity 0.2s;
+}
+.mc-loss-chart path:hover {
+  stroke-width: 4px;
+  opacity: 0.9;
+  cursor: pointer;
 }
 
 .mc-insights {
@@ -187,4 +238,60 @@
   .mc-stats { grid-template-columns: repeat(2, 1fr); }
   .mc-insights { grid-template-columns: 1fr; }
   .mc-table th:nth-child(n+5), .mc-table td:nth-child(n+5) { display: none; }
+}
+
+/* ===== Chart entrance animations ===== */
+
+/* Horizontal bars (feature importance) */
+.mc-feature-importance .fi-bar {
+  transform-box: fill-box;
+  transform-origin: left;
+  transform: scaleX(0);
+  transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mc-feature-importance.visible .fi-bar {
+  transform: scaleX(1);
+}
+
+/* Vertical bars (metric comparison) */
+.mc-bar-chart rect {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  transform: scaleY(0);
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mc-bar-chart.visible rect {
+  transform: scaleY(1);
+}
+
+/* Radar polygons */
+.mc-radar .radar-poly {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mc-radar.visible .radar-poly {
+  transform: scale(1);
+}
+
+/* Loss convergence lines */
+.mc-loss-chart .loss-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mc-loss-chart.visible .loss-line {
+  stroke-dashoffset: 0;
+}
+
+/* Scatter dots */
+.mc-scatter .sc-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  transition: transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.mc-scatter.visible .sc-dot {
+  transform: scale(1);
 }

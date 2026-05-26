@@ -16,6 +16,7 @@ type RoundEntry struct {
 	ID           string
 	Name         string
 	IsAI         bool
+	League       string
 	DeviationPct float64
 	PointsEarned int
 }
@@ -24,6 +25,7 @@ type stat struct {
 	id       string
 	name     string
 	isAI     bool
+	league   string
 	score    int
 	rounds   int
 	totalDev float64
@@ -35,6 +37,7 @@ type EntryView struct {
 	ID      string  `json:"id" firestore:"id"`
 	Name    string  `json:"name" firestore:"name"`
 	IsAI    bool    `json:"is_ai" firestore:"is_ai"`
+	League  string  `json:"league" firestore:"league"`
 	Rank    int     `json:"rank" firestore:"-"`
 	Rounds  int     `json:"rounds" firestore:"rounds"`
 	AvgErr  float64 `json:"avg_err" firestore:"-"`   // average deviation %
@@ -100,6 +103,9 @@ func (s *Store) Record(rounds [][]RoundEntry) {
 				s.stats[r.ID] = e
 			}
 			e.name = r.Name // keep nickname up-to-date
+			if r.League != "" {
+				e.league = r.League
+			}
 			e.score += r.PointsEarned
 			e.rounds++
 			e.totalDev += r.DeviationPct
@@ -126,6 +132,7 @@ func (s *Store) Snapshot() []EntryView {
 			ID:      e.id,
 			Name:    e.name,
 			IsAI:    e.isAI,
+			League:  e.league,
 			Rounds:  e.rounds,
 			AvgErr:  avgErr,
 			WinRate: winRate,
@@ -160,7 +167,7 @@ func (fs *FirestoreStore) Record(rounds [][]RoundEntry) {
 			if r.PointsEarned == 3 {
 				wins = 1
 			}
-			if _, err := docRef.Set(ctx, map[string]interface{}{
+			fields := map[string]interface{}{
 				"id":        r.ID,
 				"name":      r.Name,
 				"is_ai":     r.IsAI,
@@ -168,7 +175,11 @@ func (fs *FirestoreStore) Record(rounds [][]RoundEntry) {
 				"rounds":    firestore.Increment(1),
 				"total_dev": firestore.Increment(r.DeviationPct),
 				"wins":      firestore.Increment(wins),
-			}, firestore.MergeAll); err != nil {
+			}
+			if r.League != "" {
+				fields["league"] = r.League
+			}
+			if _, err := docRef.Set(ctx, fields, firestore.MergeAll); err != nil {
 				failures++
 				log.Printf("leaderboard.Record firestore set failed id=%s name=%s err=%v", r.ID, r.Name, err)
 				continue
@@ -204,6 +215,7 @@ func (fs *FirestoreStore) Snapshot() []EntryView {
 		id, _ := data["id"].(string)
 		name, _ := data["name"].(string)
 		isAI, _ := data["is_ai"].(bool)
+		leagueStr, _ := data["league"].(string)
 		score := asInt64(data["score"])
 		rounds := asInt64(data["rounds"])
 		totalDev := asFloat64(data["total_dev"])
@@ -220,6 +232,7 @@ func (fs *FirestoreStore) Snapshot() []EntryView {
 			ID:      id,
 			Name:    name,
 			IsAI:    isAI,
+			League:  leagueStr,
 			Rounds:  int(rounds),
 			AvgErr:  avgErr,
 			WinRate: winRate,
