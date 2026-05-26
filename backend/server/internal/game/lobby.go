@@ -37,13 +37,15 @@ type AIModelMeta struct {
 
 // AvailableAIModels is the canonical registry of model IDs the lobby can
 // enable. Each model is permanently assigned to one league based on its
-// training quality (notebook 5.1 ResNet models → Diamond; notebook 5.2
+// training quality (notebook 5.1 deep MLPs → Diamond; notebook 5.2
 // baselines → Gold/Bronze).
 var AvailableAIModels = []AIModelMeta{
-	// Diamond — notebook 5.1 ResNet-style MLPs, ~3–5% error.
+	// Diamond — notebook 5.1 deep MLPs, ~3–5% error.
+	// model_0: ResNet (residual connections, AdamW, Swish)
+	// model_1/2: standard sequential dense MLPs (Adam, ReLU)
 	{ID: "model_0", Name: "ResNet Pro", Type: "Deep MLP", League: league.Diamond},
-	{ID: "model_1", Name: "ResNet Plus", Type: "Deep MLP", League: league.Diamond},
-	{ID: "model_2", Name: "ResNet Lite", Type: "Deep MLP", League: league.Diamond},
+	{ID: "model_1", Name: "MLP Pro Plus Max", Type: "Deep MLP", League: league.Diamond},
+	{ID: "model_2", Name: "MLP Pro Plus", Type: "Deep MLP", League: league.Diamond},
 	// Gold — notebook 5.2 mid-tier baselines.
 	{ID: "model_3", Name: "MLP Pro", Type: "MLP", League: league.Gold},
 	{ID: "model_4", Name: "MLP Plus", Type: "MLP", League: league.Gold},

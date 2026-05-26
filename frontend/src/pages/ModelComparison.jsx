@@ -5,9 +5,9 @@ import { Icon, ModelBadge } from '../components/icons'
 import './ModelComparison.css'
 
 const MODELS = [
-  { name: 'ResNet Pro (model_0)', type: 'Deep MLP', mae: 341250, mape: 3.20, r2: 0.96, resp: 124, params: '8.4M', trainTime: 245, accuracy: 0.96, best: true },
-  { name: 'ResNet Plus (model_1)', type: 'Deep MLP', mae: 378400, mape: 3.65, r2: 0.94, resp: 108, params: '6.2M', trainTime: 180, accuracy: 0.94 },
-  { name: 'ResNet Lite (model_2)', type: 'Deep MLP', mae: 415800, mape: 4.10, r2: 0.93, resp: 85, params: '3.1M', trainTime: 95, accuracy: 0.93 },
+  { name: 'ResNet Pro (model_0)', type: 'Deep MLP (ResNet)', mae: 341250, mape: 3.20, r2: 0.96, resp: 124, params: '8.4M', trainTime: 245, accuracy: 0.96, best: true },
+  { name: 'MLP Pro Plus Max (model_1)', type: 'Deep MLP', mae: 378400, mape: 3.65, r2: 0.94, resp: 108, params: '6.2M', trainTime: 180, accuracy: 0.94 },
+  { name: 'MLP Pro Plus (model_2)', type: 'Deep MLP', mae: 415800, mape: 4.10, r2: 0.93, resp: 85, params: '3.1M', trainTime: 95, accuracy: 0.93 },
   { name: 'MLP Pro (model_3)', type: 'MLP', mae: 812500, mape: 7.80, r2: 0.88, resp: 72, params: '1.8M', trainTime: 65, accuracy: 0.88 },
   { name: 'MLP Plus (model_4)', type: 'MLP', mae: 865200, mape: 8.40, r2: 0.85, resp: 64, params: '1.2M', trainTime: 48, accuracy: 0.85 },
   { name: 'MLP Lite (model_5)', type: 'MLP', mae: 928900, mape: 9.20, r2: 0.82, resp: 52, params: '0.8M', trainTime: 35, accuracy: 0.82 },
@@ -26,7 +26,7 @@ const STATS = [
 
 const INSIGHTS = [
   { tag: 'En İyi', title: 'ResNet Pro (model_0)', desc: 'Tüm metriklerde en üstte. En düşük MAE (%3.20 MAPE) ve en yüksek R² değeri.' },
-  { tag: 'En Dengeli', title: 'ResNet Lite (model_2)', desc: 'Hem yüksek doğruluk (%4.10 MAPE) hem de son derece hızlı yanıt süresi (85ms).' },
+  { tag: 'En Dengeli', title: 'MLP Pro Plus (model_2)', desc: 'Hem yüksek doğruluk (%4.10 MAPE) hem de son derece hızlı yanıt süresi (85ms).' },
   { tag: 'En Hızlı', title: 'Stub MLP (model_8)', desc: 'Sadece 32ms ortalama çıkarım süresiyle en hızlı çalışan yapay zeka modelimiz.' },
   { tag: 'En Hafif', title: 'Mini MLP (model_6)', desc: 'Düşük parametre boyutu ve hızlı eğitim süresiyle en az kaynak tüketen model.' },
 ]

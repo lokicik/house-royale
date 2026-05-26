@@ -1129,9 +1129,11 @@
               </p>
               <ul class="bullet-list" style="font-size: 0.8rem;">
                 <li><strong>Modeller:</strong> model_0, model_1, model_2</li>
-                <li><strong>Mimari:</strong> <strong>model_0 ResNet Pro</strong> (Residual Bloklar) + 8 Katmanlı Derin MLP'ler</li>
-                <li><strong>Performans:</strong> MAPE ≈ %3, R² > 0.92</li>
-                <li><strong>Optimizer:</strong> AdamW + Weight Decay ve Huber Loss</li>
+                <li><strong>model_0:</strong> ResNet Pro — 2x Residual Blok, Swish, AdamW, Dropout</li>
+                <li><strong>model_1:</strong> MLP Pro Plus Max — 8 Katmanlı Ardışık Dense, ReLU, Adam, Dropout</li>
+                <li><strong>model_2:</strong> MLP Pro Plus — 8 Katmanlı Ardışık Dense, ReLU, Adam, Dropout Yok</li>
+                <li><strong>Performans:</strong> MAPE ≈ %3–%5.4, R² > 0.84</li>
+                <li><strong>Loss:</strong> Tüm modeller Huber Loss kullanır</li>
               </ul>
             </div>
           </div>
@@ -1143,7 +1145,7 @@
         <div class="speaker-notes">
           <p>Klasik bir makine öğrenmesi ödevinde hedef tek bir "en iyi" modeli eğitmektir. Ancak bir oyunda sadece yenilmez bir yapay zeka sunmak, kullanıcının motivasyonunu kırar.</p>
           <p>Biz bu engeli aşmak için oyunlaştırma teorisine uygun 3 lig ve 9 modelden oluşan bir rakip havuzu tasarladı. Bronz liginde model_6, 7 ve 8 yer alır. Bunlar kasıtlı olarak sadece 2-3 katmandan oluşan çok sığ, veri kalıplarını tam çözemeyen kolay rakiplerdir. Böylece yeni başlayan bir oyuncu rahatlıkla galip gelebilir.</p>
-          <p>Altın ligindeki model_3, 4 ve 5 standart 4 katmanlı MLP yapılarından oluşur ve sektör ortalaması olan %5-8 hata payıyla tahmin verir. En tepe olan Elmas ligi ise yenilmesi imkansıza yakın derin sinir ağlarını barındırır. Bu ligdeki liderimiz olan model_0 ResNet Pro, %3 civarı rekor düşük hata payına ulaşmıştır. Şimdi bu lider modelin derinliklerine bakalım.</p>
+          <p>Altın ligindeki model_3, 4 ve 5 standart 4 katmanlı MLP yapılarından oluşur ve sektör ortalaması olan %5-8 hata payıyla tahmin verir. En tepe olan Elmas ligi ise yenilmesi imkansıza yakın derin sinir ağlarını barındırır. Bu ligin lider modeli olan model_0, residual bağlantılara sahip tek gerçek ResNet mimarisidir ve %3 civarı rekor düşük hata payına ulaşmıştır. MLP Pro Plus Max (model_1) ve MLP Pro Plus (model_2) ise residual bağlantı içermeyen, 8 katmanlı ardışık derin MLP ağlarıdır. Şimdi bu lider modelin derinliklerine bakalım.</p>
         </div>
       </div>
 
@@ -1347,7 +1349,7 @@
                 <td>En güçlü nihai rakip (Yenilemez)</td>
               </tr>
               <tr>
-                <td>model_1 (MLP Pro)</td>
+                <td>model_1 (MLP Pro Plus Max)</td>
                 <td>💎 Elmas</td>
                 <td>8 Katmanlı Derin MLP (ReLU)</td>
                 <td>~%4.5</td>
@@ -1355,7 +1357,7 @@
                 <td>Güçlü derin alternatif</td>
               </tr>
               <tr>
-                <td>model_2 (MLP Plus)</td>
+                <td>model_2 (MLP Pro Plus)</td>
                 <td>💎 Elmas</td>
                 <td>8 Katmanlı Derin MLP (Alt Hiperparametre)</td>
                 <td>~%5.4</td>
