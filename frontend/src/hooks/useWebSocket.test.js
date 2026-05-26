@@ -90,7 +90,7 @@ describe('useWebSocket', () => {
     const resolveTerminalState = vi.fn().mockResolvedValue({
       terminal: true,
       errorCode: 'removed_from_lobby',
-      message: 'Host seni odadan cikardi.',
+      message: 'Host seni odadan çıkardı.',
     })
 
     const { result } = renderHook(() => useWebSocket('ws://example.test/socket', vi.fn(), { resolveTerminalState }))
@@ -110,7 +110,7 @@ describe('useWebSocket', () => {
     expect(result.current.terminalState).toEqual({
       terminal: true,
       errorCode: 'removed_from_lobby',
-      message: 'Host seni odadan cikardi.',
+      message: 'Host seni odadan çıkardı.',
     })
 
     await act(async () => {

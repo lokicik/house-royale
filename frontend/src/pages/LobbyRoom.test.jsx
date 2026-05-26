@@ -85,7 +85,7 @@ describe('LobbyRoom terminal redirects', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTestId('lobby-destination')).toHaveTextContent('Host seni odadan cikardi.')
+      expect(screen.getByTestId('lobby-destination')).toHaveTextContent('Host seni odadan çıkardı.')
     })
 
     expect(disconnect).toHaveBeenCalledWith(false)

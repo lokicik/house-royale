@@ -15,21 +15,21 @@ const ROUND_DURATION_OPTIONS = [30, 60]
 const ACTIVITY_MAX = 20
 
 const ACTIVITY_VERBS = {
-  joined: 'lobiye katildi',
-  rejoined: 'lobiye geri dondu',
-  left: 'lobiden ayrildi',
-  kicked: 'bir oyuncuyu odadan cikardi',
-  ready: 'oyunu baslatti',
-  settings_changed: 'oyun ayarlarini guncelledi',
-  ai_toggled: 'AI rakiplerini guncelledi',
-  submitted: 'tahminini gonderdi',
-  voted_next: 'sonraki tura hazir',
-  round_advanced: 'sonraki tura gecti',
+  joined: 'lobiye katıldı',
+  rejoined: 'lobiye geri döndü',
+  left: 'lobiden ayrıldı',
+  kicked: 'bir oyuncuyu odadan çıkardı',
+  ready: 'oyunu başlattı',
+  settings_changed: 'oyun ayarlarını güncelledi',
+  ai_toggled: 'AI rakiplerini güncelledi',
+  submitted: 'tahminini gönderdi',
+  voted_next: 'sonraki tura hazır',
+  round_advanced: 'sonraki tura geçti',
 }
 
 const LEAGUE_LABEL = {
   bronze: 'Bronz',
-  gold: 'Altin',
+  gold: 'Altın',
   diamond: 'Elmas',
 }
 
@@ -62,10 +62,10 @@ function initials(name) {
 function relativeTime(ts) {
   if (!ts) return ''
   const diff = Math.max(0, Date.now() - ts)
-  if (diff < 10_000) return 'az once'
-  if (diff < 60_000) return `${Math.floor(diff / 1000)}sn once`
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}dk once`
-  return `${Math.floor(diff / 3_600_000)}sa once`
+  if (diff < 10_000) return 'az önce'
+  if (diff < 60_000) return `${Math.floor(diff / 1000)}sn önce`
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}dk önce`
+  return `${Math.floor(diff / 3_600_000)}sa önce`
 }
 
 function computeRoundTimeLeft(payload) {
@@ -77,31 +77,31 @@ function computeRoundTimeLeft(payload) {
 }
 
 function roomClosedMessage(reason) {
-  if (reason === 'host_closed') return 'Oda host tarafindan kapatildi.'
-  if (reason === 'host_absent') return 'Host geri donmedigi icin oda kapatildi.'
-  if (reason === 'stale_empty') return 'Oda sure asimi nedeniyle kapatildi.'
-  return 'Oda kapatildi.'
+  if (reason === 'host_closed') return 'Oda host tarafından kapatıldı.'
+  if (reason === 'host_absent') return 'Host geri dönemediği için oda kapatıldı.'
+  if (reason === 'stale_empty') return 'Oda süre aşımı nedeniyle kapatıldı.'
+  return 'Oda kapatıldı.'
 }
 
 function terminalMessageFromErrorCode(errorCode, fallbackMessage) {
   if (errorCode === 'removed_from_lobby') {
-    return 'Host seni odadan cikardi.'
+    return 'Host seni odadan çıkardı.'
   }
   if (errorCode === 'lobby_not_found') {
-    return 'Oda artik mevcut degil.'
+    return 'Oda artık mevcut değil.'
   }
   if (errorCode === 'game_in_progress') {
-    return 'Bu oyuna artik baglanamiyorsun.'
+    return 'Bu oyuna artık bağlanamıyorsun.'
   }
-  return fallbackMessage || 'Odaya su anda ulasilamiyor.'
+  return fallbackMessage || 'Odaya şu anda ulaşılamıyor.'
 }
 
 function connectionStatusLabel(connectionState, connectionError) {
-  if (connectionState === 'connected') return 'Bagli'
-  if (connectionState === 'reconnecting') return connectionError ?? 'Yeniden baglaniliyor...'
-  if (connectionState === 'terminal') return 'Oda erisilemez hale geldi.'
-  if (connectionState === 'connecting') return 'Baglaniliyor...'
-  return connectionError ?? 'Baglanti bekleniyor...'
+  if (connectionState === 'connected') return 'Bağlı'
+  if (connectionState === 'reconnecting') return connectionError ?? 'Yeniden bağlanılıyor...'
+  if (connectionState === 'terminal') return 'Oda erişilemez hale geldi.'
+  if (connectionState === 'connecting') return 'Bağlanılıyor...'
+  return connectionError ?? 'Bağlantı bekleniyor...'
 }
 
 export default function LobbyRoom() {
@@ -123,6 +123,7 @@ export default function LobbyRoom() {
   const [timeLeft, setTimeLeft] = useState(0)
   const [guess, setGuess] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [submittedPlayerIds, setSubmittedPlayerIds] = useState(new Set())
   const [settings, setSettings] = useState({ round_count: 3, round_duration_sec: 30 })
   const [aiModels, setAIModels] = useState({})
   const [availableAI, setAvailableAI] = useState([])
@@ -228,7 +229,7 @@ export default function LobbyRoom() {
         })
         break
       case 'PLAYER_KICKED':
-        handleTerminalClose(msg.payload?.message || 'Host seni odadan cikardi.')
+        handleTerminalClose(msg.payload?.message || 'Host seni odadan çıkardı.')
         break
       case 'ROOM_CLOSED':
         handleTerminalClose(roomClosedMessage(msg.payload?.reason))
@@ -244,6 +245,9 @@ export default function LobbyRoom() {
           actor: msg.payload?.actor_nickname ?? 'Sistem',
           ts: msg.payload?.ts ?? Date.now(),
         })
+        if (msg.payload?.kind === 'submitted' && msg.payload?.actor_id) {
+          setSubmittedPlayerIds(prev => new Set([...prev, msg.payload.actor_id]))
+        }
         break
       case 'ROUND_START':
         if (msg.payload?.round === 1) setRoundHistory([])
@@ -251,6 +255,7 @@ export default function LobbyRoom() {
         setRoomStatus('playing')
         setRoundData(msg.payload)
         setSubmitted(false)
+        setSubmittedPlayerIds(new Set())
         setGuess('')
         setScreen('round')
         setTimeLeft(computeRoundTimeLeft(msg.payload))
@@ -288,7 +293,7 @@ export default function LobbyRoom() {
         break
       }
       case 'ERROR':
-        showError(msg.payload?.message ?? 'Bir hata olustu.')
+        showError(msg.payload?.message ?? 'Bir hata oluştu.')
         break
       default:
         break
@@ -300,7 +305,7 @@ export default function LobbyRoom() {
       return {
         terminal: true,
         errorCode: 'lobby_not_found',
-        message: 'Oturum bulunamadi.',
+        message: 'Oturum bulunamadı.',
       }
     }
 
@@ -346,7 +351,7 @@ export default function LobbyRoom() {
   useEffect(() => {
     if (!terminalState?.terminal) return
     disconnect(false)
-    handleTerminalClose(terminalState.message || 'Odaya su anda ulasilamiyor.')
+    handleTerminalClose(terminalState.message || 'Odaya şu anda ulaşılamıyor.')
   }, [disconnect, handleTerminalClose, terminalState])
 
   useEffect(() => {
@@ -411,7 +416,7 @@ export default function LobbyRoom() {
     leavingRef.current = true
     send('LEAVE', {})
     disconnect(false)
-    navigate('/lobby', { state: { notice: 'Oyundan ayrildin.' } })
+    navigate('/lobby', { state: { notice: 'Oyundan ayrıldın.' } })
   }
 
   if (!user) {
@@ -420,9 +425,9 @@ export default function LobbyRoom() {
   }
 
   const subnavRound = screen === 'round' && roundData
-    ? { label: 'Tur', value: `${roundData.round} / ${roundData.total_rounds}` }
+    ? { label: 'Tür', value: `${roundData.round} / ${roundData.total_rounds}` }
     : screen === 'result' && resultData
-      ? { label: 'Tur', value: `${resultData.round}` }
+      ? { label: 'Tür', value: `${resultData.round}` }
       : null
 
   const aiActiveCount = availableAI.filter(m => aiModels[m.id]).length
@@ -436,7 +441,7 @@ export default function LobbyRoom() {
         <div className="lr-subnav-item">Mod <strong>Multiplayer</strong></div>
         {subnavRound && <div className="lr-subnav-item">{subnavRound.label} <strong>{subnavRound.value}</strong></div>}
         {screen === 'round' && (
-          <div className="lr-subnav-item">Sure <strong style={{ color: timeLeft <= 10 ? '#fca5a5' : '#fff' }}>{timeLeft}s</strong></div>
+          <div className="lr-subnav-item">Süre <strong style={{ color: timeLeft <= 10 ? '#fca5a5' : '#fff' }}>{timeLeft}s</strong></div>
         )}
         <div className="lr-subnav-item">Host <strong>{
           (hostId && players.find(p => p.player_id === hostId)?.nickname) || (isHost ? nickname : '-')
@@ -445,12 +450,12 @@ export default function LobbyRoom() {
         <div className="lr-subnav-spacer" />
         {canCloseRoom && (
           <button className="hr-btn hr-btn-outline" onClick={handleCloseRoom}>
-            Odayi Kapat
+            Odayı Kapat
           </button>
         )}
         {screen === 'leaderboard' ? (
           <button className="hr-btn hr-btn-primary" onClick={() => navigate('/lobby')}>
-            Lobiye Don
+            Lobiye Dön
           </button>
         ) : (
           <>
@@ -458,7 +463,7 @@ export default function LobbyRoom() {
               {connectionStatusLabel(connectionState, connectionError)}
             </span>
             <button className="hr-btn hr-btn-danger" onClick={handleExitGame}>
-              Oyundan Cik
+              Oyundan Çık
             </button>
           </>
         )}
@@ -469,8 +474,8 @@ export default function LobbyRoom() {
         <div className={`lr-league-toast ${leagueToast.promoted ? 'promoted' : leagueToast.demoted ? 'demoted' : ''}`}>
           <LeagueBadge league={leagueToast.league} />
           <span className="lr-league-toast-text">
-            {leagueToast.promoted && 'Yukseldin! '}
-            {leagueToast.demoted && 'Dustun. '}
+            {leagueToast.promoted && 'Yükseldin! '}
+            {leagueToast.demoted && 'Düştün. '}
             LP: <strong>{leagueToast.lp}</strong>
             <span className="delta"> ({leagueToast.lp_delta >= 0 ? '+' : ''}{leagueToast.lp_delta})</span>
           </span>
@@ -503,6 +508,7 @@ export default function LobbyRoom() {
           onSubmit={handleSubmitGuess}
           players={players}
           nickname={nickname}
+          submittedPlayerIds={submittedPlayerIds}
         />
       )}
       {screen === 'result' && resultData && (
@@ -556,7 +562,7 @@ function WaitingScreen({
         <div className="lr-panel">
           <div className="lr-panel-header">
             <h3>Oyuncular ({totalParticipants})</h3>
-            <span className="lr-pill ready">Canli</span>
+            <span className="lr-pill ready">Canlı</span>
           </div>
           <div className="lr-panel-body">
             {totalParticipants === 0 && (
@@ -597,7 +603,7 @@ function WaitingScreen({
           </div>
           <div className="lr-panel-body lr-activity-scroll">
             {activity.length === 0 && (
-              <div className="lr-activity" style={{ fontStyle: 'italic' }}>Henuz aktivite yok.</div>
+              <div className="lr-activity" style={{ fontStyle: 'italic' }}>Henüz aktivite yok.</div>
             )}
             {activity.map(a => (
               <div key={a.id} className="lr-activity">
@@ -612,12 +618,12 @@ function WaitingScreen({
       <div>
         <div className="lr-panel">
           <div className="lr-panel-header">
-            <h3>Oyun Ayarlari</h3>
-            {!isHost && <span style={{ fontSize: 11, color: 'var(--hr-muted)' }}>Sadece host degistirebilir</span>}
+            <h3>Oyun Ayarları</h3>
+            {!isHost && <span style={{ fontSize: 11, color: 'var(--hr-muted)' }}>Sadece host değiştirebilir</span>}
           </div>
           <div className="lr-panel-body">
             <SettingRow
-              label="Tur Sayisi"
+              label="Tür Sayısı"
               options={ROUND_COUNT_OPTIONS}
               active={settings.round_count}
               disabled={!isHost}
@@ -625,7 +631,7 @@ function WaitingScreen({
               renderOption={(v) => v}
             />
             <SettingRow
-              label="Tur Suresi"
+              label="Tür Süresi"
               options={ROUND_DURATION_OPTIONS}
               active={settings.round_duration_sec}
               disabled={!isHost}
@@ -637,14 +643,14 @@ function WaitingScreen({
 
         {isHost ? (
           <div className="lr-start-card">
-            <h4>Hazir misin?</h4>
-            <p>Tum oyuncular katildiktan sonra oyunu baslat.</p>
-            <button onClick={onStart}>▶ Oyuna Basla</button>
+            <h4>Hazır mısın?</h4>
+            <p>Tüm oyuncular katıldıktan sonra oyunu başlat.</p>
+            <button onClick={onStart}>▶ Oyuna Başla</button>
           </div>
         ) : (
           <div className="lr-start-card">
             <h4>Host'u bekliyoruz</h4>
-            <p>Oyun ayarlari tamamlandiginda host oyunu baslatacak.</p>
+            <p>Oyun ayarları tamamlandığında host oyunu başlatacak.</p>
             <div className="wait">Bekleniyor...</div>
           </div>
         )}
@@ -663,7 +669,7 @@ function WaitingScreen({
           </div>
           <div className="lr-panel-body">
             {availableAI.length === 0 && (
-              <div className="lr-player-row empty">Modeller yukleniyor...</div>
+              <div className="lr-player-row empty">Modeller yükleniyor...</div>
             )}
             {availableAI.map(m => {
               const on = !!aiModels[m.id]
@@ -677,7 +683,7 @@ function WaitingScreen({
                   <button
                     type="button"
                     className={`lr-toggle${on ? ' on' : ''}${isHost ? '' : ' disabled'}`}
-                    aria-label={`${m.name} ${on ? 'acik' : 'kapali'}`}
+                    aria-label={`${m.name} ${on ? 'açık' : 'kapalı'}`}
                     onClick={() => onToggleAI(m.id, !on)}
                     disabled={!isHost}
                   />
@@ -690,8 +696,8 @@ function WaitingScreen({
         <div className="lr-preview">
           <img src="/assets/landing-page-house-img.png" alt="Sample listing" />
           <div className="cap">
-            <strong>Ornek Ilan</strong>
-            120 m² · 3+1 · Kadikoy/Istanbul
+            <strong>Örnek İlan</strong>
+            120 m² · 3+1 · Kadıköy/İstanbul
           </div>
         </div>
       </div>
@@ -720,7 +726,7 @@ function SettingRow({ label, options, active, disabled, onChange, renderOption }
   )
 }
 
-function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nickname }) {
+function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nickname, submittedPlayerIds }) {
   const { property } = data
 
   const handleAddGuess = (amount) => {
@@ -737,9 +743,9 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
     property.metrekare_net > 0 ? { l: 'Net Alan', v: `${property.metrekare_net} m²`, icon: 'ruler' } : null,
     { l: 'Oda', v: property.oda_salon, icon: 'bed' },
     property.banyo_sayisi ? { l: 'Banyo', v: property.banyo_sayisi, icon: 'bed' } : null,
-    { l: 'Yas', v: property.bina_yasi, icon: 'building' },
+    { l: 'Yaş', v: property.bina_yasi, icon: 'building' },
     { l: 'Kat', v: `${property.kat} / ${property.kat_sayisi}`, icon: 'floor' },
-    { l: 'Isitma', v: property.isitma, icon: 'heater' },
+    { l: 'Isıtma', v: property.isitma, icon: 'heater' },
   ].filter(Boolean)
 
   return (
@@ -769,8 +775,8 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
 
       <div>
         <div className="lr-guess-card">
-          <h4>Sira Sende!</h4>
-          <p className="sub">Bu evin fiyatini tahmin et</p>
+          <h4>Sıra Sende!</h4>
+          <p className="sub">Bu evin fiyatını tahmin et</p>
           {!submitted ? (
             <form onSubmit={onSubmit}>
               <div style={{ position: 'relative' }}>
@@ -800,31 +806,34 @@ function RoundScreen({ data, guess, setGuess, submitted, onSubmit, players, nick
               </div>
               <button type="submit" className="hr-btn hr-btn-primary hr-btn-lg" style={{ width: '100%', marginTop: 12 }}>
                 <Icon name="send" size={16} />
-                Tahmini Gonder
+                Tahmini Gönder
               </button>
               <div className="lr-tip">
-                Ipuclari: konum, alan ve bina yasi en yakin tahmini yapmana yardimci olur.
+                İpuçları: konum, alan ve bina yaşı en yakın tahmini yapmana yardımcı olur.
               </div>
             </form>
           ) : (
-            <div className="lr-submitted">✓ Tahminin gonderildi, sonuc bekleniyor...</div>
+            <div className="lr-submitted">✓ Tahminin gönderildi, sonuç bekleniyor...</div>
           )}
         </div>
 
         <div className="lr-progress">
-          <h4>Canli Ilerleme</h4>
-          {(players.length ? players.filter(p => p.connected !== false) : [{ player_id: 'self', nickname }]).map(p => (
+          <h4>Canlı İlerleme</h4>
+          {(players.length ? players.filter(p => p.connected !== false) : [{ player_id: 'self', nickname }]).map(p => {
+            const hasSubmitted = submittedPlayerIds?.has(p.player_id) || (p.nickname === nickname && submitted)
+            return (
             <div className="lr-player-row" key={p.player_id}>
               <span className="lr-pavatar">{initials(p.nickname)}</span>
               <span className="lr-player-name">{p.nickname}</span>
-              <span className={`lr-pill ${p.nickname === nickname && submitted ? 'ready' : 'waiting'}`}>
-                {p.nickname === nickname && submitted ? 'Gonderildi' : 'Dusunuyor'}
+              <span className={`lr-pill ${hasSubmitted ? 'ready' : 'waiting'}`}>
+                {hasSubmitted ? 'Gönderildi' : 'Düşünüyor'}
               </span>
             </div>
-          ))}
+            )
+          })}
           <div className="lr-think">
             <span className="dots"><span /><span /><span /></span>
-            AI modelleri dusunuyor...
+            AI modelleri düşünüyor...
           </div>
         </div>
       </div>
@@ -899,10 +908,10 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
             <div className="lr-property-body">
               <div className="lr-location">
                 <Icon name="pin" size={16} />
-                Tur {round} sonucu
+                Tür {round} sonucu
               </div>
               <div className="lr-actual">
-                Gercek Fiyat <span className="v">₺{fmt(actual_price)}</span>
+                Gerçek Fiyat <span className="v">₺{fmt(actual_price)}</span>
               </div>
             </div>
           </div>
@@ -912,14 +921,14 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
           <div className="lr-winbanner">
             <h2>
               {!hasAnyWinner
-                ? 'Tutan Tahmin Yok'
+                ? 'Tutun Tahmin Yok'
                 : isWinner
-                  ? '🎉 Kazandin!'
+                  ? '🎉 Kazandın!'
                   : winnerType === 'AI'
-                    ? `🤖 ${winnerName} Kazandi`
-                    : `🏆 ${winnerName} Kazandi`}
+                    ? `🤖 ${winnerName} Kazandı`
+                    : `🏆 ${winnerName} Kazandı`}
             </h2>
-            <div className="sub">Bu turda en yakin tahmini yapti</div>
+            <div className="sub">Bu turda en yakın tahmini yaptı</div>
           </div>
 
           {hasOpponent ? (
@@ -957,14 +966,14 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
 
           <div className="lr-summary">
             <div><div className="l">Ort. Sapma</div><div className="v">%{avgDev}</div></div>
-            <div><div className="l">En Iyi</div><div className="v">%{bestDev}</div></div>
+            <div><div className="l">En İyi</div><div className="v">%{bestDev}</div></div>
             <div><div className="l">Toplam Puan</div><div className="v">+{totalPts}</div></div>
           </div>
         </div>
 
         <div>
           <div className="lr-panel">
-            <div className="lr-panel-header"><h3>Tum Tahminler</h3></div>
+            <div className="lr-panel-header"><h3>Tüm Tahminler</h3></div>
             <div className="lr-panel-body">
               {allPreds.map((p, i) => (
                 <div className={`lr-pred-row${p.name === nickname && p.type === 'Oyuncu' ? ' me-row' : ''}`} key={`${p.type}-${p.name}-${i}`}>
@@ -990,8 +999,8 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
         <div className="lr-vote-card">
           <div className="lr-vote-head">
             <div>
-              <h4>Sonraki Tur</h4>
-              <p>Hazir olan tum oyuncular bekleniyor.</p>
+              <h4>Sonraki Tür</h4>
+              <p>Hazır olan tüm oyuncular bekleniyor.</p>
             </div>
             <button
               type="button"
@@ -999,12 +1008,12 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
               onClick={onVoteNext}
               disabled={youVoted}
             >
-              {youVoted ? '✓ Hazirsin' : 'Sonraki Tur'}
+              {youVoted ? '✓ Hazırsın' : 'Sonraki Tür'}
             </button>
           </div>
           <div className="lr-vote-progress">
             <div className="lr-vote-count">
-              Hazir oyuncular: <strong>{votedCount} / {totalParticipants}</strong>
+              Hazır oyuncular: <strong>{votedCount} / {totalParticipants}</strong>
             </div>
             <div className="lr-vote-chips">
               {voteParticipants.map(p => {
@@ -1032,7 +1041,7 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
           })}
         </div>
         {isFinalRound && (
-          <span className="lr-final-pending">Final siralamasi hazirlaniyor...</span>
+          <span className="lr-final-pending">Final sıralaması hazırlanıyor...</span>
         )}
       </div>
     </>
@@ -1058,7 +1067,7 @@ function FinalLeaderboard({ data, roundHistory, onExit, isHost, onCloseRoom }) {
 
   return (
     <div className="lr-final">
-      <h2>🏆 Oyun Bitti - Final Siralamasi</h2>
+      <h2>🏆 Oyun Bitti - Final Sıralaması</h2>
       {top3.length > 0 && (
         <div className="lr-podium">
           {[1, 0, 2].map(i => {
@@ -1094,7 +1103,7 @@ function FinalLeaderboard({ data, roundHistory, onExit, isHost, onCloseRoom }) {
 
       {roundHistory.length > 0 && rd && (
         <div className="lr-round-breakdown">
-          <h3 className="lr-breakdown-title">Tur Ozetleri</h3>
+          <h3 className="lr-breakdown-title">Tür Özetleri</h3>
 
           <div className="lr-slider-nav">
             <button
@@ -1105,7 +1114,7 @@ function FinalLeaderboard({ data, roundHistory, onExit, isHost, onCloseRoom }) {
             >
               ◀
             </button>
-            <span className="lr-slider-title">Tur {rd.round} Ozeti</span>
+            <span className="lr-slider-title">Tür {rd.round} Özeti</span>
             <button
               type="button"
               className="hr-btn hr-btn-outline lr-slider-btn"
@@ -1118,8 +1127,8 @@ function FinalLeaderboard({ data, roundHistory, onExit, isHost, onCloseRoom }) {
 
           <div className="lr-round-card animate-round-card">
             <div className="lr-round-card-header">
-              <span className="lr-round-label">Tur {rd.round}</span>
-              <span className="lr-round-price">Gercek Fiyat: <strong>₺{fmt(rd.actual_price)}</strong></span>
+              <span className="lr-round-label">Tür {rd.round}</span>
+              <span className="lr-round-price">Gerçek Fiyat: <strong>₺{fmt(rd.actual_price)}</strong></span>
             </div>
 
             <div className="lr-breakdown-section">
@@ -1177,7 +1186,7 @@ function FinalLeaderboard({ data, roundHistory, onExit, isHost, onCloseRoom }) {
                 key={idx}
                 className={`lr-slider-dot${idx === currentRoundIdx ? ' active' : ''}`}
                 onClick={() => setCurrentRoundIdx(idx)}
-                aria-label={`Tur ${idx + 1}`}
+                aria-label={`Tür ${idx + 1}`}
               />
             ))}
           </div>
@@ -1187,11 +1196,11 @@ function FinalLeaderboard({ data, roundHistory, onExit, isHost, onCloseRoom }) {
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 24 }}>
         {isHost && (
           <button type="button" className="hr-btn hr-btn-outline" onClick={onCloseRoom}>
-            Odayi Kapat
+            Odayı Kapat
           </button>
         )}
         <button type="button" className="hr-btn hr-btn-primary" onClick={onExit}>
-          Lobiye Don
+          Lobiye Dön
         </button>
       </div>
     </div>
