@@ -425,9 +425,9 @@ export default function LobbyRoom() {
   }
 
   const subnavRound = screen === 'round' && roundData
-    ? { label: 'Tür', value: `${roundData.round} / ${roundData.total_rounds}` }
+    ? { label: 'Tur', value: `${roundData.round} / ${roundData.total_rounds}` }
     : screen === 'result' && resultData
-      ? { label: 'Tür', value: `${resultData.round}` }
+      ? { label: 'Tur', value: `${resultData.round}` }
       : null
 
   const aiActiveCount = availableAI.filter(m => aiModels[m.id]).length
@@ -623,7 +623,7 @@ function WaitingScreen({
           </div>
           <div className="lr-panel-body">
             <SettingRow
-              label="Tür Sayısı"
+              label="Tur Sayısı"
               options={ROUND_COUNT_OPTIONS}
               active={settings.round_count}
               disabled={!isHost}
@@ -631,7 +631,7 @@ function WaitingScreen({
               renderOption={(v) => v}
             />
             <SettingRow
-              label="Tür Süresi"
+              label="Tur Süresi"
               options={ROUND_DURATION_OPTIONS}
               active={settings.round_duration_sec}
               disabled={!isHost}
@@ -908,7 +908,7 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
             <div className="lr-property-body">
               <div className="lr-location">
                 <Icon name="pin" size={16} />
-                Tür {round} sonucu
+                Tur {round} sonucu
               </div>
               <div className="lr-actual">
                 Gerçek Fiyat <span className="v">₺{fmt(actual_price)}</span>
@@ -999,7 +999,7 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
         <div className="lr-vote-card">
           <div className="lr-vote-head">
             <div>
-              <h4>Sonraki Tür</h4>
+              <h4>Sonraki Tur</h4>
               <p>Hazır olan tüm oyuncular bekleniyor.</p>
             </div>
             <button
@@ -1008,7 +1008,7 @@ function ResultScreen({ data, property, nickname, totalRounds, voteState, voted,
               onClick={onVoteNext}
               disabled={youVoted}
             >
-              {youVoted ? '✓ Hazırsın' : 'Sonraki Tür'}
+              {youVoted ? '✓ Hazırsın' : 'Sonraki Tur'}
             </button>
           </div>
           <div className="lr-vote-progress">
@@ -1103,7 +1103,7 @@ function FinalLeaderboard({ data, roundHistory, onExit, isHost, onCloseRoom }) {
 
       {roundHistory.length > 0 && rd && (
         <div className="lr-round-breakdown">
-          <h3 className="lr-breakdown-title">Tür Özetleri</h3>
+          <h3 className="lr-breakdown-title">Tur Özetleri</h3>
 
           <div className="lr-slider-nav">
             <button
@@ -1114,7 +1114,7 @@ function FinalLeaderboard({ data, roundHistory, onExit, isHost, onCloseRoom }) {
             >
               ◀
             </button>
-            <span className="lr-slider-title">Tür {rd.round} Özeti</span>
+            <span className="lr-slider-title">Tur {rd.round} Özeti</span>
             <button
               type="button"
               className="hr-btn hr-btn-outline lr-slider-btn"
@@ -1127,7 +1127,7 @@ function FinalLeaderboard({ data, roundHistory, onExit, isHost, onCloseRoom }) {
 
           <div className="lr-round-card animate-round-card">
             <div className="lr-round-card-header">
-              <span className="lr-round-label">Tür {rd.round}</span>
+              <span className="lr-round-label">Tur {rd.round}</span>
               <span className="lr-round-price">Gerçek Fiyat: <strong>₺{fmt(rd.actual_price)}</strong></span>
             </div>
 
@@ -1186,7 +1186,7 @@ function FinalLeaderboard({ data, roundHistory, onExit, isHost, onCloseRoom }) {
                 key={idx}
                 className={`lr-slider-dot${idx === currentRoundIdx ? ' active' : ''}`}
                 onClick={() => setCurrentRoundIdx(idx)}
-                aria-label={`Tür ${idx + 1}`}
+                aria-label={`Tur ${idx + 1}`}
               />
             ))}
           </div>

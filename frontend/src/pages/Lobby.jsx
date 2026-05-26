@@ -9,12 +9,12 @@ import './Lobby.css'
 
 const RANK_MEDALS = ['🥇', '🥈', '🥉']
 
-const LEAGUE_LABEL = { bronze: 'Bronz', gold: 'Altin', diamond: 'Elmas' }
+const LEAGUE_LABEL = { bronze: 'Bronz', gold: 'Altın', diamond: 'Elmas' }
 const LEAGUE_EMOJI = { bronze: '🥉', gold: '🥇', diamond: '💎' }
 
 function statusLabel(status) {
   if (status === 'waiting') return { text: 'Bekliyor', cls: 'lp-status-waiting' }
-  if (status === 'playing') return { text: 'Oynaniyor', cls: 'lp-status-playing' }
+  if (status === 'playing') return { text: 'Oynanıyor', cls: 'lp-status-playing' }
   if (status === 'finished') return { text: 'Bitti', cls: 'lp-status-finished' }
   return { text: status, cls: '' }
 }
@@ -24,16 +24,16 @@ function roleLabel(role) {
 }
 
 function actionLabel(lobby) {
-  if (lobby.status === 'finished') return 'Skora Don'
-  if (lobby.status === 'playing') return 'Oyuna Don'
-  return lobby.role === 'host' ? 'Odaya Git' : 'Bekleme Odasina Don'
+  if (lobby.status === 'finished') return 'Skora Dön'
+  if (lobby.status === 'playing') return 'Oyuna Dön'
+  return lobby.role === 'host' ? 'Odaya Git' : 'Bekleme Odasına Dön'
 }
 
 function timeAgo(isoString) {
   const diff = Math.floor((Date.now() - new Date(isoString)) / 1000)
-  if (diff < 60) return `${diff}sn once`
-  if (diff < 3600) return `${Math.floor(diff / 60)}dk once`
-  return `${Math.floor(diff / 3600)}sa once`
+  if (diff < 60) return `${diff}sn önce`
+  if (diff < 3600) return `${Math.floor(diff / 60)}dk önce`
+  return `${Math.floor(diff / 3600)}sa önce`
 }
 
 function formatDate(isoString) {
@@ -96,7 +96,7 @@ export default function Lobby() {
       await getLobby(user, idToken, code)
       navigate(`/lobby/${code}`, { state: { nickname: nickname.trim(), isHost: false } })
     } catch (err) {
-      setError(err.message || 'Oda bulunamadi.')
+      setError(err.message || 'Oda bulunamadı.')
     } finally {
       setLoading(false)
     }
@@ -109,8 +109,8 @@ export default function Lobby() {
     <AppShell>
       <ParticleBanner className="lp-header">
         <div>
-          <h1>Hos geldin, {displayName} 👋</h1>
-          <p>Bir oda olustur ve arkadaslarini davet et ya da var olan bir odaya katil.</p>
+          <h1>Hoş geldin, {displayName} 👋</h1>
+          <p>Bir oda oluştur ve arkadaşlarını davet et ya da var olan bir odaya katıl.</p>
         </div>
         {myLeague?.league && (
           <div className={`lp-league-card lp-league-${myLeague.league}`}>
@@ -135,8 +135,8 @@ export default function Lobby() {
       <div className="lp-grid">
         <div className="lp-card" style={{ '--i': 0 }}>
           <div className="lp-card-icon"><Icon name="sparkle" size={22} /></div>
-          <h2>Yeni Oda Olustur</h2>
-          <p className="lp-card-desc">Hizli bir oda ac, kodunu paylas, oyunu yonet.</p>
+          <h2>Yeni Oda Oluştur</h2>
+          <p className="lp-card-desc">Hızlı bir oda aç, kodunu paylaş, oyunu yönet.</p>
           <form onSubmit={handleCreate}>
             <div className="lp-field">
               <label htmlFor="nick-create">Takma Ad</label>
@@ -145,7 +145,7 @@ export default function Lobby() {
                 className="lp-input"
                 value={nickname}
                 onChange={e => setNickname(e.target.value)}
-                placeholder="Takma adin"
+                placeholder="Takma adın"
                 maxLength={20}
               />
             </div>
@@ -155,15 +155,15 @@ export default function Lobby() {
               className="hr-btn hr-btn-primary hr-btn-lg"
               style={{ width: '100%' }}
             >
-              {loading ? 'Olusturuluyor...' : 'Oda Olustur'}
+              {loading ? 'Oluşturuluyor...' : 'Oda Oluştur'}
             </button>
           </form>
         </div>
 
         <div className="lp-card" style={{ '--i': 1 }}>
           <div className="lp-card-icon"><Icon name="users" size={22} /></div>
-          <h2>Mevcut Odaya Katil</h2>
-          <p className="lp-card-desc">Arkadasindan aldigin oda kodunu gir.</p>
+          <h2>Mevcut Odaya Katıl</h2>
+          <p className="lp-card-desc">Arkadaşından aldığın oda kodunu gir.</p>
           <form onSubmit={handleJoin}>
             <div className="lp-field">
               <label htmlFor="nick-join">Takma Ad</label>
@@ -172,7 +172,7 @@ export default function Lobby() {
                 className="lp-input"
                 value={nickname}
                 onChange={e => setNickname(e.target.value)}
-                placeholder="Takma adin"
+                placeholder="Takma adın"
                 maxLength={20}
               />
             </div>
@@ -193,7 +193,7 @@ export default function Lobby() {
               className="hr-btn hr-btn-outline hr-btn-lg"
               style={{ width: '100%' }}
             >
-              {loading ? 'Kontrol ediliyor...' : 'Katil'}
+              {loading ? 'Kontrol ediliyor...' : 'Katıl'}
             </button>
           </form>
         </div>
@@ -231,13 +231,13 @@ export default function Lobby() {
 
       <div className="lp-info-row">
         <div className="lp-info" style={{ '--i': 0 }}>
-          <h3>Nasil Oynanir?</h3>
-          <p>Ev gorselini ve detaylarini incele, fiyatini tahmin et, AI'a karsi yaris. En yakin tahmin tur puanlarini alir.</p>
+          <h3>Nasıl Oynanır?</h3>
+          <p>Ev görselini ve detaylarını incele, fiyatını tahmin et, AI'a karşı yarış. En yakın tahmin tur puanlarını alır.</p>
         </div>
         <div className="lp-info" style={{ '--i': 1 }}>
           <h3>Liderler</h3>
           {leaderboard.length === 0 ? (
-            <p className="lp-empty">Henuz kayitli oyun yok.</p>
+            <p className="lp-empty">Henüz kayıtlı oyun yok.</p>
           ) : (
             <ul className="lp-info-list">
               {leaderboard.slice(0, 3).map((entry, i) => (
@@ -250,9 +250,9 @@ export default function Lobby() {
           )}
         </div>
         <div className="lp-info" style={{ '--i': 2 }}>
-          <h3>Oyun Gecmisim</h3>
+          <h3>Oyun Geçmişim</h3>
           {gameHistory.length === 0 ? (
-            <p className="lp-empty">Henuz tamamlanmis oyunun yok.</p>
+            <p className="lp-empty">Henüz tamamlanmış oyunun yok.</p>
           ) : (
             <ul className="lp-history-list">
               {gameHistory.slice(0, 5).map((rec, i) => (
