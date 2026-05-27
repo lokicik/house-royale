@@ -5,43 +5,37 @@ import { Icon, ModelBadge } from '../components/icons'
 import './ModelComparison.css'
 
 const MODELS = [
-  { name: 'ResNet Pro (model_0)', type: 'Deep MLP (ResNet)', mae: 341250, mape: 3.20, r2: 0.96, resp: 124, params: '8.4M', trainTime: 245, accuracy: 0.96, best: true },
-  { name: 'MLP Pro Plus Max (model_1)', type: 'Deep MLP', mae: 378400, mape: 3.65, r2: 0.94, resp: 108, params: '6.2M', trainTime: 180, accuracy: 0.94 },
-  { name: 'MLP Pro Plus (model_2)', type: 'Deep MLP', mae: 415800, mape: 4.10, r2: 0.93, resp: 85, params: '3.1M', trainTime: 95, accuracy: 0.93 },
-  { name: 'MLP Pro (model_3)', type: 'MLP', mae: 812500, mape: 7.80, r2: 0.88, resp: 72, params: '1.8M', trainTime: 65, accuracy: 0.88 },
-  { name: 'MLP Plus (model_4)', type: 'MLP', mae: 865200, mape: 8.40, r2: 0.85, resp: 64, params: '1.2M', trainTime: 48, accuracy: 0.85 },
-  { name: 'MLP Lite (model_5)', type: 'MLP', mae: 928900, mape: 9.20, r2: 0.82, resp: 52, params: '0.8M', trainTime: 35, accuracy: 0.82 },
-  { name: 'Mini MLP (model_6)', type: 'MLP', mae: 2150000, mape: 22.90, r2: 0.45, resp: 45, params: '0.4M', trainTime: 20, accuracy: 0.45 },
-  { name: 'Tiny MLP (model_7)', type: 'MLP', mae: 2680000, mape: 27.60, r2: 0.22, resp: 38, params: '0.2M', trainTime: 15, accuracy: 0.22 },
-  { name: 'Stub MLP (model_8)', type: 'MLP', mae: 3190000, mape: 31.90, r2: -0.12, resp: 32, params: '0.1M', trainTime: 10, accuracy: -0.12 }
+  { name: 'ResNet Pro (model_0)', type: 'Deep MLP (ResNet)', mae: 936591, r2: 0.4924, resp: 82, params: '318K', trainTime: 120, accuracy: 0.4924 },
+  { name: 'MLP Pro Plus Max (model_1)', type: 'Deep MLP', mae: 802674, r2: 0.5415, resp: 72, params: '314K', trainTime: 95, accuracy: 0.5415, best: true },
+  { name: 'MLP Pro Plus (model_2)', type: 'Deep MLP', mae: 879489, r2: 0.5440, resp: 65, params: '312K', trainTime: 85, accuracy: 0.5440 },
+  { name: 'MLP Pro (model_3)', type: 'MLP', mae: null, r2: null, resp: 58, params: '100K', trainTime: 50, accuracy: 0.43 },
+  { name: 'MLP Plus (model_4)', type: 'MLP', mae: null, r2: null, resp: 52, params: '90K', trainTime: 42, accuracy: 0.40 },
+  { name: 'MLP Lite (model_5)', type: 'MLP', mae: null, r2: null, resp: 45, params: '70K', trainTime: 35, accuracy: 0.36 },
+  { name: 'Mini MLP (model_6)', type: 'MLP', mae: null, r2: null, resp: 38, params: '5K', trainTime: 20, accuracy: 0.18 },
+  { name: 'Tiny MLP (model_7)', type: 'MLP', mae: null, r2: null, resp: 33, params: '2K', trainTime: 12, accuracy: 0.05 },
+  { name: 'Stub MLP (model_8)', type: 'MLP', mae: 1357356, r2: -0.0930, resp: 28, params: '<1K', trainTime: 8, accuracy: -0.0930 }
 ]
 
 const STATS = [
-  { l: 'MAE', v: '341.250', sub: 'En iyi model (model_0)' },
-  { l: 'MAPE', v: '%3.20', sub: 'En iyi model (model_0)' },
-  { l: 'R²', v: '0.960', sub: 'En yüksek (model_0)' },
-  { l: 'Yanıt Süresi', v: '32ms', sub: 'En hızlı (model_8)' },
-  { l: 'Parametreler', v: '8.4M', sub: 'En büyük model (model_0)' },
+  { l: 'MAE', v: '802.674 ₺', sub: 'En iyi model (model_1)' },
+  { l: 'RMSE', v: '1.187.755 ₺', sub: 'En iyi model (model_1)' },
+  { l: 'R²', v: '0.544', sub: 'En yüksek (model_2)' },
+  { l: 'Yanıt Süresi', v: '28ms', sub: 'En hızlı (model_8)' },
+  { l: 'Parametreler', v: '318K', sub: 'En büyük model (model_0)' },
 ]
 
-const INSIGHTS = [
-  { tag: 'En İyi', title: 'ResNet Pro (model_0)', desc: 'Tüm metriklerde en üstte. En düşük MAE (%3.20 MAPE) ve en yüksek R² değeri.' },
-  { tag: 'En Dengeli', title: 'MLP Pro Plus (model_2)', desc: 'Hem yüksek doğruluk (%4.10 MAPE) hem de son derece hızlı yanıt süresi (85ms).' },
-  { tag: 'En Hızlı', title: 'Stub MLP (model_8)', desc: 'Sadece 32ms ortalama çıkarım süresiyle en hızlı çalışan yapay zeka modelimiz.' },
-  { tag: 'En Hafif', title: 'Mini MLP (model_6)', desc: 'Düşük parametre boyutu ve hızlı eğitim süresiyle en az kaynak tüketen model.' },
-]
 
 const RADAR_AXES = ['Doğruluk', 'Hız', 'Tutarlılık', 'Sağlamlık', 'Verimlilik']
 const RADAR_DATA = [
-  { name: 'ResNet Pro (model_0)', color: '#2563eb', values: [0.96, 0.65, 0.95, 0.92, 0.55] },
-  { name: 'MLP Pro (model_3)', color: '#10b981', values: [0.85, 0.82, 0.82, 0.78, 0.80] },
-  { name: 'Stub MLP (model_8)', color: '#f59e0b', values: [0.45, 0.96, 0.35, 0.30, 0.95] },
+  { name: 'MLP Pro Plus Max (model_1)', color: '#2563eb', values: [0.90, 0.40, 0.88, 0.85, 0.50] },
+  { name: 'MLP Pro (model_3)', color: '#10b981', values: [0.72, 0.65, 0.72, 0.68, 0.78] },
+  { name: 'Stub MLP (model_8)', color: '#f59e0b', values: [0.02, 1.00, 0.28, 0.22, 1.00] },
 ]
-const BAR_METRICS = ['MAPE', 'R²', 'Hız', 'Doğruluk']
+const BAR_METRICS = ['MAE', 'R²', 'Hız', 'Doğruluk']
 const BAR_DATA = [
-  { name: 'ResNet Pro (model_0)', color: '#2563eb', values: [0.94, 0.96, 0.65, 0.96] },
-  { name: 'MLP Pro (model_3)', color: '#10b981', values: [0.84, 0.88, 0.82, 0.88] },
-  { name: 'Stub MLP (model_8)', color: '#f59e0b', values: [0.36, 0.10, 0.96, 0.45] },
+  { name: 'MLP Pro Plus Max (model_1)', color: '#2563eb', values: [1.0, 1.0, 0.40, 1.0] },
+  { name: 'MLP Pro (model_3)', color: '#10b981', values: [0.55, 0.82, 0.65, 0.72] },
+  { name: 'Stub MLP (model_8)', color: '#f59e0b', values: [0.0, 0.0, 1.0, 0.0] },
 ]
 
 function radarPoints(values, cx, cy, r) {
@@ -99,8 +93,7 @@ export default function ModelComparison() {
                   <tr>
                     <th>Model</th>
                     <th>Tip</th>
-                    <th>MAE</th>
-                    <th>MAPE</th>
+                    <th>MAE (₺)</th>
                     <th>R²</th>
                     <th>Yanıt</th>
                     <th>Params</th>
@@ -117,9 +110,8 @@ export default function ModelComparison() {
                         </div>
                       </td>
                       <td>{m.type}</td>
-                      <td>{m.mae.toLocaleString('tr-TR')}</td>
-                      <td>%{m.mape.toFixed(2)}</td>
-                      <td>{m.r2.toFixed(2)}</td>
+                      <td>{m.mae != null ? m.mae.toLocaleString('tr-TR') : 'N/A'}</td>
+                      <td>{m.r2 != null ? m.r2.toFixed(4) : 'N/A'}</td>
                       <td>{m.resp}ms</td>
                       <td>{m.params}</td>
                     </tr>
@@ -208,7 +200,7 @@ export default function ModelComparison() {
                 />
               </svg>
               <div className="mc-legend" style={{ marginTop: 8 }}>
-                <span style={{ color: '#2563eb' }}><span style={{ color: 'var(--hr-text)' }}>ResNet Pro (model_0)</span></span>
+                <span style={{ color: '#2563eb' }}><span style={{ color: 'var(--hr-text)' }}>MLP Pro Plus Max (model_1)</span></span>
                 <span style={{ color: '#10b981' }}><span style={{ color: 'var(--hr-text)' }}>MLP Pro (model_3)</span></span>
                 <span style={{ color: '#f97316' }}><span style={{ color: 'var(--hr-text)' }}>Stub MLP (model_8)</span></span>
               </div>
@@ -342,21 +334,20 @@ export default function ModelComparison() {
                 <line x1="35" y1="180" x2="305" y2="180" stroke="var(--hr-border)" strokeWidth="1.5" />
 
                 {/* Y-axis labels */}
-                <text x="32" y="28" fontSize="8" textAnchor="end" fill="var(--hr-muted)">1.0 (R²)</text>
-                <text x="32" y="96" fontSize="8" textAnchor="end" fill="var(--hr-muted)">0.5</text>
+                <text x="32" y="28" fontSize="8" textAnchor="end" fill="var(--hr-muted)">0.6 (R²)</text>
+                <text x="32" y="96" fontSize="8" textAnchor="end" fill="var(--hr-muted)">0.3</text>
                 <text x="32" y="172" fontSize="8" textAnchor="end" fill="var(--hr-muted)">-0.1</text>
 
                 {/* X-axis labels */}
-                <text x="68" y="195" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">32ms</text>
-                <text x="116" y="195" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">52ms</text>
-                <text x="163" y="195" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">72ms</text>
-                <text x="286" y="195" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">124ms</text>
+                <text x="60" y="195" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">28ms</text>
+                <text x="153" y="195" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">52ms</text>
+                <text x="270" y="195" fontSize="8" textAnchor="middle" fill="var(--hr-muted)">82ms</text>
 
                 <text x="170" y="210" fontSize="9" textAnchor="middle" fontWeight="600" fill="var(--hr-muted)">Çıkarım Hızı (Response Time)</text>
 
                 {/* Pareto Frontier Line */}
                 <path
-                  d="M 68 169 L 83 124 L 99 93 L 116 44 L 144 40 L 163 36 L 194 29 L 248 28 L 286 25"
+                  d="M 60 169 L 99 112 L 177 60 L 231 39"
                   fill="none"
                   stroke="var(--hr-blue)"
                   strokeWidth="1.5"
@@ -364,17 +355,17 @@ export default function ModelComparison() {
                   opacity="0.6"
                 />
 
-                {/* All 9 points */}
+                {/* All 9 points — cx/cy computed from resp & R² */}
                 {[
-                  { cx: 68,  cy: 169, fill: '#f97316', label: 'model_8', ly: 161 },
-                  { cx: 83,  cy: 124, fill: '#f97316', label: 'model_7', ly: 116 },
-                  { cx: 99,  cy: 93,  fill: '#f97316', label: 'model_6', ly: 85  },
-                  { cx: 116, cy: 44,  fill: '#fbbf24', label: 'model_5', ly: 36  },
-                  { cx: 144, cy: 40,  fill: '#fbbf24', label: 'model_4', ly: 32  },
-                  { cx: 163, cy: 36,  fill: '#fbbf24', label: 'model_3', ly: 28  },
-                  { cx: 194, cy: 29,  fill: '#06b6d4', label: 'model_2', ly: 21  },
-                  { cx: 248, cy: 28,  fill: '#06b6d4', label: 'model_1', ly: 20  },
-                  { cx: 286, cy: 25,  fill: '#06b6d4', label: 'model_0', ly: 17  },
+                  { cx: 60,  cy: 169, fill: '#f97316', label: 'model_8', ly: 161 },
+                  { cx: 79,  cy: 139, fill: '#f97316', label: 'model_7', ly: 131 },
+                  { cx: 99,  cy: 112, fill: '#f97316', label: 'model_6', ly: 104 },
+                  { cx: 126, cy: 75,  fill: '#fbbf24', label: 'model_5', ly: 67  },
+                  { cx: 153, cy: 66,  fill: '#fbbf24', label: 'model_4', ly: 58  },
+                  { cx: 177, cy: 60,  fill: '#fbbf24', label: 'model_3', ly: 52  },
+                  { cx: 204, cy: 36,  fill: '#06b6d4', label: 'model_2', ly: 28  },
+                  { cx: 231, cy: 39,  fill: '#06b6d4', label: 'model_1', ly: 32  },
+                  { cx: 270, cy: 47,  fill: '#06b6d4', label: 'model_0', ly: 39  },
                 ].map((pt, i) => (
                   <g key={pt.label}>
                     <circle cx={pt.cx} cy={pt.cy} r="5" fill={pt.fill} className="sc-dot" style={{ transitionDelay: `${i * 60}ms` }} />
@@ -393,21 +384,11 @@ export default function ModelComparison() {
         </div>
       </div>
 
-      <div className="mc-insights">
-        {INSIGHTS.map(i => (
-          <div className="mc-insight" key={i.title}>
-            <span className="tag">{i.tag}</span>
-            <h4>{i.title}</h4>
-            <p>{i.desc}</p>
-          </div>
-        ))}
-      </div>
-
       <div className="mc-about">
         <h3><Icon name="brain" size={18} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Modeller Hakkında</h3>
         <p>
           Bu sayfada House Royale altyapısında çalışan tüm yapay zeka modellerinin performans
-          metrikleri karşılaştırılmaktadır. MAE ve MAPE düşük; R² yüksek ve yanıt süresi kısa
+          metrikleri karşılaştırılmaktadır. MAE ve RMSE düşük; R² yüksek ve yanıt süresi kısa
           olmalı. Tüm modeller aynı veri seti üzerinde değerlendirilir, bu sayede karşılaştırma adildir.
         </p>
       </div>

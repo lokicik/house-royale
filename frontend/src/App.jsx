@@ -7,8 +7,6 @@ import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Lobby from './pages/Lobby'
 import LobbyRoom from './pages/LobbyRoom'
-import Game from './pages/Game'
-import RoundResult from './pages/RoundResult'
 import Leaderboard from './pages/Leaderboard'
 import Profile from './pages/Profile'
 import ModelComparison from './pages/ModelComparison'
@@ -26,8 +24,6 @@ export default function App() {
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/lobby" element={<ProtectedRoute><Lobby /></ProtectedRoute>} />
             <Route path="/lobby/:id" element={<ProtectedRoute><LobbyRoom /></ProtectedRoute>} />
-            <Route path="/game/:id" element={<ProtectedRoute><Game /></ProtectedRoute>} />
-            <Route path="/round-result" element={<ProtectedRoute><RoundResult /></ProtectedRoute>} />
             <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/model-comparison" element={<ProtectedRoute><ModelComparison /></ProtectedRoute>} />
