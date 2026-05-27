@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"math/rand"
 	"sort"
 	"sync"
 	"sync/atomic"
@@ -205,6 +206,7 @@ func (s *Session) Run() {
 	}
 
 	props := property.All()
+	rand.Shuffle(len(props), func(i, j int) { props[i], props[j] = props[j], props[i] })
 	used := make(map[string]bool)
 
 	for round := 1; round <= roundCount; round++ {
