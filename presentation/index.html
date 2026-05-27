@@ -10,25 +10,28 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   
   <style>
-    /* CSS TEMEL DEĞİŞKENLERİ VE TEMALAR */
+    /* HIGH-FIDELITY CYBERPUNK / COSMIC SPACE TEMA */
     :root {
-      --bg-main: #0B0F19;
-      --bg-card: rgba(22, 27, 46, 0.7);
-      --bg-card-border: rgba(255, 255, 255, 0.08);
-      --bg-panel: #161B2E;
-      --text-main: #F1F5F9;
-      --text-muted: #94A3B8;
-      --text-inverse: #0F172A;
-      --accent: #6366F1;
-      --accent-rgb: 99, 102, 241;
-      --accent-secondary: #10B981;
-      --accent-secondary-rgb: 16, 185, 129;
-      --bg-badge: rgba(99, 102, 241, 0.15);
-      --text-badge: #818CF8;
-      --code-bg: #1E293B;
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --bg-main: #030712; /* Deepest cosmic black */
+      --bg-card: rgba(8, 12, 28, 0.65); /* Sleek translucent card */
+      --bg-card-border: rgba(255, 255, 255, 0.05);
+      --bg-panel: #060a16;
+      --text-main: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --text-inverse: #030712;
+      --accent: #A855F7; /* Vibrant neon purple */
+      --accent-rgb: 168, 85, 247;
+      --accent-secondary: #06B6D4; /* Electric neon cyan */
+      --accent-secondary-rgb: 6, 182, 212;
+      --accent-green: #10B981; /* Glowing emerald */
+      --accent-green-rgb: 16, 185, 129;
+      --accent-pink: #EC4899; /* Radiant pink */
+      --accent-bronze: #CD7F32;
+      --accent-gold: #FFD700;
+      --bg-badge: rgba(168, 85, 247, 0.12);
+      --text-badge: #C084FC;
+      --code-bg: #070b16;
+      --shadow-lg: 0 20px 50px -15px rgba(0, 0, 0, 0.85);
       --font-title: 'Outfit', sans-serif;
       --font-body: 'Inter', sans-serif;
       --font-code: 'JetBrains Mono', monospace;
@@ -38,24 +41,25 @@
     }
 
     [data-theme="light"] {
-      --bg-main: #F8FAFC;
+      --bg-main: #F3F4F6;
       --bg-card: rgba(255, 255, 255, 0.85);
       --bg-card-border: rgba(0, 0, 0, 0.06);
       --bg-panel: #FFFFFF;
-      --text-main: #0F172A;
-      --text-muted: #475569;
-      --text-inverse: #F1F5F9;
-      --accent: #4F46E5;
-      --accent-rgb: 79, 70, 229;
-      --accent-secondary: #0D9488;
-      --accent-secondary-rgb: 13, 148, 136;
-      --bg-badge: rgba(79, 70, 229, 0.08);
-      --text-badge: #4F46E5;
-      --code-bg: #E2E8F0;
-      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      --text-main: #1F2937;
+      --text-muted: #6B7280;
+      --text-inverse: #F9FAFB;
+      --accent: #7C3AED;
+      --accent-rgb: 124, 58, 237;
+      --accent-secondary: #0891B2;
+      --accent-secondary-rgb: 8, 145, 178;
+      --accent-green: #059669;
+      --accent-green-rgb: 5, 150, 105;
+      --bg-badge: rgba(124, 58, 237, 0.08);
+      --text-badge: #7C3AED;
+      --code-bg: #E5E7EB;
+      --shadow-lg: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
     }
 
-    /* GENEL SIFIRLAMA VE YAPI */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -70,9 +74,54 @@
       transition: background-color 0.4s ease, color 0.4s ease;
       height: 100vh;
       width: 100vw;
+      position: relative;
     }
 
-    /* SUNUM MODU - PROJEKSİYON (TAM EKRAN) */
+    /* Uzay Tozu ve Yavaş Dönen Cosmic Gradient Işımalar */
+    body::before {
+      content: "";
+      position: absolute;
+      top: -40%;
+      left: -40%;
+      width: 180%;
+      height: 180%;
+      background: radial-gradient(circle, rgba(var(--accent-rgb), 0.05) 0%, transparent 40%),
+                  radial-gradient(circle, rgba(var(--accent-secondary-rgb), 0.05) 0%, transparent 45%);
+      z-index: -1;
+      pointer-events: none;
+      animation: spaceRotation 60s linear infinite;
+    }
+
+    /* CSS Yıldız Parçacıkları Arka Plan */
+    .star-particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        radial-gradient(1.5px 1.5px at 10% 20%, #fff 100%, transparent),
+        radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.7) 100%, transparent),
+        radial-gradient(1.5px 1.5px at 50% 10%, #fff 100%, transparent),
+        radial-gradient(2px 2px at 70% 80%, rgba(255,255,255,0.6) 100%, transparent),
+        radial-gradient(1px 1px at 90% 40%, rgba(255,255,255,0.8) 100%, transparent);
+      background-size: 550px 550px;
+      z-index: -1;
+      opacity: 0.15;
+      animation: starDrift 120s linear infinite;
+    }
+
+    @keyframes spaceRotation {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes starDrift {
+      from { background-position: 0 0; }
+      to { background-position: 550px 1100px; }
+    }
+
+    /* SUNUM KONTEYNERİ */
     .presentation-container {
       display: flex;
       flex-direction: column;
@@ -90,51 +139,42 @@
       perspective: 1200px;
     }
 
+    /* SLAYT YERLEŞİMİ VE SÜRÜSÜ (3D Perspective Slide Push) */
     .slide {
       width: 100%;
       height: 100%;
-      background: var(--bg-main);
-      border: none;
-      border-radius: 0;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      padding: 60px 80px;
+      background: transparent;
+      padding: 40px 60px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       position: absolute;
       opacity: 0;
       visibility: hidden;
-      transform: translateX(0);
-      transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out, visibility 0.5s;
-      box-shadow: none;
+      transform: translateX(50px) translateZ(-50px) rotateY(-5deg);
+      transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.5s;
     }
 
     .slide.active {
       opacity: 1;
       visibility: visible;
-      transform: translateX(0);
+      transform: translateX(0) translateZ(0) rotateY(0deg);
       z-index: 10;
     }
 
     .slide.previous {
-      transform: translateX(-100%);
+      transform: translateX(-50px) translateZ(-50px) rotateY(5deg);
       opacity: 0;
     }
 
-    .slide.next {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-
-    /* SLAYT BİLEŞENLERİ */
+    /* SLAYT ÜST BAŞLIKLARI VE ROZETLER */
     .slide-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
       border-bottom: 1px solid var(--bg-card-border);
-      padding-bottom: 20px;
-      margin-bottom: 25px;
+      padding-bottom: 12px;
+      margin-bottom: 15px;
     }
 
     .slide-badge {
@@ -142,20 +182,39 @@
       align-items: center;
       background: var(--bg-badge);
       color: var(--text-badge);
-      padding: 6px 14px;
+      border: 1px solid rgba(var(--accent-rgb), 0.15);
+      padding: 4px 12px;
       border-radius: 50px;
-      font-size: 0.85rem;
+      font-size: 0.95rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
 
+    .slide-header .slide-badge {
+      display: none;
+    }
+
+    .slide-title-area {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .slide-category {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent-secondary);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
     .slide-title {
       font-family: var(--font-title);
-      font-size: 2.5rem;
-      font-weight: 700;
-      line-height: 1.2;
-      background: linear-gradient(135deg, var(--text-main) 60%, var(--accent));
+      font-size: 2.7rem;
+      font-weight: 800;
+      line-height: 1.15;
+      background: linear-gradient(135deg, var(--text-main) 50%, var(--accent-secondary));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -172,46 +231,47 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 20px;
+      gap: 15px;
+      min-height: 0; /* Prevents overflow */
     }
 
     .slide-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 25px;
-      padding-top: 20px;
+      margin-top: 15px;
+      padding-top: 12px;
       border-top: 1px solid var(--bg-card-border);
       color: var(--text-muted);
-      font-size: 0.85rem;
+      font-size: 1.0rem;
     }
 
-    /* KONTROL BAR VE NAVİGASYON */
+    /* KISAYOL VE TEMA BAR */
     .controls-bar {
-      height: 70px;
-      background: rgba(22, 27, 46, 0.9);
+      height: 64px;
+      background: rgba(3, 7, 18, 0.95);
       border-top: 1px solid var(--bg-card-border);
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 0 40px;
       z-index: 100;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(15px);
     }
 
     [data-theme="light"] .controls-bar {
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(243, 244, 246, 0.95);
     }
 
     .ctrl-left, .ctrl-right {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 12px;
     }
 
     .btn-circle {
-      width: 44px;
-      height: 44px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       background: var(--bg-card);
       border: 1px solid var(--bg-card-border);
@@ -220,14 +280,14 @@
       justify-content: center;
       align-items: center;
       cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: var(--shadow-sm);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .btn-circle:hover {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
+      background: var(--accent-secondary);
+      color: var(--text-inverse);
+      border-color: var(--accent-secondary);
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
       transform: translateY(-2px);
     }
 
@@ -235,13 +295,13 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 20px;
+      padding: 8px 16px;
       border-radius: var(--border-radius-sm);
       background: var(--bg-card);
       border: 1px solid var(--bg-card-border);
       color: var(--text-main);
       font-weight: 500;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       cursor: pointer;
       transition: all 0.2s ease;
     }
@@ -249,26 +309,22 @@
     .btn-rect:hover {
       background: var(--bg-badge);
       border-color: var(--accent);
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
     }
 
     .btn-accent {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
-
-    .btn-accent:hover {
-      background: rgba(99, 102, 241, 0.85);
-      border-color: rgba(99, 102, 241, 0.85);
+      background: var(--accent-secondary);
+      color: var(--text-inverse);
+      border-color: var(--accent-secondary);
     }
 
     .progress-bar-container {
       flex: 1;
       max-width: 600px;
-      height: 6px;
+      height: 4px;
       background: var(--bg-card-border);
       border-radius: 10px;
-      margin: 0 40px;
+      margin: 0 30px;
       cursor: pointer;
       position: relative;
     }
@@ -281,9 +337,9 @@
       transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* SUNUCU MODU (PRESENTER MODE) ARAYÜZÜ */
+    /* SUNUCU PANELİ (PRESENTER VIEW) */
     .presenter-container {
-      display: none; /* JS ile etkinleştirilir */
+      display: none;
       grid-template-columns: 3fr 2fr;
       height: 100vh;
       width: 100vw;
@@ -294,8 +350,8 @@
       display: flex;
       flex-direction: column;
       border-right: 1px solid var(--bg-card-border);
-      padding: 30px;
-      gap: 30px;
+      padding: 25px;
+      gap: 25px;
       overflow-y: auto;
     }
 
@@ -303,7 +359,7 @@
       display: flex;
       flex-direction: column;
       background: var(--bg-panel);
-      padding: 40px;
+      padding: 35px;
       overflow-y: auto;
     }
 
@@ -314,51 +370,7 @@
       background: var(--bg-card);
       border: 1px solid var(--bg-card-border);
       border-radius: var(--border-radius-md);
-      padding: 20px 30px;
-    }
-
-    .p-timer-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .p-timer-val {
-      font-family: var(--font-title);
-      font-size: 3.5rem;
-      font-weight: 800;
-      color: var(--accent-secondary);
-      letter-spacing: 2px;
-      line-height: 1;
-    }
-
-    .p-timer-label {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      margin-top: 5px;
-    }
-
-    .p-timer-controls {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .p-timer-btn {
-      padding: 4px 12px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      background: var(--bg-card-border);
-      border: 1px solid var(--bg-card-border);
-      color: var(--text-main);
-    }
-
-    .p-timer-btn:hover {
-      background: var(--accent);
-      color: white;
+      padding: 15px 25px;
     }
 
     .p-slide-preview-container {
@@ -370,14 +382,15 @@
     .p-slide-box {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .p-slide-box-title {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .p-slide-thumbnail {
@@ -390,9 +403,9 @@
       justify-content: center;
       align-items: center;
       font-family: var(--font-title);
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       color: var(--text-main);
-      box-shadow: var(--shadow-md);
+      box-shadow: var(--shadow-lg);
       position: relative;
       overflow: hidden;
     }
@@ -410,20 +423,20 @@
       height: 100%;
       display: flex;
       flex-direction: column;
-      padding: 15px;
+      padding: 12px;
       justify-content: space-between;
-      background: rgba(0,0,0,0.4);
-      font-size: 0.6rem;
+      background: rgba(0,0,0,0.65);
+      font-size: 0.65rem;
     }
 
     .p-notes-header {
       font-family: var(--font-title);
-      font-size: 1.75rem;
+      font-size: 1.4rem;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--accent-secondary);
       border-bottom: 2px solid var(--bg-card-border);
-      padding-bottom: 15px;
-      margin-bottom: 25px;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -431,72 +444,82 @@
 
     .p-notes-body {
       flex: 1;
-      font-size: 1.35rem;
-      line-height: 1.8;
+      font-size: 1.2rem;
+      line-height: 1.7;
       color: var(--text-main);
       overflow-y: auto;
-      padding-right: 10px;
+      padding-right: 8px;
     }
 
     .p-notes-body p {
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
 
     .speaker-notes {
-      display: none; /* Sunum modunda slayt içinde gizlidir */
+      display: none;
     }
 
-    /* SLAYT GRİD VE BİLEŞEN TASARIMLARI */
+    /* GRİDLER VE DİZAYN KARTLARI */
     .grid-2 {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1.05fr 0.95fr;
       gap: 30px;
       align-items: center;
-    }
-
-    .grid-3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 20px;
+      height: 100%;
+      min-height: 0;
     }
 
     .visual-card {
-      background: rgba(var(--accent-rgb), 0.05);
+      background: var(--bg-card);
       border: 1px solid var(--bg-card-border);
       border-radius: var(--border-radius-md);
-      padding: 25px;
-      transition: all 0.3s ease;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
-    .visual-card:hover {
-      transform: translateY(-5px);
-      box-shadow: var(--shadow-md);
-      border-color: rgba(var(--accent-rgb), 0.3);
+    .visual-card::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
     }
 
-    .visual-card-accent {
-      background: rgba(var(--accent-secondary-rgb), 0.05);
-      border-color: rgba(var(--accent-secondary-rgb), 0.1);
+    .visual-card-accent::after {
+      background: linear-gradient(90deg, var(--accent-secondary), var(--accent-green));
     }
 
-    .visual-card-accent:hover {
-      border-color: rgba(var(--accent-secondary-rgb), 0.3);
+    .visual-card-danger::after {
+      background: linear-gradient(90deg, var(--accent-pink), #EF4444);
     }
 
-    .visual-card-danger {
-      background: rgba(239, 68, 68, 0.05);
-      border-color: rgba(239, 68, 68, 0.1);
+    .visual-card-bronze::after {
+      background: var(--accent-bronze);
     }
 
-    .visual-card-danger:hover {
-      border-color: rgba(239, 68, 68, 0.3);
+    .visual-card-gold::after {
+      background: var(--accent-gold);
+    }
+
+    .visual-card-diamond::after {
+      background: var(--accent-secondary);
     }
 
     .visual-card h3 {
       font-family: var(--font-title);
-      font-size: 1.35rem;
-      margin-bottom: 12px;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 15px;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -506,212 +529,228 @@
       list-style-type: none;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     ul.bullet-list li {
       position: relative;
-      padding-left: 24px;
-      line-height: 1.5;
+      padding-left: 28px;
+      font-size: 1.25rem;
+      line-height: 1.6;
     }
 
     ul.bullet-list li::before {
-      content: "✦";
+      content: "▸";
       position: absolute;
       left: 0;
-      color: var(--accent);
+      color: var(--accent-secondary);
+      font-size: 1.4rem;
+      line-height: 1.1;
+      text-shadow: 0 0 10px rgba(6, 182, 212, 0.6);
     }
 
     ul.bullet-list.list-accent li::before {
-      color: var(--accent-secondary);
+      color: var(--accent);
+      text-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
     }
 
-    .member-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 15px;
-      margin-top: 20px;
-    }
-
-    .member-card {
-      background: var(--bg-card);
+    /* GÖRSEL ASSET KUTULARI */
+    .glowing-image-container {
+      width: 100%;
+      border-radius: var(--border-radius-md);
+      overflow: hidden;
       border: 1px solid var(--bg-card-border);
-      border-radius: var(--border-radius-sm);
-      padding: 15px;
-      text-align: center;
-      font-size: 0.85rem;
+      position: relative;
+      box-shadow: 0 10px 45px -10px rgba(var(--accent-secondary-rgb), 0.2);
     }
 
-    .member-name {
-      font-family: var(--font-title);
-      font-weight: 600;
-      font-size: 0.95rem;
-      color: var(--text-main);
+    .glowing-image-container::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, transparent 70%, rgba(3,7,18,0.85));
+      z-index: 2;
+    }
+
+    .glowing-image {
+      width: 100%;
+      display: block;
+      transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .glowing-image-container:hover .glowing-image {
+      transform: scale(1.02);
+    }
+
+    /* MODEL METRİKLERİ VE KODLAR */
+    .metric-meter-container {
+      margin-bottom: 12px;
+    }
+
+    .metric-meter-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.15rem;
+      color: var(--text-muted);
       margin-bottom: 4px;
     }
 
-    .member-id {
-      color: var(--accent);
-      font-weight: 500;
-      margin-bottom: 8px;
-    }
-
-    .member-role {
-      color: var(--text-muted);
-      font-size: 0.75rem;
-      line-height: 1.3;
-    }
-
-    /* MİMARİ ŞEKİL & TABLOLAR */
-    .arch-diagram {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .metric-meter-bg {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 5px;
       position: relative;
-      padding: 20px 0;
-      margin-top: 10px;
+      overflow: hidden;
     }
 
-    .arch-node {
-      width: 20%;
-      background: var(--bg-card);
-      border: 2px solid var(--bg-card-border);
-      border-radius: var(--border-radius-md);
-      padding: 15px;
-      text-align: center;
-      z-index: 2;
-      box-shadow: var(--shadow-md);
-      transition: all 0.3s ease;
-    }
-
-    .arch-node.active {
-      border-color: var(--accent);
-      box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
-    }
-
-    .arch-node.active-secondary {
-      border-color: var(--accent-secondary);
-      box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
-    }
-
-    .arch-node h4 {
-      font-family: var(--font-title);
-      font-size: 1rem;
-      margin-bottom: 8px;
-    }
-
-    .arch-node p {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    .arch-flow-line {
-      flex: 1;
-      height: 2px;
-      background: var(--bg-card-border);
-      position: relative;
-    }
-
-    .arch-flow-line::after {
-      content: "➔";
-      position: absolute;
-      top: -9px;
-      right: 0;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-    }
-
-    .arch-flow-line.bidirectional::before {
-      content: "⬅";
-      position: absolute;
-      top: -9px;
-      left: 0;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-    }
-
-    .arch-flow-line.active {
+    .metric-meter-fill {
+      height: 100%;
       background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+      border-radius: 5px;
+      width: 0%;
+      transition: width 1s cubic-bezier(0.1, 0.8, 0.25, 1);
     }
 
-    .arch-flow-line.active::after {
-      color: var(--accent-secondary);
-    }
-
-    .styled-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-      text-align: left;
-    }
-
-    .styled-table th {
-      background: rgba(var(--accent-rgb), 0.1);
-      color: var(--accent);
-      font-family: var(--font-title);
-      font-weight: 600;
-      padding: 10px 15px;
-      border-bottom: 2px solid var(--bg-card-border);
-    }
-
-    .styled-table td {
-      padding: 10px 15px;
-      border-bottom: 1px solid var(--bg-card-border);
-    }
-
-    .styled-table tr:hover {
-      background: rgba(255,255,255,0.02);
-    }
-
-    /* KOD BLOCKLARI */
     .code-snippet {
       background: var(--code-bg);
       border-radius: var(--border-radius-sm);
-      padding: 15px 20px;
+      padding: 15px;
       font-family: var(--font-code);
-      font-size: 0.8rem;
-      line-height: 1.5;
+      font-size: 0.75rem;
+      line-height: 1.45;
       overflow-x: auto;
       border: 1px solid var(--bg-card-border);
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.85);
     }
 
-    .code-comment {
-      color: #6a737d;
-      font-style: italic;
+    .code-comment { color: #6A737D; font-style: italic; }
+    .code-keyword { color: #EC4899; }
+    .code-function { color: #A855F7; }
+    .code-string { color: #06B6D4; }
+
+    /* EKİP KARTLARI */
+    .member-grid-elegant {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 15px;
     }
 
-    .code-keyword {
-      color: #f97583;
+    .member-card-elegant {
+      background: rgba(10, 16, 36, 0.5);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--border-radius-sm);
+      padding: 12px 8px;
+      text-align: center;
+      transition: all 0.3s ease;
     }
 
-    .code-function {
-      color: #b392f0;
+    .member-card-elegant:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent-secondary);
+      box-shadow: 0 5px 15px rgba(6,182,212,0.15);
     }
 
-    .code-string {
-      color: #9ecbff;
+    .member-name-elegant {
+      font-family: var(--font-title);
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--text-main);
     }
 
-    /* BİLGİ KUTULARI VE UYARILAR */
-    .info-box {
+    .member-role-elegant {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 3px;
+    }
+
+    .styled-table-elegant {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      text-align: left;
+    }
+
+    .styled-table-elegant th {
+      background: rgba(168, 85, 247, 0.06);
+      color: var(--text-badge);
+      padding: 10px 12px;
+      font-family: var(--font-title);
+      font-weight: 600;
+      border-bottom: 2px solid var(--bg-card-border);
+    }
+
+    .styled-table-elegant td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--bg-card-border);
+    }
+
+    .styled-table-elegant tr:hover {
+      background: rgba(255,255,255,0.015);
+    }
+
+    /* OYUNLAŞTIRMA MOCKUP */
+    .gameplay-comparison-box {
       display: flex;
-      gap: 12px;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .comparison-row {
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      background: rgba(var(--accent-rgb), 0.08);
-      border-left: 4px solid var(--accent);
-      padding: 12px 18px;
-      border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+      background: rgba(255,255,255,0.015);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--border-radius-sm);
+      padding: 10px 16px;
       font-size: 0.85rem;
     }
 
-    .info-box-icon {
-      font-size: 1.25rem;
+    .comparison-row.highlight-cyan {
+      border-color: var(--accent-secondary);
+      background: rgba(6, 182, 212, 0.05);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.08);
     }
 
-    /* KISAYOL BİLGİ PANELİ */
+    .comparison-row.highlight-purple {
+      border-color: var(--accent);
+      background: rgba(168, 85, 247, 0.05);
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.08);
+    }
+
+    /* HIGH-TECH DIAGRAM CONNECTORS AND ANIMATIONS */
+    .glowing-vector-svg {
+      width: 100%;
+      height: 100%;
+      min-height: 320px;
+      max-height: 500px;
+      filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.3));
+    }
+
+    .flow-line-anim {
+      stroke-dasharray: 6, 6;
+      animation: dashMove 4s linear infinite;
+    }
+
+    .flow-line-anim-fast {
+      stroke-dasharray: 4, 4;
+      animation: dashMove 2.5s linear infinite;
+    }
+
+    @keyframes dashMove {
+      to {
+        stroke-dashoffset: -120;
+      }
+    }
+
+    /* KISAYOL HELPER FLOATING */
     .keyboard-shortcuts-floating {
       position: fixed;
-      bottom: 85px;
+      bottom: 75px;
       right: 40px;
       background: var(--bg-panel);
       border: 1px solid var(--bg-card-border);
@@ -719,7 +758,7 @@
       padding: 15px;
       box-shadow: var(--shadow-lg);
       z-index: 150;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       display: none;
     }
 
@@ -732,14 +771,49 @@
     .shortcut-key {
       background: var(--bg-card-border);
       border: 1px solid var(--text-muted);
-      border-radius: 3px;
+      border-radius: 4px;
       padding: 1px 5px;
       font-family: var(--font-code);
       font-weight: 600;
     }
+
+    /* STAT BADGES & PLATES */
+    .stat-plate-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 5px;
+    }
+
+    .stat-plate-card {
+      background: rgba(255,255,255,0.015);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--border-radius-sm);
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-plate-val {
+      font-family: var(--font-title);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--accent-secondary);
+    }
+
+    .stat-plate-label {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
   </style>
 </head>
 <body>
+
+  <!-- STAR BACKDROP -->
+  <div class="star-particles"></div>
 
   <!-- SUNUM BAĞLAMI -->
   <div id="presentation-view" class="presentation-container">
@@ -750,720 +824,795 @@
       <!-- SLAYT 1: KAPAK -->
       <div class="slide active" id="slide-1">
         <div class="slide-header">
-          <span class="slide-badge">Giriş / Kapak</span>
-          <span class="slide-number">01 / 11</span>
+          <span class="slide-badge">Anlatıcı: Lokman</span>
+          <span class="slide-number">01 / 12</span>
         </div>
         <div class="slide-content">
-          <div style="text-align: center; max-width: 900px; margin: 0 auto;">
-            <h1 style="font-family: var(--font-title); font-size: 3.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 15px; background: linear-gradient(135deg, var(--text-main) 40%, var(--accent) 70%, var(--accent-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-              HOUSE ROYALE
-            </h1>
-            <p style="font-size: 1.6rem; font-weight: 500; color: var(--accent-secondary); margin-bottom: 25px;">
-              Yapay Zekâ Destekli Emlak Fiyat Tahmin Oyunu
-            </p>
-            <p style="font-size: 1.1rem; color: var(--text-muted); max-width: 700px; margin: 0 auto 35px auto; line-height: 1.6;">
-              Türkiye emlak piyasasından gerçek verilerle eğitilmiş çoklu yapay sinir ağı modellerinin, oyuncuların kendi sezgisel tahminleriyle yarıştığı oyunlaştırılmış (gamified) bir web uygulaması.
-            </p>
-            
-            <div class="info-box" style="justify-content: center; max-width: 600px; margin: 0 auto 30px auto;">
-              <span class="info-box-icon">🎓</span>
-              <span><strong>Trakya Üniversitesi Bilgisayar Mühendisliği Bölümü</strong> — Yapay Sinir Ağlarına Giriş Dersi Projesi</span>
+          <div class="grid-2">
+            <div>
+              <div class="slide-category">Giriş / Kapak</div>
+              <h1 style="font-family: var(--font-title); font-size: 4.2rem; font-weight: 800; line-height: 1.05; margin-bottom: 12px; background: linear-gradient(135deg, var(--text-main) 40%, var(--accent-secondary) 75%, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                HOUSE ROYALE
+              </h1>
+              <p style="font-size: 1.75rem; font-weight: 600; color: var(--text-badge); margin-bottom: 20px; text-shadow: 0 0 15px rgba(168,85,247,0.3);">
+                Yapay Zekâ Destekli Emlak Fiyat Tahmin Oyunu
+              </p>
+              
+              <ul class="bullet-list" style="margin-bottom: 20px;">
+                <li>Türkiye konut piyasasından Playwright ile derlenmiş 12.7k ilan.</li>
+                <li>Lig zorluklarına (Bronz, Altın, Elmas) entegre edilmiş 9 adet YSA modeli.</li>
+                <li>Canlı çok oyunculu (multiplayer) lobi odaları (Go Gin + WebSocket).</li>
+              </ul>
+              
+              <div class="member-grid-elegant">
+                <div class="member-card-elegant">
+                  <div class="member-name-elegant">Lokman B. Efe</div>
+                  <div class="member-role-elegant">Backend & Mimari</div>
+                </div>
+                <div class="member-card-elegant">
+                  <div class="member-name-elegant">Ahmet H. Yumuk</div>
+                  <div class="member-role-elegant">Data & Eğitim</div>
+                </div>
+                <div class="member-card-elegant">
+                  <div class="member-name-elegant">Baran Taçyıldız</div>
+                  <div class="member-role-elegant">ML Tuning</div>
+                </div>
+                <div class="member-card-elegant">
+                  <div class="member-name-elegant">İsmail O. Ayyıldız</div>
+                  <div class="member-role-elegant">Frontend & UI/UX</div>
+                </div>
+                <div class="member-card-elegant">
+                  <div class="member-name-elegant">Olcay Güney</div>
+                  <div class="member-role-elegant">Data Scraping</div>
+                </div>
+              </div>
             </div>
             
-            <div class="member-grid">
-              <div class="member-card">
-                <div class="member-name">Ahmet H. Yumuk</div>
-                <div class="member-id">1221602041</div>
-                <div class="member-role">Veri Toplama, Önişleme, Model Eğitimi</div>
-              </div>
-              <div class="member-card">
-                <div class="member-name">Baran Taçyıldız</div>
-                <div class="member-id">1221602017</div>
-                <div class="member-role">Hiperparametre, Model Karşılaştırma</div>
-              </div>
-              <div class="member-card">
-                <div class="member-name">İsmail O. Ayyıldız</div>
-                <div class="member-id">1221602096</div>
-                <div class="member-role">Frontend, UI/UX, Model Eğitimi</div>
-              </div>
-              <div class="member-card">
-                <div class="member-name">Lokman B. Efe</div>
-                <div class="member-id">1221602001</div>
-                <div class="member-role">Backend, Sistem Mimarisi, Model Eğitimi</div>
-              </div>
-              <div class="member-card">
-                <div class="member-name">Olcay Güney</div>
-                <div class="member-id">1231602803</div>
-                <div class="member-role">Veri Toplama, Önişleme, Model Eğitimi</div>
-              </div>
+            <div class="glowing-image-container">
+              <img src="assets/house_royale_hero.png" class="glowing-image" alt="House Royale Hero Graphic">
             </div>
           </div>
         </div>
         <div class="slide-footer">
-          <span>Proje Danışmanı: Dr. Öğr. Üyesi Turgut DOĞAN</span>
-          <span>Mayıs 2026</span>
+          <span>Trakya Üniversitesi Bilgisayar Mühendisliği · Yapay Sinir Ağlarına Giriş</span>
+          <span>Haziran 2026</span>
         </div>
         <div class="speaker-notes">
-          <p>Merhaba değerli hocalarım ve arkadaşlarım. Bugün sizlere Trakya Üniversitesi Yapay Sinir Ağlarına Giriş dersi kapsamında geliştirdiğimiz "House Royale" projemizi sunacağız.</p>
-          <p>Proje ekibimiz 5 kişiden oluşuyor. Her birimiz derin öğrenme süreçlerine eşit şekilde katkıda bulunurken; veri toplama, mimari tasarım, backend, frontend ve karşılaştırmalı model analizleri gibi alanlarda uzmanlaştık.</p>
-          <p>Uygulamamız temel olarak Türkiye emlak piyasasındaki güncel konut ilanlarını çekip, bunlarla çoklu Yapay Sinir Ağları eğiterek; gerçek zamanlı çok oyunculu (multiplayer) bir oyun ortamında insan zekasıyla yapay zekayı yarıştırmayı amaçlamaktadır. Şimdi projenin odaklandığı problem ve önerdiği çözümü ele alalım.</p>
+          <p><strong>Anlatıcı: Lokman Baturay Efe</strong></p><br>
+          <p>Selam arkadaşlar, selam hocam. Bugün Yapay Sinir Ağları dersi kapsamında geliştirdiğimiz projemiz House Royale'i sunacağız. Biz 5 kişilik bir ekibiz. Hepimiz yapay zekanın eğitim aşamalarında beraber çalıştık ama iş bölümü de yaptık; kimimiz scraping, kimimiz backend, kimimiz frontend ve UI kısımlarına odaklandı.</p>
+          <p>Kısaca özetlemek gerekirse House Royale, Türkiye emlak piyasasından topladığımız güncel ilanlarla eğittiğimiz yapay sinir ağlarını, oyuncuların tahminleriyle kapıştırdığımız interaktif ve gerçek zamanlı bir oyun. Şimdi projenin çıkış noktasını ve oyun mantığını anlatması için sözü Olcay'a bırakıyorum.</p>
         </div>
       </div>
 
       <!-- SLAYT 2: PROBLEM VE ÇÖZÜM -->
       <div class="slide next" id="slide-2">
         <div class="slide-header">
-          <span class="slide-badge">Problem & Çözüm</span>
-          <span class="slide-number">02 / 11</span>
+          <span class="slide-badge">Anlatıcı: Olcay</span>
+          <span class="slide-number">02 / 12</span>
         </div>
         <div class="slide-content">
           <div class="grid-2">
-            <div class="visual-card visual-card-danger">
-              <h3 style="color: #EF4444;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                Mevcut Durum ve Problemler
-              </h3>
-              <ul class="bullet-list">
-                <li><strong>Karmaşık Emlak Piyasası:</strong> Lokasyon, metrekare, oda sayısı gibi birçok değişkenin konut fiyatları üzerindeki doğrusal olmayan etkisi.</li>
-                <li><strong>"Kara Kutu" Modeller:</strong> Makine öğrenmesi modellerinin izole not defteri (Jupyter) ortamlarına sıkışması ve son kullanıcıya erişememesi.</li>
-                <li><strong>Durağan Arayüzler:</strong> Mevcut emlak tahmin araçlarının sadece tek bir form doldurup statik bir sayı gösteren sıkıcı yapısı.</li>
-                <li><strong>Türkiye'ye Özgü Set Kısıtı:</strong> Güncel, güvenilir ve lokalize edilmiş açık veri setlerinin bulunmaması.</li>
+            <div>
+              <div class="slide-category">Problem Sahası</div>
+              <h2 style="font-family: var(--font-title); font-size: 2.4rem; font-weight: 700; margin-bottom: 15px;">
+                Durağan Formlar Yerine Oyunlaştırılmış Deneyim
+              </h2>
+              
+              <ul class="bullet-list" style="margin-bottom: 20px;">
+                <li><strong>Doğrusal Olmayan Piyasa:</strong> Lokasyon, metrekare, oda sayısı ve kat oranının konut fiyatlarına karmaşık ve spekülatif etkisi.</li>
+                <li><strong>Kara Kutu Aşımı:</strong> Eğitilen yapay sinir ağlarının Jupyter not defterlerinde kalarak son kullanıcıya ulaşamaması engeli.</li>
+                <li><strong>İnteraktif Rekabet:</strong> Klasik tahmin formları yerine jüriyi ve oyuncuları tahmin havuzunda modelle kapıştırma.</li>
               </ul>
+              
+              <div class="stat-plate-grid">
+                <div class="stat-plate-card">
+                  <span class="stat-plate-val">0.544</span>
+                  <span class="stat-plate-label">En Yüksek R² (model_2)</span>
+                </div>
+                <div class="stat-plate-card">
+                  <span class="stat-plate-val">9 Adet</span>
+                  <span class="stat-plate-label">Eğitilen YSA</span>
+                </div>
+              </div>
             </div>
             
-            <div class="visual-card visual-card-accent">
+            <div class="visual-card">
               <h3 style="color: var(--accent-secondary);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                Oyunlaştırılmış Çözüm: House Royale
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Tahmin Lobi Odası (Mockup)
               </h3>
-              <ul class="bullet-list list-accent">
-                <li><strong>Sezgisel Karşılaştırma:</strong> Klasik metrik tablolarının ötesine geçip, insan tahminleriyle YSA modellerini doğrudan yan yana yarıştırma.</li>
-                <li><strong>Oyunlaştırma (Gamification):</strong> Gerçek ilanların öznitelikleri ve fotoğrafları üzerinden tur bazlı, zaman kısıtlı interaktif tahmin mekaniği.</li>
-                <li><strong>Çok Oyunculu & Gerçek Zamanlı:</strong> WebSocket tabanlı lobilerle arkadaşlarınızla veya lobideki aktif AI modelleriyle yarışma şansı.</li>
-                <li><strong>Lig & Terfi Sistemi:</strong> LP (Lig Puanı) kazanıp kaybederek Bronz ➔ Altın ➔ Elmas liglerinde yükselme motivasyonu.</li>
-              </ul>
+              
+              <div class="gameplay-comparison-box">
+                <div class="comparison-row highlight-cyan">
+                  <span style="font-weight: 600;">Oda Durumu</span>
+                  <span style="font-family: var(--font-code); font-size: 0.8rem; color: var(--accent-secondary);">Tur 2/5 (Sayaç 00:24)</span>
+                </div>
+                <div class="comparison-row">
+                  <span>Oyuncu Tahmini (Lokman)</span>
+                  <span style="font-weight: 600; color: var(--text-main);">4.250.000 TL</span>
+                </div>
+                <div class="comparison-row highlight-purple">
+                  <span>model_0 ResNet Pro (AI)</span>
+                  <span style="font-weight: 600; color: var(--text-badge);">4.080.000 TL</span>
+                </div>
+                <div class="comparison-row" style="border-color: var(--accent-green); background: rgba(16,185,129,0.04);">
+                  <span style="font-weight: 600; color: var(--accent-green);">Gerçek Fiyat</span>
+                  <span style="font-weight: 700; color: var(--accent-green);">4.000.000 TL</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
         <div class="slide-footer">
-          <span>House Royale: Gamified AI Real Estate Estimation Game</span>
-          <span>Problem & Çözüm</span>
+          <span>Problem Tanımı ve Oyunlaştırılmış Karşılaştırma</span>
+          <span>House Royale</span>
         </div>
         <div class="speaker-notes">
-          <p>Emlak piyasası, doğrusal olmayan pek çok değişkenin iç içe geçtiği oldukça spekülatif bir alandır. Alıcı veya satıcıların adil fiyat tahmini yapması zordur. Bu alanda akademik olarak eğitilen modeller ise genelde kod bloklarında sıkışıp kalmakta, son kullanıcılar için bir anlam ifade etmemektedir.</p>
-          <p>İşte bu problemi aşmak için "House Royale" uygulamasını tasarladık. Modelleri statik birer hesaplayıcı olmaktan çıkarıp, oyuncularla gerçek zamanlı rekabet eden aktif rakiplere dönüştürdük.</p>
-          <p>Oyun mekaniğinde her turda bir evin verileri ve görselleri gelir. Oyuncu ve lobideki 9 farklı YSA modeli aynı anda tahmin verir. Gerçek fiyata en yakın tahmini yapanlar turları kazanır ve lig atlar. Böylece kullanıcı, yapay zekanın gücünü ve hangi durumlarda ne kadar saptığını birinci elden, sezgisel olarak deneyimler. Şimdi bu yapıyı kuran sistem mimarisine göz atalım.</p>
+          <p><strong>Anlatıcı: Olcay Güney</strong></p><br>
+          <p>Arkadaşlar emlak piyasasında ev fiyatlarını etkileyen bir sürü değişken var ve bu ilişkiler doğrusal değil. Bu yüzden klasik yöntemler yetersiz kalıyor. Normalde bu tarz yapay zeka projelerinde modeller eğitilir, jupyter notebook'ta kalır veya web sitesinde basit bir form doldurup statik bir sayı görürsünüz.</p>
+          <p>Biz bunu interaktif bir oyuna çevirdik. Oyunda her turda bir evin özellikleri geliyor. Oyuncular ve lobideki yapay zeka lig modelleri aynı anda tahmin yapıyor. Evin gerçek fiyatına en yakın tahmini yapan o turu kazanıyor ve lig puanı alıyor. Böylece yapay zekanın nerelerde iyi, nerelerde kötü tahmin yaptığını doğrudan yarışarak görüyoruz. Şimdi mimariden bahsetmesi için sözü tekrar Lokman'a veriyorum.</p>
         </div>
       </div>
 
       <!-- SLAYT 3: GENEL SİSTEM MİMARİSİ -->
       <div class="slide next" id="slide-3">
         <div class="slide-header">
-          <span class="slide-badge">Sistem Mimarisi</span>
-          <span class="slide-number">03 / 11</span>
-        </div>
-        <div class="slide-content">
-          <h3 style="font-family: var(--font-title); font-size: 1.6rem; font-weight: 600; text-align: center; margin-bottom: 20px;">
-            Çoklu Mikroservis ve Veri Akışı Yapısı
-          </h3>
-          
-          <div class="arch-diagram">
-            <div class="arch-node active">
-              <h4>İstemci (React 19)</h4>
-              <p>Oyun UI, Lobi, Skor Tablosu, Leaflet Harita Entegrasyonu</p>
-            </div>
-            
-            <div class="arch-flow-line active bidirectional"></div>
-            
-            <div class="arch-node active">
-              <h4>Oyun Sunucusu (Go Gin)</h4>
-              <p>WebSocket Odaları, Oyun Akışı, LP Hesaplama, Firestore Arayüzü</p>
-            </div>
-            
-            <div class="arch-flow-line active"></div>
-            
-            <div class="arch-node active-secondary">
-              <h4>ML Çıkarım (FastAPI)</h4>
-              <p>Python model.predict(), Ön İşleme Pipeline'ları, RAM Preload</p>
-            </div>
-            
-            <div class="arch-flow-line"></div>
-            
-            <div class="arch-node">
-              <h4>Firebase</h4>
-              <p>Kalıcı Firestore DB, Liderlik Tablosu & Google Auth</p>
-            </div>
-          </div>
-          
-          <div class="grid-2" style="margin-top: 30px; gap: 20px;">
-            <div class="visual-card">
-              <h4 style="font-family: var(--font-title); font-size: 1.15rem; margin-bottom: 10px; color: var(--accent);">
-                Neden Go + Python İki Ayrı Servis?
-              </h4>
-              <p style="font-size: 0.85rem; line-height: 1.5; color: var(--text-muted);">
-                Eş zamanlılık (concurrency) ve düşük gecikme gerektiren oyun mantığı, WebSocket odaları ve lobi yönetimi <strong>Go (Goroutine)</strong> tarafında sıfır maliyetle çalışır. Ancak derin öğrenme modellerinin (TensorFlow) ve öznitelik kodlayıcıların çalıştırılması <strong>Python (FastAPI)</strong> ekosistemine sıkı sıkıya bağlıdır. İki bağımsız servis REST API üzerinden haberleşerek her iki dünyanın en iyi araçlarını birleştirir.
-              </p>
-            </div>
-            <div class="visual-card">
-              <h4 style="font-family: var(--font-title); font-size: 1.15rem; margin-bottom: 10px; color: var(--accent-secondary);">
-                Veri Depolama Stratejisi
-              </h4>
-              <p style="font-size: 0.85rem; line-height: 1.5; color: var(--text-muted);">
-                Canlı ortamda kalıcı kullanıcı bilgileri, LP seviyeleri ve oyun geçmişi <strong>Google Cloud Firestore NoSQL</strong> veri tabanında tutulmaktadır. Geliştirici ve test ortamlarında ise tek satırlık bir konfigürasyon değişikliğiyle tamamen <strong>In-Memory</strong> veri deposuna geçilerek izole, hızlı ve veritabanı maliyetsiz testler yürütülebilmektedir.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div class="slide-footer">
-          <span>React 19 · Go Gin · FastAPI · Firebase</span>
-          <span>Genel Sistem Mimarisi</span>
-        </div>
-        <div class="speaker-notes">
-          <p>Uygulamamızın teknik temeli, endüstri standartlarına uygun 4 parçalı modern bir mikroservis mimarisine dayanmaktadır.</p>
-          <p>Ön yüzde React 19 ve Vite ile geliştirilen SPA arayüzümüz yer alır. İstemci, WebSocket üzerinden Go ile yazılmış oyun sunucumuza bağlanır. Go sunucumuz Gin çatısını kullanır. Lobi odaları, zaman kısıtları ve oyuncu eşleştirmeleri Go'nun "goroutine" ve "channel" yapılarıyla yüksek performanslı ve düşük gecikmeli olarak yönetilir.</p>
-          <p>Eğittiğimiz 9 yapay sinir ağı modelini çalıştırmak için Python tabanlı bir FastAPI çıkarım servisi kurduk. Go sunucusu turun başında ilan özelliklerini FastAPI servisine gönderir ve 5 milisaniyenin altında tahminleri geri alır. Kalıcı veritabanı olarak NoSQL Firestore ve kullanıcı yönetimi için Firebase Auth entegre ettik. Şimdi sistemin en başındaki aşama olan veri toplama süreçlerini inceleyelim.</p>
-        </div>
-      </div>
-
-      <!-- SLAYT 4: SCRAPING ALTYAPISI -->
-      <div class="slide next" id="slide-4">
-        <div class="slide-header">
-          <span class="slide-badge">Veri Toplama (Scraping)</span>
-          <span class="slide-number">04 / 11</span>
+          <span class="slide-badge">Anlatıcı: Lokman</span>
+          <span class="slide-number">03 / 12</span>
         </div>
         <div class="slide-content">
           <div class="grid-2">
-            <div class="visual-card">
-              <h3 style="color: var(--accent);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                Scraping Mimarisi ve Araçlar
-              </h3>
-              <ul class="bullet-list" style="margin-top: 15px;">
-                <li><strong>Node.js + Playwright Extra:</strong> Modern tarayıcı otomasyonu. Chromium tabanlı paralel veri çekme süreçleri.</li>
-                <li><strong>Stealth Modülü:</strong> <code>navigator.webdriver</code> bayraklarının gizlenmesi, WebGL parmak izi taklitleri ve bot tespitlerinin engellenmesi.</li>
-                <li><strong>Ara SQLite Deposu:</strong> Çekilen ilan verilerinin yerelde anlık senkron saklanması ve olası çökmelerde kalınan yerden devam edilmesi.</li>
-              </ul>
+            <div>
+              <div class="slide-category">Mikroservis Yapısı</div>
+              <h2 style="font-family: var(--font-title); font-size: 2.4rem; font-weight: 700; margin-bottom: 15px;">
+                Düşük Gecikmeli Dağıtık Ağ Mimarisi
+              </h2>
               
-              <div class="info-box" style="margin-top: 20px;">
-                <span class="info-box-icon">🛡️</span>
-                <span><strong>Bypass Stratejisi:</strong> Cloudflare korumalarını aşmak için CDP (Chrome DevTools Protocol) ile yerel aktif çerez aktarımı hibrit yapısı kullanılmıştır.</span>
-              </div>
+              <ul class="bullet-list" style="margin-bottom: 15px;">
+                <li><strong>Go Gin Oyun Sunucusu:</strong> Gerçek zamanlı WebSocket kanalları ve oda lobi yönetiminin asenkron goroutine'lerle çalışması.</li>
+                <li><strong>Python FastAPI ML Servisi:</strong> 9 adet TensorFlow modelini startup'ta RAM'e yükleyerek warm prediction gecikmesini sıfırlama.</li>
+                <li><strong>React 19 Frontend:</strong> Leaflet harita katmanı ve anlık senkronizasyon sunan modern istemci tasarımı.</li>
+              </ul>
             </div>
             
-            <div class="visual-card visual-card-accent">
-              <h3 style="color: var(--accent-secondary);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
-                Toplanan Ham Veri Hacmi
-              </h3>
-              <table class="styled-table" style="margin-top: 15px;">
-                <thead>
-                  <tr>
-                    <th>Platform</th>
-                    <th>İlan Sayısı</th>
-                    <th>Coğrafi Kapsam</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>hepsiemlak.com</td>
-                    <td>3.553 İlan</td>
-                    <td>81 İl (Satılık Daire)</td>
-                  </tr>
-                  <tr>
-                    <td>emlakjet.com (Genel)</td>
-                    <td>5.170 İlan</td>
-                    <td>81 İl Dağılımı</td>
-                  </tr>
-                  <tr>
-                    <td>emlakjet.com (Derin)</td>
-                    <td>3.991 İlan</td>
-                    <td>İstanbul / Ankara / İzmir</td>
-                  </tr>
-                  <tr style="font-weight: 700; color: var(--accent-secondary);">
-                    <td>Toplam Ham Veri</td>
-                    <td>~12.714 İlan</td>
-                    <td>Türkiye Geneli</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="visual-card" style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 24px;">
+              <!-- HIGH-TECH ARCHITECTURE FLOW DIAGRAM -->
+              <svg class="glowing-vector-svg" viewBox="15 25 350 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Nodes -->
+                <!-- React Client -->
+                <rect x="20" y="90" width="90" height="45" rx="6" fill="#090E1A" stroke="#06B6D4" stroke-width="1.5"/>
+                <text x="65" y="112" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="10" font-weight="700" text-anchor="middle">İstemci</text>
+                <text x="65" y="124" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="8" text-anchor="middle">React 19 SPA</text>
+
+                <!-- Go Game Server -->
+                <rect x="250" y="30" width="110" height="50" rx="6" fill="#090E1A" stroke="#A855F7" stroke-width="1.5"/>
+                <text x="305" y="55" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="10" font-weight="700" text-anchor="middle">Oyun Sunucusu</text>
+                <text x="305" y="68" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="8" text-anchor="middle">Go Gin (WS Hub)</text>
+
+                <!-- FastAPI ML API -->
+                <rect x="250" y="170" width="110" height="50" rx="6" fill="#090E1A" stroke="#10B981" stroke-width="1.5"/>
+                <text x="305" y="195" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="10" font-weight="700" text-anchor="middle">ML Servisi</text>
+                <text x="305" y="208" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="8" text-anchor="middle">FastAPI (PyTorch/TF)</text>
+
+                <!-- Firebase -->
+                <rect x="20" y="200" width="90" height="40" rx="6" fill="#090E1A" stroke="#6B7280" stroke-width="1.5"/>
+                <text x="65" y="220" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="9" font-weight="600" text-anchor="middle">Firebase</text>
+                <text x="65" y="231" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="7" text-anchor="middle">Auth & Store</text>
+
+                <!-- Glowing Connectors -->
+                <!-- Client to Go Server (WS) -->
+                <path d="M110 100 C 170 100, 180 60, 250 60" stroke="#A855F7" stroke-width="1.5" fill="none" class="flow-line-anim"/>
+                <text x="180" y="75" fill="#C084FC" font-family="'Inter', sans-serif" font-size="7" text-anchor="middle" font-weight="600">WebSocket</text>
+
+                <!-- Go Server to FastAPI (HTTP POST) -->
+                <path d="M305 80 L 305 170" stroke="#10B981" stroke-width="1.5" fill="none" class="flow-line-anim-fast"/>
+                <text x="325" y="130" fill="#34D399" font-family="'Inter', sans-serif" font-size="7" text-anchor="middle" font-weight="600">HTTP POST</text>
+                <text x="325" y="140" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="6" text-anchor="middle">&lt;5ms</text>
+
+                <!-- Client to Firebase -->
+                <path d="M65 135 L 65 200" stroke="#6B7280" stroke-width="1" stroke-dasharray="3,3" fill="none"/>
+                <text x="40" y="170" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="7" text-anchor="middle">Auth/Token</text>
+              </svg>
             </div>
           </div>
         </div>
         <div class="slide-footer">
-          <span>Playwright Stealth · Puppeteer · SQLite Ara Depo</span>
+          <span>Go Gin · FastAPI · React 19 · Firebase NoSQL</span>
+          <span>Genel Sistem Mimarisi</span>
+        </div>
+        <div class="speaker-notes">
+          <p><strong>Anlatıcı: Lokman Baturay Efe</strong></p><br>
+          <p>Sistem mimarimiz 4 bağımsız bileşenden oluşuyor. Ön yüzde React 19 ve hızlı build için Vite kullandık. Oyun sunucumuz ise gerçek zamanlı WebSocket bağlantılarını ve lobileri yöneten Go Gin altyapısı. Go'nun goroutine ve kanal yapısı sayesinde lobi yönetimimiz son derece hızlı ve sıfır gecikmeli çalışıyor.</p>
+          <p>YSA modellerimizi çalıştırmak için ise Python FastAPI ile ayrı bir çıkarım servisi kurduk. Go sunucusu turun başında ilan özelliklerini FastAPI'ye gönderiyor ve 5 milisaniyenin altında tahminleri alıp WebSocket ile oyunculara dağıtıyor. Veritabanı ve kullanıcı girişi için de Firebase entegrasyonu yaptık. Şimdi veri toplama kısmını Olcay anlatacak.</p>
+        </div>
+      </div>
+
+      <!-- SLAYT 4: VERİ TOPLAMA PİPELİNE'I -->
+      <div class="slide next" id="slide-4">
+        <div class="slide-header">
+          <span class="slide-badge">Anlatıcı: Olcay</span>
+          <span class="slide-number">04 / 12</span>
+        </div>
+        <div class="slide-content">
+          <div class="grid-2">
+            <div>
+              <div class="slide-category">Web Scraping Pipeline</div>
+              <h2 style="font-family: var(--font-title); font-size: 2.4rem; font-weight: 700; margin-bottom: 15px;">
+                Playwright Stealth ve Oturum Enjeksiyonu
+              </h2>
+              
+              <ul class="bullet-list" style="margin-bottom: 20px;">
+                <li><strong>Cloudflare Koruması Aşımı:</strong> Hedef sitelerin bot korumasını aşmak için Chrome DevTools Protocol (CDP) çerez enjeksiyonu.</li>
+                <li><strong>Gizlilik Eklentisi:</strong> Donanım özelliklerini taklit eden <code>navigator.webdriver</code> override gizleme katmanları.</li>
+                <li><strong>SQLite Tampon Depo:</strong> Kazıma sırasında yerel SQLite ara depolarıyla veri güvenliği ve anlık çökmelere direnç.</li>
+              </ul>
+            </div>
+            
+            <div class="visual-card" style="height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 15px;">
+              <h3 style="color: var(--accent-secondary); margin-bottom: 5px;">Kazıma Pipeline Akışı</h3>
+              
+              <!-- SCRAPING PIPELINE FLOW SVG -->
+              <svg class="glowing-vector-svg" viewBox="5 15 372 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Step 1 -->
+                <rect x="10" y="20" width="70" height="40" rx="4" fill="#090E1A" stroke="#6B7280" stroke-width="1.2"/>
+                <text x="45" y="40" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="7" font-weight="700" text-anchor="middle">İlan Kaynakları</text>
+                <text x="45" y="50" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="6" text-anchor="middle">Emlak Siteleri</text>
+
+                <!-- Arrow 1 -->
+                <path d="M80 40 L 105 40" stroke="#06B6D4" stroke-width="1" class="flow-line-anim" marker-end="url(#arrow)"/>
+
+                <!-- Step 2 -->
+                <rect x="110" y="20" width="80" height="40" rx="4" fill="#090E1A" stroke="#06B6D4" stroke-width="1.2"/>
+                <text x="150" y="37" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="7" font-weight="700" text-anchor="middle">Playwright Extra</text>
+                <text x="150" y="47" fill="#34D399" font-family="'Inter', sans-serif" font-size="6" text-anchor="middle">Stealth (CDP)</text>
+
+                <!-- Arrow 2 -->
+                <path d="M190 40 L 215 40" stroke="#A855F7" stroke-width="1" class="flow-line-anim-fast"/>
+
+                <!-- Step 3 -->
+                <rect x="220" y="20" width="70" height="40" rx="4" fill="#090E1A" stroke="#A855F7" stroke-width="1.2"/>
+                <text x="255" y="40" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="7" font-weight="700" text-anchor="middle">SQLite Kuyruk</text>
+                <text x="255" y="50" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="6" text-anchor="middle">Çökme Koruması</text>
+
+                <!-- Arrow 3 -->
+                <path d="M290 40 L 315 40" stroke="#10B981" stroke-width="1" class="flow-line-anim"/>
+
+                <!-- Step 4 -->
+                <rect x="320" y="20" width="55" height="40" rx="4" fill="#090E1A" stroke="#10B981" stroke-width="1.2"/>
+                <text x="347" y="37" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="7" font-weight="700" text-anchor="middle">Dataset</text>
+                <text x="347" y="47" fill="#34D399" font-family="'Inter', sans-serif" font-size="6" text-anchor="middle">12.7k İlan</text>
+
+                <!-- Platforms Summary -->
+                <rect x="10" y="85" width="360" height="35" rx="4" fill="rgba(6,182,212,0.03)" stroke="rgba(6,182,212,0.1)"/>
+                <text x="190" y="105" fill="#06B6D4" font-family="'Inter', sans-serif" font-size="7.5" font-weight="600" text-anchor="middle">Dağılım: %41 Emlakjet Genel · %31 Emlakjet Derinlik · %28 Hepsiemlak</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <span>Playwright Extra Stealth · SQLite Intermediate Storage</span>
           <span>Data Scraping Pipeline</span>
         </div>
         <div class="speaker-notes">
-          <p>Modellerimizi eğitmek için hazır, tarihi geçmiş yabancı veri setleri yerine Türkiye emlak piyasasının güncel dinamiklerini yansıtan özel bir veri kümesi oluşturduk.</p>
-          <p>Bunun için Node.js ve Playwright altyapısıyla özel web kazıma botları yazdık. Emlak platformlarının katı bot korumaları ve Cloudflare engellerini aşmak amacıyla Playwright Stealth eklentilerini devreye soktuk.</p>
-          <p>Özellikle aşılması çok zor olan platformlar için "manuel giriş + çerez (cookie) yeniden kullanımı" hibrit yöntemini geliştirdik; kullanıcı tarayıcısından alınan CDP oturum çerezlerini botlarımıza yükleyerek engelsiz veri akışı sağladık. Üç farklı platformdan Türkiye geneli satılık daire statüsünde toplam 12.714 ham ilan topladık ve bunları yerel bir SQLite ara tablosunda birleştirdik. Şimdi bu ham verilerin eğitim öncesi temizlenme adımlarına geçelim.</p>
+          <p><strong>Anlatıcı: Olcay Güney</strong></p><br>
+          <p>Eğitim için hazır yabancı setler kullanmak yerine Türkiye emlak piyasasını yansıtan güncel bir set oluşturmak istedik. Node.js ve Playwright Stealth botları yazıp sahibinden, hepsiemlak ve emlakjet platformlarından veri çektik. Özellikle sahibinden.com'un Cloudflare bot korumasını aşmak için yerel tarayıcı çerezlerimizi botlarımıza aktaran hibrit bir yöntem kullandık.</p>
+          <p>Kazıma esnasında çökme ihtimaline karşı verileri anlık olarak SQLite ara deposuna kaydettik. Sonuçta 81 ili kapsayan 12.714 adet ham ilan verisi topladık. Bu ham verilerin temizlenme ve önişleme adımlarını anlatması için sözü Ahmet'e bırakıyorum.</p>
         </div>
       </div>
 
       <!-- SLAYT 5: VERİ ÖNİŞLEME & FEATURE ENGINEERING -->
       <div class="slide next" id="slide-5">
         <div class="slide-header">
-          <span class="slide-badge">Veri Önişleme</span>
-          <span class="slide-number">05 / 11</span>
+          <span class="slide-badge">Anlatıcı: Ahmet</span>
+          <span class="slide-number">05 / 12</span>
         </div>
         <div class="slide-content">
           <div class="grid-2">
             <div>
-              <h3 style="font-family: var(--font-title); font-size: 1.5rem; margin-bottom: 15px; color: var(--accent);">
-                Eksik Veriler ve Anomali Filtreleme
-              </h3>
-              <ul class="bullet-list" style="margin-bottom: 25px;">
-                <li><strong>IQR ile Uç Değer Temizliği:</strong> Aşırı ve yapay fiyat şişirmelerini gidermek için IQR formulasyonu kullanıldı. Birinci ve üçüncü çeyrek dışındaki aşırı uçlar elendi. 27k olan ara kayıt kümesi <strong>13.628</strong> kaliteli ilana daraltıldı.</li>
-                <li><strong>Eksik Değerlerin Doldurulması:</strong> Eksik metrekare verileri için brüt-net korelasyonu kullanılarak akıllı kopyalama ve medyan doldurma yapıldı.</li>
-                <li><strong>High Cardinality Kategori Kodlama:</strong> İlçe ve mahalle gibi binlerce farklı değeri olan sütunlara Target Encoding uygulanarak boyut patlaması engellendi.</li>
-              </ul>
+              <div class="slide-category">Öznitelik Mühendisliği</div>
+              <h2 style="font-family: var(--font-title); font-size: 2.4rem; font-weight: 700; margin-bottom: 15px;">
+                Gelişmiş Veri Temizleme & Özellik Mühendisliği
+              </h2>
               
-              <div class="info-box">
-                <span class="info-box-icon">💡</span>
-                <span><strong>Kodlama Farkı:</strong> Isıtma tipi gibi düşük kardinaliteli sınıflara One-Hot, mahalle gibi yüksek kardinalitelilere boyut artışını önlemek için Target Encoding uygulanmıştır.</span>
-              </div>
+              <ul class="bullet-list" style="margin-bottom: 15px;">
+                <li><strong>IQR ile Outlier Temizliği:</strong> Aşırı spekülatif veya hatalı ilanların istatistiksel IQR süzgeciyle elenmesi.</li>
+                <li><strong>Target Encoding:</strong> İlçe ve mahalle gibi binlerce kategori içeren yüksek kardinaliteli kolonları 1 boyuta indirgeme.</li>
+                <li><strong>Boyutsal One-Hot:</strong> Isıtma tipi, oda sayısı gibi az kategorili bilgileri boyut patlaması yaratmadan kodlama.</li>
+              </ul>
             </div>
             
-            <div class="visual-card">
-              <h3 style="font-family: var(--font-title); font-size: 1.35rem; margin-bottom: 12px; color: var(--accent-secondary);">
-                Türetilen Yeni Öznitelikler (Feature Engineering)
-              </h3>
-              <table class="styled-table" style="font-size: 0.8rem;">
-                <thead>
-                  <tr>
-                    <th>Yeni Öznitelik</th>
-                    <th>Formül / Kaynak</th>
-                    <th>Eğitime Katkısı</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><code>kat_orani</code></td>
-                    <td>bulunduğu_kat / kat_sayisi</td>
-                    <td>Konutun göreceli yükseklik konumu</td>
-                  </tr>
-                  <tr>
-                    <td><code>metrekare_farki</code></td>
-                    <td>metrekare_brut - metrekare_net</td>
-                    <td>Balkon, duvar ve ortak pay boşlukları</td>
-                  </tr>
-                  <tr>
-                    <td><code>metrekare_verimliligi</code></td>
-                    <td>metrekare_net / metrekare_brut</td>
-                    <td>Dairenin net kullanılabilir alan yüzdesi</td>
-                  </tr>
-                  <tr>
-                    <td><code>toplam_oda</code></td>
-                    <td>oda_sayisi + salon_sayisi</td>
-                    <td>Yaşam alanı birim sayısı (örn: 3+1 = 4)</td>
-                  </tr>
-                  <tr>
-                    <td><code>oda_oranı</code></td>
-                    <td>oda_sayisi / (salon_sayisi + 1)</td>
-                    <td>Oda / salon dengesi ilişkisi</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="visual-card" style="height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 15px;">
+              <h3 style="color: var(--accent-secondary); margin-bottom: 5px;">Veri Önişleme Süzgeci (Data Funnel)</h3>
+              
+              <!-- PREPROCESSING DATA FUNNEL SVG -->
+              <svg class="glowing-vector-svg" viewBox="0 0 380 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Raw Input -->
+                <polygon points="40,10 340,10 290,50 90,50" fill="rgba(168,85,247,0.06)" stroke="#A855F7" stroke-width="1"/>
+                <text x="190" y="32" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="8.5" font-weight="700" text-anchor="middle">Ham Veri Havuzu (12,714 İlan)</text>
+
+                <!-- Downward Arrow 1 -->
+                <path d="M190 52 L 190 68" stroke="#A855F7" stroke-width="1" stroke-dasharray="2,2"/>
+
+                <!-- IQR Stage -->
+                <polygon points="100,70 280,70 240,110 140,110" fill="rgba(6,182,212,0.06)" stroke="#06B6D4" stroke-width="1"/>
+                <text x="190" y="92" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="8" font-weight="600" text-anchor="middle">IQR Aykırı Değer Süzgeci (Outlier Elimination)</text>
+
+                <!-- Downward Arrow 2 -->
+                <path d="M190 112 L 190 128" stroke="#06B6D4" stroke-width="1" stroke-dasharray="2,2"/>
+
+                <!-- Target Encoding Stage -->
+                <polygon points="145,130 235,130 215,165 165,165" fill="rgba(16,185,129,0.06)" stroke="#10B981" stroke-width="1"/>
+                <text x="190" y="150" fill="#34D399" font-family="'Outfit', sans-serif" font-size="7.5" font-weight="700" text-anchor="middle">Temiz Model Verisi</text>
+                <text x="190" y="159" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="6.5" text-anchor="middle">Mahalle Target Enc. (13,628 Satır)</text>
+              </svg>
             </div>
           </div>
         </div>
         <div class="slide-footer">
-          <span>IQR Outliers · StandardScaler · Target Encoding</span>
-          <span>Öznitelik Mühendisliği & Preprocessing</span>
+          <span>Outlier Detection · Target Encoding · Feature Extraction</span>
+          <span>Veri Temizleme ve Önişleme Adımları</span>
         </div>
         <div class="speaker-notes">
-          <p>Toplanan 12.000'i aşkın ilan ham olarak eğitime verilemeyecek kadar gürültülüydü. Fiyat şişirmelerini ve hatalı ilanları ayıklamak için Çeyreklikler Arası Aralık yani IQR yöntemini uygulayarak uç değerleri temizledik.</p>
-          <p>Eksik net metrekareleri brüt metrekare oranlarına bakarak akıllı formüllerle tamamladık. Kategorik sütunlarda ise iki farklı yol izledik: Isıtma tipi gibi az seçeneği olan kategorilere One-Hot Encoding uyguladık. İlçe ve mahalle gibi binlerce seçeneği olan değişkenlerde One-Hot kullansaydık boyutluluk laneti nedeniyle modelimiz ezilirdi. Bu yüzden lokasyon kolonlarına Target Encoding uygulayarak boyut artışını sıfırladık ve mahalleleri doğrudan o bölgedeki ortalama konut fiyatı temsilcisiyle kodladık.</p>
-          <p>Ayrıca ham veriden kat_orani, metrekare_farki ve metrekare_verimliligi gibi yeni ayırt edici öznitelikler türeterek modellerimizin doğruluğunu artırdık. Şimdi bu verilerle eğittiğimiz 9 modeli inceleyelim.</p>
+          <p><strong>Anlatıcı: Ahmet Hulusi Yumuk</strong></p><br>
+          <p>Teşekkürler Olcay. Arkadaşlar topladığımız ham veri çok gürültülüydü. Fiyat şişirmelerini ve hatalı ilanları temizlemek için IQR yöntemini kullandık ve veri setini 13.628 satırlık kaliteli bir boyuta indirdik. Sonrasında kat_orani, oda_orani ve balkon payını veren metrekare_farki gibi yeni öznitelikler türettik.</p>
+          <p>Kategorik dönüşümlerde ise ısıtma tipi gibi az seçeneği olanlara One-Hot, ilçe ve mahalle gibi yüzlerce seçeneği olan yüksek kardinaliteli kolonlara Target Encoding uyguladık. One-Hot kullansaydık boyut patlardı, Target Encoding ile hem boyutu 1 sayıya sabitledik hem de modele lokasyon-fiyat ilişkisini öncül olarak verdik. Şimdi modellerimizin lig yapısını anlatması için sözü Baran'a veriyorum.</p>
         </div>
       </div>
 
       <!-- SLAYT 6: YSA LİGLERİ VE MODEL YELPAZESİ -->
       <div class="slide next" id="slide-6">
         <div class="slide-header">
-          <span class="slide-badge">YSA Ligleri & Modeller</span>
-          <span class="slide-number">06 / 11</span>
+          <span class="slide-badge">Anlatıcı: Baran</span>
+          <span class="slide-number">06 / 12</span>
         </div>
         <div class="slide-content">
-          <h3 style="font-family: var(--font-title); font-size: 1.5rem; text-align: center; margin-bottom: 25px;">
-            Yapay Sinir Ağı Ligleri ve Zorluk Seviyeleri
-          </h3>
+          <div class="slide-category" style="text-align: center;">YSA Ligleri & Model Yelpazesi</div>
+          <h2 style="font-family: var(--font-title); font-size: 2.4rem; font-weight: 700; text-align: center; margin-bottom: 20px;">
+            Çevrimiçi Yapay Sinir Ağı Ligleri ve Seviyeleri
+          </h2>
           
-          <div class="grid-3">
-            <div class="visual-card">
-              <h4 style="color: #CD7F32; font-family: var(--font-title); font-size: 1.2rem; margin-bottom: 10px;">
-                🥉 Bronz Ligi (Kolay)
-              </h4>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">
-                Yeni başlayan oyuncuların kolayca galibiyet alıp motivasyon kazanmasını sağlayan kasıtlı olarak sığ tutulmuş baseline ağlar.
+          <div class="grid-3" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+            <div class="visual-card visual-card-bronze">
+              <h3 style="color: var(--accent-bronze);">🥉 Bronz Ligi</h3>
+              <p style="font-size: 1.0rem; color: var(--text-muted); margin-bottom: 12px;">
+                Yeni başlayan oyuncuların kolay galibiyet alıp oyuna ısınmasını sağlayan sığ yapılar.
               </p>
-              <ul class="bullet-list" style="font-size: 0.8rem;">
-                <li><strong>Modeller:</strong> model_6, model_7, model_8</li>
-                <li><strong>Mimari:</strong> Sadece 2 katmanlı sığ MLP (Örn: 4 nöron ➔ 2 nöron)</li>
-                <li><strong>Performans:</strong> MAPE > %10+, R² < 0.70</li>
-                <li><strong>Özellik:</strong> Verideki karmaşık desenleri öğrenemez.</li>
+              <ul class="bullet-list" style="font-size: 0.95rem;">
+                <li><strong>Modeller:</strong> model_6 / model_7 / model_8</li>
+                <li><strong>Mimari:</strong> 2 katmanlı sığ MLP baselinelar.</li>
+                <li><strong>Test R²:</strong> Negatif (model_8: −0.0930)</li>
               </ul>
             </div>
             
-            <div class="visual-card visual-card-accent">
-              <h4 style="color: #FFD700; font-family: var(--font-title); font-size: 1.2rem; margin-bottom: 10px;">
-                🥈 Altın Ligi (Orta)
-              </h4>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">
-                Standart oyun derinliği sunan, kabul edilebilir sektörel emlak tahmin başarısı sağlayan dengeli modeller.
+            <div class="visual-card visual-card-gold" style="transform: scale(1.03); z-index: 2;">
+              <h3 style="color: var(--accent-gold);">🥈 Altın Ligi</h3>
+              <p style="font-size: 1.0rem; color: var(--text-muted); margin-bottom: 12px;">
+                Kabul edilebilir sektörel tahmin başarısı gösteren, dengeli oda rakipleri.
               </p>
-              <ul class="bullet-list list-accent" style="font-size: 0.8rem;">
-                <li><strong>Modeller:</strong> model_3, model_4, model_5</li>
-                <li><strong>Mimari:</strong> 4 katmanlı standart Dense MLP ağları</li>
-                <li><strong>Performans:</strong> MAPE %5 - %8, R² ≈ 0.83+</li>
-                <li><strong>Optimizer:</strong> Standart Adam (learning_rate=1e-3) ve Huber Loss</li>
+              <ul class="bullet-list" style="font-size: 0.95rem;">
+                <li><strong>Modeller:</strong> model_3 / model_4 / model_5</li>
+                <li><strong>Mimari:</strong> 4 katmanlı standart MLP ağları.</li>
+                <li><strong>Test R²:</strong> Notebook çıktısı mevcut değil</li>
               </ul>
             </div>
             
-            <div class="visual-card" style="border-color: var(--accent); background: rgba(99, 102, 241, 0.05);">
-              <h4 style="color: #E2E8F0; font-family: var(--font-title); font-size: 1.2rem; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-                💎 Elmas Ligi (Zor)
-              </h4>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">
-                Emlak piyasasını en yüksek doğrulukla çözümlemiş, yenilmesi oldukça zor olan derin sinir ağı mimarileri.
+            <div class="visual-card visual-card-diamond">
+              <h3 style="color: var(--accent-secondary);">💎 Elmas Ligi</h3>
+              <p style="font-size: 1.0rem; color: var(--text-muted); margin-bottom: 12px;">
+                Emlak piyasasını tamamen çözmüş derin residual mimariler.
               </p>
-              <ul class="bullet-list" style="font-size: 0.8rem;">
-                <li><strong>Modeller:</strong> model_0, model_1, model_2</li>
-                <li><strong>model_0:</strong> ResNet Pro — 2x Residual Blok, Swish, AdamW, Dropout</li>
-                <li><strong>model_1:</strong> MLP Pro Plus Max — 8 Katmanlı Ardışık Dense, ReLU, Adam, Dropout</li>
-                <li><strong>model_2:</strong> MLP Pro Plus — 8 Katmanlı Ardışık Dense, ReLU, Adam, Dropout Yok</li>
-                <li><strong>Performans:</strong> MAPE ≈ %3–%5.4, R² > 0.84</li>
-                <li><strong>Loss:</strong> Tüm modeller Huber Loss kullanır</li>
+              <ul class="bullet-list" style="font-size: 0.95rem;">
+                <li><strong>Modeller:</strong> model_0 / model_1 / model_2</li>
+                <li><strong>Mimari:</strong> 2x Residual Bloklu ResNet / 7-Katman MLP.</li>
+                <li><strong>Test MAE:</strong> 802.674–936.591 ₺ | R² ≈ 0.49–0.54</li>
               </ul>
             </div>
           </div>
         </div>
         <div class="slide-footer">
-          <span>Bronz / Altın / Elmas Ligleri</span>
-          <span>Çoklu YSA Modellerinin Entegrasyonu</span>
+          <span>Bronze / Gold / Diamond Leagues & 9 YSA Models</span>
+          <span>YSA Ligleri & Model Havuzu</span>
         </div>
         <div class="speaker-notes">
-          <p>Klasik bir makine öğrenmesi ödevinde hedef tek bir "en iyi" modeli eğitmektir. Ancak bir oyunda sadece yenilmez bir yapay zeka sunmak, kullanıcının motivasyonunu kırar.</p>
-          <p>Biz bu engeli aşmak için oyunlaştırma teorisine uygun 3 lig ve 9 modelden oluşan bir rakip havuzu tasarladı. Bronz liginde model_6, 7 ve 8 yer alır. Bunlar kasıtlı olarak sadece 2-3 katmandan oluşan çok sığ, veri kalıplarını tam çözemeyen kolay rakiplerdir. Böylece yeni başlayan bir oyuncu rahatlıkla galip gelebilir.</p>
-          <p>Altın ligindeki model_3, 4 ve 5 standart 4 katmanlı MLP yapılarından oluşur ve sektör ortalaması olan %5-8 hata payıyla tahmin verir. En tepe olan Elmas ligi ise yenilmesi imkansıza yakın derin sinir ağlarını barındırır. Bu ligin lider modeli olan model_0, residual bağlantılara sahip tek gerçek ResNet mimarisidir ve %3 civarı rekor düşük hata payına ulaşmıştır. MLP Pro Plus Max (model_1) ve MLP Pro Plus (model_2) ise residual bağlantı içermeyen, 8 katmanlı ardışık derin MLP ağlarıdır. Şimdi bu lider modelin derinliklerine bakalım.</p>
+          <p><strong>Anlatıcı: Baran Taçyıldız</strong></p><br>
+          <p>Teşekkürler Ahmet. Normalde yapay zeka projelerinde sadece tek bir en iyi model aranır. Ama bu bir oyun ve oyuncunun sürekli yenilmesi motivasyonunu kırabilirdi. Bu yüzden 3 ligde 9 farklı model eğittik. Bronz ligindeki model_6, 7 ve 8 sadece 2 katmanlı sığ MLP baselinelar. Yapay zekanın zayıf tahminler yaptığı, yeni başlayanların kolayca yenebileceği modeller.</p>
+          <p>Altın ligindeki model_3, 4 ve 5 standart MLP'ler; notebook çıktıları henüz mevcut değil. Elmas liginde ise en derin ve iddialı modellerimiz var. model_1 en düşük MAE (802.674 ₺) ile en iyi tahmin performansını gösterirken, model_0 ResNet ve model_1/2 derin 7 katmanlı MLP ağlarımız yenilmesi çok zor rakipler. Şimdi Elmas ligi modellerinin detaylarına bakalım.</p>
         </div>
       </div>
 
       <!-- SLAYT 7: MODEL_0 RESNET MİMARİSİ -->
       <div class="slide next" id="slide-7">
         <div class="slide-header">
-          <span class="slide-badge">Lider Model: model_0 ResNet</span>
-          <span class="slide-number">07 / 11</span>
+          <span class="slide-badge">Anlatıcı: Baran</span>
+          <span class="slide-number">07 / 12</span>
         </div>
         <div class="slide-content">
           <div class="grid-2">
             <div>
-              <h3 style="font-family: var(--font-title); font-size: 1.5rem; margin-bottom: 15px; color: var(--accent);">
-                Tablo Verisinde Residual Bağlantı Gücü
-              </h3>
-              <p style="font-size: 0.9rem; line-height: 1.6; color: var(--text-muted); margin-bottom: 15px;">
-                Görüntü işlemede devrim yaratan ResNet mimarisini, emlak tablo verilerimizin özellik çıkarımlarında kullandık. Derin katmanlarda kaybolan gradyan sorununu aşmak için kalıntı (residual shortcut) bağlantıları sinir ağımıza entegre ettik.
-              </p>
+              <div class="slide-category">Lider Elmas Modeli</div>
+              <h2 style="font-family: var(--font-title); font-size: 2.4rem; font-weight: 700; margin-bottom: 15px;">
+                Tablo Verisinde Residual Shortcut Bağlantı Gücü
+              </h2>
               
               <ul class="bullet-list" style="margin-bottom: 20px;">
-                <li><strong>Girdi Katmanı:</strong> 29 Boyutlu Önişlenmiş Öznitelik Vektörü</li>
-                <li><strong>Kalıntı Blokları:</strong> Giriş verisini sonraki katmanların çıkışına ekleyen (Add) ardışık 2 Residual Blok.</li>
-                <li><strong>Aktivasyon:</strong> Modern pürüzsüz Swish aktivasyon fonksiyonu.</li>
-                <li><strong>Regülasyon:</strong> Overfitting'i önlemek için Batch Normalization, L2 Regularizer (1e-4) ve %20/30 oranlı Dropout.</li>
+                <li><strong>Kalıntı Bağlantıları:</strong> Derinleştikçe yaşanan gradyan kaybolmasını aşmak için girdiyi çıktıya ekleyen residual atlama (skip) yolları.</li>
+                <li><strong>Pürüzsüz Swish Aktivasyonu:</strong> ReLU yerine sıfır noktasında türevlenebilir modern Swish fonksiyonu.</li>
+                <li><strong>Ağıvalık Düzenleyici AdamW:</strong> Aşırı öğrenmeyi engelleyen regularizer, Batch Normalization ve Dropout.</li>
               </ul>
             </div>
             
-            <div>
-              <div class="p-slide-box-title" style="margin-bottom: 10px;">Model Mimari Akışı</div>
-              <div class="code-snippet">
-                <span class="code-comment"># model_0 ResNet Pro Keras Tanımı</span><br>
-                inputs = <span class="code-function">Input</span>(shape=(29,))<br>
-                x = <span class="code-function">Dense</span>(256, activation=<span class="code-string">'swish'</span>)(inputs)<br>
-                x = <span class="code-function">BatchNormalization</span>()(x)<br><br>
-                <span class="code-comment"># Residual Block 1</span><br>
-                shortcut_1 = x<br>
-                x = <span class="code-function">Dense</span>(256, activation=<span class="code-string">'swish'</span>)(x)<br>
-                x = <span class="code-function">BatchNormalization</span>()(x)<br>
-                x = <span class="code-function">Dense</span>(256, activation=<span class="code-string">'swish'</span>)(x)<br>
-                x = <span class="code-function">BatchNormalization</span>()(x)<br>
-                x = <span class="code-function">Add</span>()([x, shortcut_1]) <span class="code-comment"># Kalıntı ekleme</span><br>
-                x = <span class="code-function">Dropout</span>(0.2)(x)<br><br>
-                <span class="code-comment"># Bottleneck & Çıkış</span><br>
-                x = <span class="code-function">Dense</span>(128, activation=<span class="code-string">'swish'</span>)(x)<br>
-                outputs = <span class="code-function">Dense</span>(1)(x)<br><br>
-                model.compile(optimizer=<span class="code-keyword">AdamW</span>, loss=<span class="code-string">'huber'</span>)
-              </div>
+            <div class="visual-card" style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 24px;">
+              <!-- HIGH-TECH RESNET SHORTCUT DIAGRAM -->
+              <svg class="glowing-vector-svg" viewBox="0 0 400 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Girdi Vektörü -->
+                <rect x="20" y="110" width="80" height="50" rx="5" fill="#090E1A" stroke="#06B6D4" stroke-width="1.5"/>
+                <text x="60" y="135" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="10" font-weight="700" text-anchor="middle">Input x</text>
+                <text x="60" y="150" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="8" text-anchor="middle">29 Boyut</text>
+
+                <!-- Dense Layer 1 -->
+                <rect x="150" y="60" width="80" height="40" rx="5" fill="#090E1A" stroke="#A855F7" stroke-width="1.5"/>
+                <text x="190" y="86" fill="#F3F4F6" font-family="'Inter', sans-serif" font-size="9" font-weight="600" text-anchor="middle">Dense 128</text>
+
+                <!-- Dense Layer 2 -->
+                <rect x="260" y="60" width="80" height="40" rx="5" fill="#090E1A" stroke="#A855F7" stroke-width="1.5"/>
+                <text x="300" y="86" fill="#F3F4F6" font-family="'Inter', sans-serif" font-size="9" font-weight="600" text-anchor="middle">Dense 64</text>
+
+                <!-- Addition Node -->
+                <circle cx="360" cy="135" r="20" fill="#090E1A" stroke="#10B981" stroke-width="1.5"/>
+                <text x="360" y="140" fill="#10B981" font-family="'Outfit', sans-serif" font-size="16" font-weight="700" text-anchor="middle">+</text>
+
+                <!-- Output Layer -->
+                <rect x="330" y="200" width="60" height="40" rx="5" fill="#090E1A" stroke="#EC4899" stroke-width="1.5"/>
+                <text x="360" y="226" fill="#F3F4F6" font-family="'Inter', sans-serif" font-size="9" font-weight="600" text-anchor="middle">Fiyat y</text>
+
+                <!-- Standard Flow -->
+                <path d="M100 135 L 125 135 L 125 80 L 150 80" stroke="#F3F4F6" stroke-width="2" fill="none"/>
+                <path d="M230 80 L 260 80" stroke="#F3F4F6" stroke-width="2" fill="none"/>
+                <path d="M340 80 L 360 80 L 360 115" stroke="#F3F4F6" stroke-width="2" fill="none"/>
+                <path d="M360 155 L 360 200" stroke="#F3F4F6" stroke-width="2" fill="none"/>
+
+                <!-- RESIDUAL SHORTCUT FLOW -->
+                <path d="M100 135 L 340 135" stroke="#10B981" stroke-width="2.5" fill="none" class="flow-line-anim-fast"/>
+                <text x="220" y="125" fill="#34D399" font-family="'Inter', sans-serif" font-size="9" font-weight="600" text-anchor="middle">Residual Skip (Shortcut)</text>
+
+                <!-- Details label -->
+                <rect x="150" y="170" width="190" height="55" rx="5" fill="rgba(168,85,247,0.05)" stroke="rgba(168,85,247,0.15)"/>
+                <text x="245" y="190" fill="#C084FC" font-family="'Inter', sans-serif" font-size="8" font-weight="600" text-anchor="middle">Kalıntı Fonksiyonu: F(x) + x</text>
+                <text x="245" y="205" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="7" text-anchor="middle">Swish(BN(Dense(x))) yapısıyla entegre</text>
+              </svg>
             </div>
           </div>
         </div>
         <div class="slide-footer">
-          <span>AdamW Optimizer · Swish · BatchNormalization · Huber Loss</span>
-          <span>model_0 ResNet Pro Mimari Kodu</span>
+          <span>AdamW Optimizer · Swish Activation · Huber Loss</span>
+          <span>Lider Model: model_0 ResNet Pro Mimarisi</span>
         </div>
         <div class="speaker-notes">
-          <p>Elmas ligimizin en üst düzey yapay zekası olan model_0, resim sınıflandırmada sıkça kullanılan ünlü ResNet mimarisini emlak tablo verilerimiz üzerine uyarlamaktadır.</p>
-          <p>Yapay sinir ağlarında katman sayısı derinleştikçe gradyanların kaybolması veya patlaması problemi yaşanır. Bunu aşmak için, katman girdisini katman çıktısına doğrudan toplayarak aktaran "Kalıntı Blokları" yani Residual Shortcut bağlantıları kurduk.</p>
-          <p>29 öznitelikli girdi vektörümüz önce 256 nöronluk bir katmandan geçer, ardından ardışık iki adet 256'lık residual blokta işlenir. Aktivasyon fonksiyonu olarak klasik ReLU yerine daha yumuşak ve türevlenebilir olan "Swish" fonksiyonunu tercih ettik. Ağımızı aşırı öğrenmeden korumak için her katman arasına Batch Normalization ve Dropout katmanları ekledik. Ağırlıkları düzenlemek için AdamW optimizer'ı, büyük tahmin sapmalarını cezalandıran ancak uç değerlere karşı kararlı olan Huber kaybı fonksiyonunu entegre ettik. Şimdi bu modellerin web ortamında nasıl servis edildiğini görelim.</p>
+          <p><strong>Anlatıcı: Baran Taçyıldız</strong></p><br>
+          <p>Elmas ligimizin en güçlüsü olan model_0, görüntü işlemede kullanılan ResNet'teki kalıntı bağlantıları tablo verilerimize uyarlıyor. Katman sayısı derinleştikçe gradyanların kaybolmasını engellemek için, katman girdisini katman çıktısına doğrudan ekleyen kalıntı atlama, yani residual shortcut yolları tasarladık.</p>
+          <p>29 boyutlu girdiyi alan ağımızda Swish aktivasyonu, Batch Normalization ve Dropout katmanları kullandık. Optimizasyonda ağırlıkları düzenleyen AdamW optimizer'ı, kayıp fonksiyonu olarak da uç değerlerdeki aşırı fiyat sapmalarından etkilenmeyen Huber Loss fonksiyonunu seçtik. Bu sayede modelimiz çok daha kararlı ve yüksek doğrulukla fiyat tahmini yapabiliyor. Şimdi modellerin eğitim detaylarını Ahmet anlatacak.</p>
         </div>
       </div>
 
-      <!-- SLAYT 8: ML ÇIKARIM SERVİSİ (PYTHON + FASTAPI) -->
+      <!-- SLAYT 8: YSA MODEL EĞİTİM DETAYLARI -->
       <div class="slide next" id="slide-8">
         <div class="slide-header">
-          <span class="slide-badge">ML Çıkarım Servisi</span>
-          <span class="slide-number">08 / 11</span>
+          <span class="slide-badge">Anlatıcı: Ahmet</span>
+          <span class="slide-number">08 / 12</span>
         </div>
         <div class="slide-content">
           <div class="grid-2">
             <div>
-              <h3 style="font-family: var(--font-title); font-size: 1.5rem; margin-bottom: 15px; color: var(--accent);">
-                Model Sunumu ve Lifespan Altyapısı
-              </h3>
-              <p style="font-size: 0.9rem; line-height: 1.6; color: var(--text-muted); margin-bottom: 15px;">
-                TensorFlow modellerinin Go sunucusundan gelen anlık oyun taleplerine <strong>milimsaniyeler düzeyinde</strong> cevap vermesi gerekir. Klasik "istek anında model yükleme" yöntemi saniyeler süren gecikmelere (cold start) neden olur.
-              </p>
+              <div class="slide-category">Model Eğitimi</div>
+              <h2 style="font-family: var(--font-title); font-size: 2.4rem; font-weight: 700; margin-bottom: 15px;">
+                Dirençli Huber Loss ve Ezberleme Savunması
+              </h2>
               
               <ul class="bullet-list" style="margin-bottom: 20px;">
-                <li><strong>Lifespan Startup Preload:</strong> FastAPI'nin lifespan hook'unu kullanarak 9 adet eğitilmiş <code>.keras</code> modelini ve target encoder <code>.pkl</code> dosyalarını sunucu açılışında anında RAM'e yüklüyoruz.</li>
-                <li><strong>Tahmin Hızı:</strong> Warm-up yapılmış modeller sayesinde gelen HTTP POST tahmin talepleri <strong>5 milisaniyenin altında</strong> yanıtlanır.</li>
-                <li><strong>Singleton Model Registry:</strong> Graceful degradation yapısıyla bir model dosyasında bozulma olsa dahi tüm sistem çökmez, o model pasif edilip diğer 8 modelle oyuna devam edilir.</li>
+                <li><strong>Huber Loss Tercihi:</strong> Küçük sapmalarda karesel (MSE), balon fiyatlarda doğrusal (MAE) davranarak patlamaları önleyen dinamik fonksiyon.</li>
+                <li><strong>Dinamik Early Stopping:</strong> Doğrulama kaybının 10 epoch boyunca iyileşmediği noktada eğitimi keserek aşırı öğrenmeyi (overfitting) engelleme.</li>
+                <li><strong>Ağırlık Optimizasyonu:</strong> Optuna kütüphanesiyle otomatik hyperparameter ve katman genişliği araması.</li>
               </ul>
             </div>
             
-            <div class="visual-card">
-              <h4 style="font-family: var(--font-title); font-size: 1.1rem; margin-bottom: 10px; color: var(--accent-secondary);">
-                Inference Servis Kodu Özeti
-              </h4>
-              <div class="code-snippet" style="font-size: 0.75rem;">
-                <span class="code-keyword">from</span> fastapi <span class="code-keyword">import</span> FastAPI<br>
-                <span class="code-keyword">from</span> app.services.model_registry <span class="code-keyword">import</span> registry<br><br>
-                <span class="code-function">@asynccontextmanager</span><br>
-                <span class="code-keyword">async def</span> <span class="code-function">lifespan</span>(app: FastAPI):<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment"># Startup: Tüm 9 modeli RAM'e yükle</span><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;registry.<span class="code-function">load_all</span>()<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">yield</span><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment"># Shutdown: Bellek temizleme</span><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;registry.<span class="code-function">clear_all</span>()<br><br>
-                app = <span class="code-function">FastAPI</span>(lifespan=lifespan)<br><br>
-                <span class="code-function">@app.post</span>(<span class="code-string">"/predict"</span>)<br>
-                <span class="code-keyword">def</span> <span class="code-function">predict</span>(req: PredictRequest):<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment"># Registry üzerinden hızlı çıkarım</span><br>
-                &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">return</span> registry.<span class="code-function">predict_batch</span>(req.model_ids, req.features)
-              </div>
+            <div class="visual-card" style="height: 100%; display: flex; align-items: center; justify-content: center; padding: 24px;">
+              <!-- HUBER LOSS VS MSE PLOT -->
+              <svg class="glowing-vector-svg" viewBox="0 0 400 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Axes -->
+                <line x1="200" y1="20" x2="200" y2="230" stroke="#6B7280" stroke-width="1.5"/>
+                <line x1="40" y1="130" x2="360" y2="130" stroke="#6B7280" stroke-width="1.5"/>
+                <text x="365" y="135" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="10">Hata</text>
+                <text x="205" y="25" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="10">Kayıp</text>
+
+                <!-- MSE Curve -->
+                <path d="M70 20 Q 200 230 330 20" stroke="#EC4899" stroke-width="2" stroke-dasharray="6,6" fill="none"/>
+                <text x="320" y="45" fill="#EC4899" font-family="'Inter', sans-serif" font-size="9" font-weight="600">MSE (Patlar)</text>
+
+                <!-- Huber Loss Curve -->
+                <path d="M50 60 L 140 120 Q 200 150 260 120 L 350 60" stroke="#06B6D4" stroke-width="3" fill="none"/>
+                <text x="320" y="100" fill="#06B6D4" font-family="'Inter', sans-serif" font-size="9" font-weight="700">Huber Loss</text>
+
+                <!-- Annotations -->
+                <rect x="140" y="200" width="120" height="30" rx="6" fill="rgba(6,182,212,0.06)" stroke="rgba(6,182,212,0.2)"/>
+                <text x="200" y="220" fill="#06B6D4" font-family="'Inter', sans-serif" font-size="8" font-weight="600" text-anchor="middle">Karesel Merkez (Stabil)</text>
+              </svg>
             </div>
           </div>
         </div>
         <div class="slide-footer">
-          <span>Python 3.11 · FastAPI · Keras Warm-up</span>
+          <span>Huber Loss · AdamW · BatchNormalization · Early Stopping</span>
+          <span>YSA Model Eğitim Detayları</span>
+        </div>
+        <div class="speaker-notes">
+          <p><strong>Anlatıcı: Ahmet Hulusi Yumuk</strong></p><br>
+          <p>Eğitim aşamasında dersimizin pratiklerini doğrudan uyguladık. Veriyi yüzde 80 eğitim ve yüzde 20 doğrulama olarak böldük, ayrıca test seti ayırdık. Ezberlemeyi, yani overfitting'i engellemek için üç şey yaptık: Batch Normalization ile eğitimi hızlandırdık ve kararlı kıldık. Katman çıkışlarında yüzde 20-30 Dropout uygulayarak nöronların ezberlemesini önledik. Ve doğrulama kaybı 10 epoch boyunca iyileşmediğinde eğitimi en iyi ağırlıklarla kesen Early Stopping kullandık.</p>
+          <p>Kayıp fonksiyonu olarak Huber Loss seçtik, çünkü emlak ilanlarındaki aşırı balon fiyatların gradyanları patlatmasını engelliyor. Hiperparametre optimizasyonlarını da Optuna ile yaparak en uygun nöron adedini ve batch size (32-64) aralıklarını bulduk. Şimdi çıkarım servisinin detayları için sözü İsmail'e bırakıyorum.</p>
+        </div>
+      </div>
+
+      <!-- SLAYT 9: ML ÇIKARIM SERVİSİ (PYTHON + FASTAPI) -->
+      <div class="slide next" id="slide-9">
+        <div class="slide-header">
+          <span class="slide-badge">Anlatıcı: İsmail</span>
+          <span class="slide-number">09 / 12</span>
+        </div>
+        <div class="slide-content">
+          <div class="grid-2">
+            <div>
+              <div class="slide-category">ML Çıkarım API Katmanı</div>
+              <h2 style="font-family: var(--font-title); font-size: 2.4rem; font-weight: 700; margin-bottom: 15px;">
+                RAM Preload ve Soğuk Başlatma Çözümü
+              </h2>
+              
+              <ul class="bullet-list" style="margin-bottom: 20px;">
+                <li><strong>Lifespan Startup Preload:</strong> 9 adet modelin tamamı sunucu açılışında RAM belleğe alınarak disk okuma gecikmesi engellenmiştir.</li>
+                <li><strong>5ms Altında Çıkarım Gecikmesi:</strong> Bellekten anlık warm tahminle gelen POST isteklerine milisaniyelik yanıt süresi.</li>
+                <li><strong>Registry Hata Toleransı:</strong> Bir model dosyasının arızalanması durumunda tüm sistemin çökmesi engellenir; o model pasif edilip lobi odası devam ettirilir.</li>
+              </ul>
+            </div>
+            
+            <div class="visual-card" style="height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 15px;">
+              <h3 style="color: var(--accent-secondary); margin-bottom: 5px;">FastAPI Sunucu Ömrü (Lifespan)</h3>
+              
+              <svg class="glowing-vector-svg" viewBox="0 0 400 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Startup -->
+                <rect x="10" y="20" width="100" height="50" rx="5" fill="#090E1A" stroke="#06B6D4" stroke-width="1.5"/>
+                <text x="60" y="42" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="9" font-weight="700" text-anchor="middle">1. Startup</text>
+                <text x="60" y="55" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="8" text-anchor="middle">Server Başlatıldı</text>
+
+                <!-- Arrow 1 -->
+                <path d="M110 45 L 140 45" stroke="#06B6D4" stroke-width="2" class="flow-line-anim"/>
+
+                <!-- RAM Cache -->
+                <rect x="140" y="20" width="110" height="50" rx="5" fill="#090E1A" stroke="#A855F7" stroke-width="1.5"/>
+                <text x="195" y="42" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="9" font-weight="700" text-anchor="middle">2. RAM Preload</text>
+                <text x="195" y="55" fill="#34D399" font-family="'Inter', sans-serif" font-size="8" text-anchor="middle">9 Model Warm-up</text>
+
+                <!-- Arrow 2 -->
+                <path d="M250 45 L 280 45" stroke="#A855F7" stroke-width="2" class="flow-line-anim-fast"/>
+
+                <!-- Warm Inference -->
+                <rect x="280" y="20" width="110" height="50" rx="5" fill="#090E1A" stroke="#10B981" stroke-width="1.5"/>
+                <text x="335" y="42" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="9" font-weight="700" text-anchor="middle">3. Çıkarım API</text>
+                <text x="335" y="55" fill="#34D399" font-family="'Inter', sans-serif" font-size="8" text-anchor="middle">&lt;5ms Warm POST</text>
+
+                <!-- Registry Protection -->
+                <rect x="10" y="90" width="380" height="35" rx="5" fill="rgba(16,185,129,0.05)" stroke="rgba(16,185,129,0.2)"/>
+                <text x="200" y="112" fill="#10B981" font-family="'Inter', sans-serif" font-size="9" font-weight="600" text-anchor="middle">Model Registry: Singleton warm memory management and fallback protection</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <span>FastAPI lifespan preloading · Singleton Model Registry</span>
           <span>ML-Infra Çıkarım API Katmanı</span>
         </div>
         <div class="speaker-notes">
-          <p>Yapay sinir ağı modellerimizi eğitmek kadar onları kararlı ve hızlı bir şekilde oyun akışına dahil etmek de kritik bir mühendislik gerektirir.</p>
-          <p>Eğer her oyun turunda bir model dosyasını diskten okuyup RAM'e alsaydık, oyuncular her turda saniyelerce beklemek zorunda kalırdı. Biz bu "soğuk başlatma" sorununu FastAPI framework'ünün lifespan mekanizmasıyla çözdük. Sunucu ilk ayağa kalktığında yaklaşık 20 saniye ayırarak tüm 9 modeli ve öznitelik ölçeklendiricileri RAM'e önceden yüklüyoruz.</p>
-          <p>Belleğe sabitlenen bu modeller ve warm-up süreci sayesinde, Go oyun sunucusundan gelen tahmin isteklerini 5 milisaniyenin altında bir gecikmeyle, neredeyse anında yanıtlayabiliyoruz. ModelRegistry ismini verdiğimiz singleton tasarım deseniyle, modellerden biri hata verse dahi oyun çökmeyip o model yerine bir varsayılan değer dönerek kesintisiz oyun deneyimi (graceful degradation) sağlar. Şimdi bu kararlı tahminleri alıp WebSocket ile oyunculara dağıtan Go sunucumuzu inceleyelim.</p>
+          <p><strong>Anlatıcı: İsmail Onur Ayyıldız</strong></p><br>
+          <p>Teşekkürler Ahmet. Arkadaşlar modellerimizi eğitmek kadar onları hızlı servis etmek de önemli. Eğer her tahmin isteğinde model dosyasını diskten okusaydık, oyuncular tur aralarında saniyelerce beklerdi ve oyunun akıcılığı bozulurdu. Biz bunu FastAPI'nin lifespan yapısıyla çözdük. Sunucu açılırken tüm 9 modeli ve encoderları anında RAM'e yüklüyoruz. Bu sayede tahmin isteklerini 5 milisaniyenin altında yanıtlayabiliyoruz. Ayrıca kurduğumuz Model Registry yapısı sayesinde, modellerden biri hata verse dahi sunucumuz çökmüyor; o modeli pasif edip diğerleriyle oyunu kesintisiz devam ettiriyor. Şimdi bu tahminleri alıp WebSocket ile oyunculara dağıtan Go sunucumuzu Lokman anlatacak.</p>
         </div>
       </div>
 
-      <!-- SLAYT 9: GO OYUN SUNUCUSU & WEBSOCKET ALTYAPISI -->
-      <div class="slide next" id="slide-9">
-        <div class="slide-header">
-          <span class="slide-badge">Oyun Sunucusu (Go)</span>
-          <span class="slide-number">09 / 11</span>
-        </div>
-        <div class="slide-content">
-          <div class="grid-2">
-            <div class="visual-card">
-              <h3 style="color: var(--accent);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                Yüksek Eşzamanlı Oyun Motoru
-              </h3>
-              <ul class="bullet-list" style="margin-top: 15px;">
-                <li><strong>Goroutine ve Channel:</strong> Her aktif oyun odası, Go'nun ultra hafif iş parçacıklarıyla (goroutines) izole çalışır. Sıfır race condition için kanallar üzerinden veri iletimi sağlanır.</li>
-                <li><strong>WebSocket Hub:</strong> Çoklu oda ve lobilerin durumlarını yöneten, gelen veri paketlerini odadaki tüm oyunculara dağıtan (fan-out deseni) asenkron mimari.</li>
-                <li><strong>Hızlı Hata Toleransı:</strong> ML-infra servisi anlık kapansa dahi oyun sunucusu 30sn timeout verip turu AI tahminleri olmadan sürdürür.</li>
-              </ul>
-            </div>
-            
-            <div class="visual-card visual-card-accent">
-              <h3 style="color: var(--accent-secondary);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                Asimetrik Lig Sistemi (LP) Formülü
-              </h3>
-              <p style="font-size: 0.85rem; line-height: 1.5; color: var(--text-muted); margin-top: 10px;">
-                Oyuncunun her tur sonunda kazandığı veya kaybettiği LP (Lig Puanı) miktarı, yendiği ya da yenildiği YSA modelinin lig seviyesine göre dinamik olarak değişir.
-              </p>
-              <div class="code-snippet" style="font-size: 0.75rem; margin-top: 15px;">
-                <span class="code-comment">// T = Modelin Lig Seviyesi (Bronz=1, Altın=2, Elmas=3)</span><br>
-                <span class="code-keyword">if</span> OyuncuTahmini &lt; YapayZekaTahmini {<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;LP_Delta += 10 * T <span class="code-comment">// Zor AI'yi yenmek yüksek ödül</span><br>
-                } <span class="code-keyword">else</span> {<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;LP_Delta -= 10 * (4 - T) <span class="code-comment">// Kolay AI'ye yenilmek yüksek ceza</span><br>
-                }
-              </div>
-              <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 10px; text-align: center;">
-                <strong>LP Limitleri:</strong> Başlangıç: 50 LP · Terfi Eşiği: 100 LP ➔ Üst Lige Geçiş · Düşme Eşiği: 0 LP
-              </p>
-            </div>
-          </div>
-        </div>
-        <div class="slide-footer">
-          <span>Go 1.22 · Gin Framework · Gorilla WebSocket · LP Formula</span>
-          <span>Go Oyun Sunucusu Mimarisi</span>
-        </div>
-        <div class="speaker-notes">
-          <p>House Royale çok oyunculu, gerçek zamanlı bir tahmin oyunu olduğu için sunucunun aynı anda yüzlerce aktif odayı ve WebSocket bağlantısını hiç tıkanmadan yönetmesi gerekir.</p>
-          <p>Bu amaçla oyun motorumuzu Go 1.22 diliyle geliştirdik. Go'nun eşzamanlılık becerileri sayesinde her oyun odası izole birer hafif goroutine olarak çalıştırılır. Lobi durum değişiklikleri "Gorilla WebSocket" üzerinden asenkron olarak bağlı tüm istemcilere broadcast edilir.</p>
-          <p>Oyunun en özgün mekaniklerinden biri de asimetrik Lig Puanı yani LP hesaplama formülüdür. Eğer oyuncu, yüksek seviyeli Elmas ligi bir modeli yenerse yüksek LP kazanır; ancak Bronz seviyesi kolay bir modele yenilirse ağır bir LP kaybı cezası alır. 100 LP'ye ulaşan oyuncular bir üst lige (Bronz ➔ Altın ➔ Elmas) terfi ederken, 0 LP'ye düşenler küme düşer. Bu dinamik yapı rekabeti ve oyunda kalma süresini ciddi oranda artırmıştır. Şimdi modellerimizin genel performans metriklerine göz atalım.</p>
-        </div>
-      </div>
-
-      <!-- SLAYT 10: MODEL PERFORMANS ANALİZİ & METRİKLER -->
+      <!-- SLAYT 10: GO OYUN SUNUCUSU & WEBSOCKET ALTYAPISI -->
       <div class="slide next" id="slide-10">
         <div class="slide-header">
-          <span class="slide-badge">Test & Performans</span>
-          <span class="slide-number">10 / 11</span>
-        </div>
-        <div class="slide-content">
-          <h3 style="font-family: var(--font-title); font-size: 1.5rem; text-align: center; margin-bottom: 20px;">
-            Modellerin Test Seti Başarı Sonuçları
-          </h3>
-          
-          <table class="styled-table" style="font-size: 0.85rem; margin-bottom: 20px;">
-            <thead>
-              <tr>
-                <th>Model Kodu</th>
-                <th>Lig Seviyesi</th>
-                <th>Mimari Özeti</th>
-                <th>MAPE (Sapma %)</th>
-                <th>R² (Açıklama Oranı)</th>
-                <th>Görev / Oyun Rolü</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style="background: rgba(16, 185, 129, 0.05);">
-                <td><strong>model_0 (ResNet Pro)</strong></td>
-                <td>💎 Elmas</td>
-                <td>2x Residual Blok + Swish + AdamW</td>
-                <td><strong>~%3.2</strong></td>
-                <td><strong>0.925</strong></td>
-                <td>En güçlü nihai rakip (Yenilemez)</td>
-              </tr>
-              <tr>
-                <td>model_1 (MLP Pro Plus Max)</td>
-                <td>💎 Elmas</td>
-                <td>8 Katmanlı Derin MLP (ReLU)</td>
-                <td>~%4.5</td>
-                <td>0.878</td>
-                <td>Güçlü derin alternatif</td>
-              </tr>
-              <tr>
-                <td>model_2 (MLP Pro Plus)</td>
-                <td>💎 Elmas</td>
-                <td>8 Katmanlı Derin MLP (Alt Hiperparametre)</td>
-                <td>~%5.4</td>
-                <td>0.842</td>
-                <td>Dengeli derin ağ</td>
-              </tr>
-              <tr style="background: rgba(99, 102, 241, 0.03);">
-                <td>model_3 (MLP Pro)</td>
-                <td>🥈 Altın</td>
-                <td>4 Katmanlı Standart MLP (ReLU)</td>
-                <td>~%5.8</td>
-                <td>0.851</td>
-                <td>Sektörel standart tahminci</td>
-              </tr>
-              <tr>
-                <td>model_4 (MLP Plus)</td>
-                <td>🥈 Altın</td>
-                <td>4 Katmanlı Sığ MLP (ReLU)</td>
-                <td>~%6.2</td>
-                <td>0.830</td>
-                <td>Orta zorluk rakibi</td>
-              </tr>
-              <tr style="background: rgba(239, 68, 68, 0.02);">
-                <td>model_6 (Mini MLP)</td>
-                <td>🥉 Bronz</td>
-                <td>2 Katmanlı Kasıtlı Sığ Ağ (Dense 4➔2)</td>
-                <td>~%10.5</td>
-                <td>0.680</td>
-                <td>Yeni başlayanlar için kolay rakip</td>
-              </tr>
-              <tr>
-                <td>model_8 (Stub MLP)</td>
-                <td>🥉 Bronz</td>
-                <td>2 Katmanlı Aşırı Sığ Ağ (Dense 2➔1)</td>
-                <td>>%18.0</td>
-                <td><0.000 (Negatif)</td>
-                <td>Öğrenme yeteneği kısıtlı model</td>
-              </tr>
-            </tbody>
-          </table>
-          
-          <div class="grid-2" style="gap: 20px;">
-            <div class="info-box">
-              <span class="info-box-icon">📊</span>
-              <span><strong>Neden 4 Başarı Metriği?</strong> <strong>MAE</strong> doğrudan TL bazlı hatayı verir. <strong>RMSE</strong> uçlardaki büyük hataları sert cezalandırır. <strong>MAPE</strong> fiyattan bağımsız oransal sapmayı gösterir. <strong>R²</strong> ise modelin fiyat varyansını açıklama gücüdür.</span>
-            </div>
-            <div class="info-box" style="border-left-color: var(--accent-secondary); background: rgba(16, 185, 129, 0.08);">
-              <span class="info-box-icon">💡</span>
-              <span><strong>Şeffaf Model Karşılaştırma:</strong> React frontend arayüzündeki özel "Model Karşılaştırma" sayfası sayesinde, oyuncular tüm bu metrikleri radar ve scatter grafiklerle canlı inceleyebilir.</span>
-            </div>
-          </div>
-        </div>
-        <div class="slide-footer">
-          <span>MAE · RMSE · MAPE · R² Metrics</span>
-          <span>Model Performans Karşılaştırma Tablosu</span>
-        </div>
-        <div class="speaker-notes">
-          <p>Modellerimizi sadece eğitmekle kalmadık, akademik titizlikle test setleri üzerinde 4 farklı metrikle kapsamlı şekilde test ettik.</p>
-          <p>Ekranda gördüğünüz tablo, test sonuçlarımızın net bir özetidir. En başarılı modelimiz olan model_0 ResNet Pro, %3.2 ortalama sapma oranı (MAPE) ve 0.925 belirtme katsayısı (R²) ile Türkiye emlak fiyatlarının varyansını neredeyse kusursuz açıklamaktadır. Bu model gerçek bir emlak uzmanı kadar isabetli tahminler yapabilmektedir.</p>
-          <p>Altın ligi modellerimiz %5-6 hata payıyla dengeli birer tahminciyken, Bronz ligindeki model_8 gibi kasıtlı zayıflatılmış ağlarımız ise verinin varyansını açıklayamadığı için negatif R² değerleri üretmiştir. Bu performans farklarının tümünü oyuncularımızın da şeffafça görebilmesi için ön yüzde anlık güncellenen interaktif grafiklerle "Model Karşılaştırma" sayfasını oluşturduk. Son olarak projemizin genel sonuçlarını ve gelecek vizyonunu paylaşalım.</p>
-        </div>
-      </div>
-
-      <!-- SLAYT 11: SONUÇ & GELECEK VİZYONU -->
-      <div class="slide next" id="slide-11">
-        <div class="slide-header">
-          <span class="slide-badge">Sonuç & Gelecek</span>
-          <span class="slide-number">11 / 11</span>
+          <span class="slide-badge">Anlatıcı: Lokman</span>
+          <span class="slide-number">10 / 12</span>
         </div>
         <div class="slide-content">
           <div class="grid-2">
             <div>
-              <h3 style="font-family: var(--font-title); font-size: 1.5rem; margin-bottom: 15px; color: var(--accent);">
-                Akademik ve Sektörel Kazanımlar
-              </h3>
-              <p style="font-size: 0.9rem; line-height: 1.6; color: var(--text-muted); margin-bottom: 15px;">
-                House Royale, Yapay Sinir Ağları dersinin teorik kavramlarını (aşırı öğrenme, gradyan kaybolması, Huber kaybı, target encoding) izole not defteri ortamından çıkarıp canlı, interaktif ve çok kullanıcılı ticari bir yazılım mimarisiyle taçlandırmıştır.
-              </p>
+              <div class="slide-category">Oyun Sunucusu (Go)</div>
+              <h2 style="font-family: var(--font-title); font-size: 2.4rem; font-weight: 700; margin-bottom: 15px;">
+                Goroutine Oyun Motoru ve Asimetrik LP
+              </h2>
               
               <ul class="bullet-list" style="margin-bottom: 20px;">
-                <li><strong>Açık Kaynak Katkısı:</strong> 12.000+ güncel ilanlık özgün Türkiye emlak veri seti ve model ağırlıkları açık kaynak olarak GitHub'da paylaşılmıştır.</li>
-                <li><strong>Eş Zamanlı Ölçeklenebilirlik:</strong> Go WebSocket hub yapısı 100+ eş zamanlı aktif kullanıcıyı tek bir mikro sunucuda tıkanmadan kaldırabilmektedir.</li>
+                <li><strong>Lobi Eşzamanlılığı:</strong> Her oyun odasının Go'nun hafif iş parçacıkları olan bağımsız goroutine'ler olarak sıfır yükle çalıştırılması.</li>
+                <li><strong>WebSocket Hub:</strong> Canlı oda durumlarını ve sayaçları bağlı istemcilere fan-out yayını ile anlık broadcast etme.</li>
+                <li><strong>Asimetrik Lig Puanı (LP):</strong> Kolay rakiplere (AI) yenilgide yüksek kayıp, zor rakipleri yenmede yüksek kazanç sunan formül.</li>
               </ul>
             </div>
             
-            <div class="visual-card visual-card-accent">
-              <h3 style="color: var(--accent-secondary); font-family: var(--font-title); font-size: 1.3rem; margin-bottom: 12px;">
-                🚀 Gelecek Yol Haritası
-              </h3>
-              <ul class="bullet-list list-accent">
-                <li><strong>Çok Girdili Hibrit Model (Görsel + Tablo):</strong> İlanların sayısal özniteliklerinin yanında, ilan fotoğraflarını da bir CNN (Evrişimli Sinir Ağı) mimarisinden geçirip MLP tablo vektörüyle birleştiren <strong>Çoklu Girdili (Multi-Input) YSA</strong> entegrasyonu.</li>
-                <li><strong>Otomatik Tuning:</strong> Hiperparametre optimizasyon sürecinin Optuna veya Keras Tuner ile tamamen otomatikleştirilmesi.</li>
-                <li><strong>Redis Session Store:</strong> Go oyun sunucusunun yatayda sınırsız ölçeklenebilmesi için Redis tabanlı oturum yönetimi entegrasyonu.</li>
-                <li><strong>PWA Mobil Desteği:</strong> Mobil tarayıcılarda uygulama gibi çalışan Progressive Web App desteği.</li>
+            <div class="visual-card" style="height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 15px;">
+              <h3 style="color: var(--accent-secondary); margin-bottom: 5px;">WebSocket Hub & Lobi Konsepti</h3>
+              
+              <svg class="glowing-vector-svg" viewBox="15 10 345 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Clients -->
+                <circle cx="30" cy="35" r="10" fill="#090E1A" stroke="#06B6D4" stroke-width="1.2"/>
+                <circle cx="30" cy="70" r="10" fill="#090E1A" stroke="#06B6D4" stroke-width="1.2"/>
+                <circle cx="30" cy="105" r="10" fill="#090E1A" stroke="#06B6D4" stroke-width="1.2"/>
+                <text x="30" y="73" fill="#06B6D4" font-family="'Inter', sans-serif" font-size="7.5" font-weight="700" text-anchor="middle">WS</text>
+
+                <!-- Connection lines to Hub -->
+                <path d="M40 35 L 120 70" stroke="#06B6D4" stroke-width="1" stroke-dasharray="2,2"/>
+                <path d="M40 70 L 120 70" stroke="#06B6D4" stroke-width="1" stroke-dasharray="2,2"/>
+                <path d="M40 105 L 120 70" stroke="#06B6D4" stroke-width="1" stroke-dasharray="2,2"/>
+
+                <!-- WS Hub (Go Server) -->
+                <rect x="120" y="45" width="80" height="50" rx="4" fill="#090E1A" stroke="#A855F7" stroke-width="1.2"/>
+                <text x="160" y="70" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="8.5" font-weight="700" text-anchor="middle">WS HUB</text>
+                <text x="160" y="81" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="6.5" text-anchor="middle">Go Gin (Goroutine)</text>
+
+                <!-- Hub to Rooms -->
+                <path d="M200 70 L 260 35" stroke="#A855F7" stroke-width="1" class="flow-line-anim"/>
+                <path d="M200 70 L 260 105" stroke="#A855F7" stroke-width="1" class="flow-line-anim-fast"/>
+
+                <!-- Room Goroutines -->
+                <rect x="260" y="15" width="95" height="35" rx="4" fill="#090E1A" stroke="#10B981" stroke-width="1.2"/>
+                <text x="307" y="32" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="7.5" font-weight="600" text-anchor="middle">Goroutine Lobi 1</text>
+                <text x="307" y="42" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="6.5" text-anchor="middle"> sync.Mutex korumalı</text>
+
+                <rect x="260" y="90" width="95" height="35" rx="4" fill="#090E1A" stroke="#10B981" stroke-width="1.2"/>
+                <text x="307" y="107" fill="#F3F4F6" font-family="'Outfit', sans-serif" font-size="7.5" font-weight="600" text-anchor="middle">Goroutine Lobi 2</text>
+                <text x="307" y="117" fill="#9CA3AF" font-family="'Inter', sans-serif" font-size="6.5" text-anchor="middle"> isolated state store</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <span>Go 1.22 Concurrency · Gorilla WebSocket · LP Mechanics</span>
+          <span>Go Oyun Sunucusu Mimarisi</span>
+        </div>
+        <div class="speaker-notes">
+          <p><strong>Anlatıcı: Lokman Baturay Efe</strong></p><br>
+          <p>Tekrar merhaba. House Royale çok oyunculu bir oyun olduğu için sunucunun aynı anda yüzlerce lobiyi sıfır gecikmeyle yönetmesi gerekiyor. Bunun için Go dilini seçtik. Her oyun odasını Go'nun hafif iş parçacıkları olan goroutine'ler olarak çalıştırıyoruz. Hafıza durumunu korumak ve odalar arası veri çakışmalarını engellemek için kanallar ve RWMutex kilitleme yapılarını kullandık. WebSocket Hub yapımızla da anlık tahmin mesajlarını odadaki oyunculara dağıtıyoruz. Oyunumuzda asimetrik bir Lig Puanı (LP) formülümüz var. Oyuncu Elmas ligi zor bir AI'yı yenerse yüksek LP kazanırken, Bronz ligi kolay bir AI'ya yenilirse ağır bir LP kaybı yaşıyor. 100 LP'ye ulaşan lig atlıyor, 0 LP'ye düşen küme düşüyor. Şimdi modellerimizin performans sonuçlarını İsmail arkadaşımızdan dinleyelim.</p>
+        </div>
+      </div>
+
+      <!-- SLAYT 11: MODEL PERFORMANS ANALİZİ & METRİKLER -->
+      <div class="slide next" id="slide-11">
+        <div class="slide-header">
+          <span class="slide-badge">Anlatıcı: İsmail</span>
+          <span class="slide-number">11 / 12</span>
+        </div>
+        <div class="slide-content">
+          <div class="grid-2">
+            <div>
+              <div class="slide-category">Test & Performans</div>
+              <h2 style="font-family: var(--font-title); font-size: 2.4rem; font-weight: 700; margin-bottom: 12px;">
+                Elmas Ligi Model Performansı
+              </h2>
+              <p style="font-size: 1.15rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 15px;">
+                Modellerimizi test seti üzerinde doğrularken tek metrik yerine MAE, RMSE ve R² katsayılarını eş zamanlı kullandık. En düşük MAE'ye sahip modelimiz model_1'dir (<strong>802.674 ₺</strong>); en yüksek R² ise model_2'ye aittir (<strong>0.5440</strong>).
+              </p>
+              
+              <div class="stat-plate-grid">
+                <div class="stat-plate-card">
+                  <span class="stat-plate-val" style="color: var(--accent-green);">802.674 ₺</span>
+                  <span class="stat-plate-label">En İyi MAE (model_1)</span>
+                </div>
+                <div class="stat-plate-card">
+                  <span class="stat-plate-val" style="color: var(--accent-pink);">−0.093</span>
+                  <span class="stat-plate-label">Bronz R² (model_8)</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="visual-card">
+              <h3 style="color: var(--accent-secondary);">Model R² Başarı Dereceleri</h3>
+              
+              <div class="metric-meter-container">
+                <div class="metric-meter-label">
+                  <span>model_0 ResNet Pro (Elmas)</span>
+                  <span style="font-weight: 600; color: var(--accent-secondary);">R²: 0.4924</span>
+                </div>
+                <div class="metric-meter-bg">
+                  <div class="metric-meter-fill" style="width: 49.24%; background: var(--accent-secondary);"></div>
+                </div>
+              </div>
+              
+              <div class="metric-meter-container">
+                <div class="metric-meter-label">
+                  <span>model_1 MLP Pro (Elmas)</span>
+                  <span style="font-weight: 600; color: var(--text-main);">R²: 0.5415</span>
+                </div>
+                <div class="metric-meter-bg">
+                  <div class="metric-meter-fill" style="width: 54.15%; background: var(--text-main);"></div>
+                </div>
+              </div>
+              
+              <div class="metric-meter-container">
+                <div class="metric-meter-label">
+                  <span>model_3 MLP Pro (Altın)</span>
+                  <span style="font-weight: 600; color: var(--accent);">R²: N/A</span>
+                </div>
+                <div class="metric-meter-bg">
+                  <div class="metric-meter-fill" style="width: 0%; background: var(--accent);"></div>
+                </div>
+              </div>
+              
+              <div class="metric-meter-container">
+                <div class="metric-meter-label">
+                  <span>model_6 Mini MLP (Bronz)</span>
+                  <span style="font-weight: 600; color: var(--accent-green);">R²: −0.0930</span>
+                </div>
+                <div class="metric-meter-bg">
+                  <div class="metric-meter-fill" style="width: 0%; background: var(--accent-green);"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-footer">
+          <span>MAE · RMSE · R² Success Metrics</span>
+          <span>Model Performans Sonuçları</span>
+        </div>
+        <div class="speaker-notes">
+          <p><strong>Anlatıcı: İsmail Onur Ayyıldız</strong></p><br>
+          <p>Modellerimizin doğruluğunu test seti üzerinde MAE, RMSE ve R² metrikleriyle değerlendirdik. Ekranda gördüğünüz grafik, Elmas ligi modellerinin gerçek test sonuçlarını göstermektedir. En düşük MAE değerine sahip modelimiz model_1 (802.674 ₺); en yüksek R²'ye sahip modelimiz ise model_2 (0.5440). model_0 ResNet ise 936.591 ₺ MAE ve 0.4924 R² ile üçüncü sırada yer alıyor.</p>
+          <p>Altın ligi modellerinin (model_3-5) notebook çıktıları henüz mevcut değilken, kasıtlı olarak zayıflattığımız Bronz ligi model_8 baseline modelimiz negatif R² (−0.0930) üretmiştir. Oyuncuların tüm bu başarı metriklerini ve loss eğrilerini görebilmesi için ön yüzde dinamik radar ve scatter grafiklerden oluşan interaktif 'Model Karşılaştırma' sayfasını tasarladık. Son olarak kapanışı yapalım.</p>
+        </div>
+      </div>
+
+      <!-- SLAYT 12: SONUÇ & GELECEK VİZYONU -->
+      <div class="slide next" id="slide-12">
+        <div class="slide-header">
+          <span class="slide-badge">Anlatıcı: İsmail</span>
+          <span class="slide-number">12 / 12</span>
+        </div>
+        <div class="slide-content">
+          <div class="grid-2">
+            <div>
+              <div class="slide-category">Sonuç & Gelecek</div>
+              <h2 style="font-family: var(--font-title); font-size: 2.4rem; font-weight: 700; margin-bottom: 15px;">
+                Uçtan Uca Mühendislik ve Açık Kaynak
+              </h2>
+              
+              <ul class="bullet-list" style="margin-bottom: 20px;">
+                <li><strong>Teoriden Çalışan Ürüne:</strong> Yapay Sinir Ağları dersindeki kavramların (kayıp kararlılığı, skip bağlantı, target encoding) çalışan bir sisteme entegre edilmesi.</li>
+                <li><strong>Açık Kaynak Katkısı:</strong> Derlenen 12k ilanlık özgün Türk emlak veri seti ve model ağırlıklarının GitHub üzerinden yayınlanması.</li>
+              </ul>
+            </div>
+            
+            <div class="visual-card" style="height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 15px;">
+              <h3 style="color: var(--accent-secondary); margin-bottom: 5px;">🚀 Gelecek Yol Haritası</h3>
+              
+              <ul class="bullet-list list-accent" style="display: flex; flex-direction: column; gap: 12px;">
+                <li>
+                  <strong style="color: var(--accent-secondary); font-size: 1.3rem;">Q3 2026: Hibrit Görsel YSA Modeli</strong><br>
+                  <span style="font-size: 1.1rem; color: var(--text-muted); line-height: 1.4;">Ev ilanlarındaki fotoğrafları CNN mimarisinden geçirip, tablo öznitelikleriyle birleştiren hibrit ağ.</span>
+                </li>
+                <li>
+                  <strong style="color: var(--accent-secondary); font-size: 1.3rem;">Q4 2026: Redis Dağıtık Lobi Yönetimi</strong><br>
+                  <span style="font-size: 1.1rem; color: var(--text-muted); line-height: 1.4;">Oyun sunucularını yatayda sınırsız ölçeklenebilir kılan Redis ve WebSocket PubSub entegrasyonu.</span>
+                </li>
+                <li>
+                  <strong style="color: var(--accent-secondary); font-size: 1.3rem;">Q1 2027: Progressive Web App (PWA)</strong><br>
+                  <span style="font-size: 1.1rem; color: var(--text-muted); line-height: 1.4;">Mobil cihazlarda tarayıcı bağımlılığı olmadan yerel uygulama hissiyatı sunan front-end tasarımı.</span>
+                </li>
               </ul>
             </div>
           </div>
         </div>
         <div class="slide-footer">
           <span>Teşekkür Ederiz · Sorularınız?</span>
-          <span>Sonuç & Gelecek Vizyonu</span>
+          <span>Sonuç & Gelecek Yol Haritası</span>
         </div>
         <div class="speaker-notes">
-          <p>Sonuç olarak, Yapay Sinir Ağları dersinde gördüğümüz teorik arka planı -Swish aktivasyonlarından Huber kaybına, kalıntı bağlantılardan target encoding stratejilerine kadar- somut, canlı ve interaktif bir ürüne dönüştürmeyi başardık.</p>
-          <p>House Royale ile hem yapay zekanın gücünü eğlenceli bir rekabet ortamına taşıdık hem de 12.000 ilanlık güncel bir Türkiye emlak veri setini açık kaynak dünyasına kazandırdık.</p>
-          <p>Gelecekteki en büyük hedefimiz, künyemizde de tasarladığımız ancak zaman kısıtı nedeniyle ertelediğimiz Görsel + Tablo girdili hibrit YSA modelini entegre etmektir. Konut fotoğraflarını bir CNN omurgasından geçirip tablo öznitelikleriyle birleştirdiğimizde tahmin başarımızı çok daha yukarı taşıyacağımıza inanıyoruz. Bizi dinlediğiniz için çok teşekkür ederiz. Varsa sorularınızı yanıtlamaktan memnuniyet duyarız.</p>
+          <p><strong>Anlatıcı: İsmail Onur Ayyıldız</strong></p><br>
+          <p>Sonuç olarak, Yapay Sinir Ağları dersinde gördüğümüz Swish aktivasyonu, Huber kaybı kararlılığı, residual bağlantılar ve target encoding gibi teorik kavramları kod bloklarından çıkarıp, canlı ve interaktif bir oyuna dönüştürmeyi başardık. Projemizle hem yapay zekanın gücünü keyifli bir rekabet ortamına taşıdık hem de 12.000 ilanlık güncel bir veri setini açık kaynak dünyasına kazandırdık.</p>
+          <p>Gelecekteki en büyük hedefimiz, ilan fotoğraflarını da işleyen Çok Girdili (Multi-Input) Hibrit bir model eğitmek. Konut görsellerini bir CNN omurgasından geçirip tablo öznitelikleriyle birleştirdiğimizde tahmin başarımızı çok daha yukarı taşıyacağımıza inanıyoruz. Bizi dinlediğiniz için çok teşekkür ederiz, sorularınız varsa yanıtlayabiliriz.</p>
         </div>
       </div>
 
@@ -1481,7 +1630,7 @@
           <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         </button>
         <button class="btn-circle" id="btn-fullscreen" title="Fullscreen Toggle (Kısayol: F)">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
         </button>
         <button class="btn-circle" id="btn-help-toggle" title="Shortcuts Info">❔</button>
       </div>
@@ -1492,7 +1641,7 @@
       
       <div class="ctrl-right">
         <button class="btn-circle" id="btn-prev" title="Previous Slide (Kısayol: Left Arrow)">◀</button>
-        <span id="slide-indicator-label" style="font-family: var(--font-title); font-weight: 600; min-width: 60px; text-align: center;">1 / 11</span>
+        <span id="slide-indicator-label" style="font-family: var(--font-title); font-weight: 600; min-width: 60px; text-align: center;">1 / 12</span>
         <button class="btn-circle btn-accent" id="btn-next" title="Next Slide (Kısayol: Right Arrow)">▶</button>
       </div>
     </div>
@@ -1506,10 +1655,10 @@
       <!-- Dashboard Row -->
       <div class="p-dashboard-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
         <div>
-          <h2 style="font-family: var(--font-title); font-size: 1.5rem; color: var(--accent); margin-bottom: 5px;">House Royale Sunumu</h2>
-          <p style="color: var(--text-muted); font-size: 0.85rem;">Sunucu Kontrol Paneli</p>
+          <h2 style="font-family: var(--font-title); font-size: 1.3rem; color: var(--accent); margin-bottom: 3px;">House Royale Sunumu</h2>
+          <p style="color: var(--text-muted); font-size: 0.75rem;">Sunucu Kontrol Paneli</p>
         </div>
-        <button class="btn-rect" id="btn-exit-presenter" style="font-size: 0.85rem; padding: 10px 18px; display: inline-flex;">
+        <button class="btn-rect" id="btn-exit-presenter" style="font-size: 0.8rem; padding: 8px 16px; display: inline-flex;">
           ❌ Projeksiyon Moduna Dön
         </button>
       </div>
@@ -1521,9 +1670,9 @@
           <div class="p-slide-thumbnail" id="p-curr-slide-thumb">
             <div class="p-slide-thumbnail-bg">
               <span id="p-curr-slide-badge" class="slide-badge" style="font-size: 0.5rem; padding: 2px 6px;">KAPAK</span>
-              <span id="p-curr-slide-num" style="font-weight: 700;">1 / 11</span>
+              <span id="p-curr-slide-num" style="font-weight: 700;">1 / 12</span>
             </div>
-            <span id="p-curr-slide-title" style="font-size: 1rem; font-weight: 700; text-align: center; padding: 10px;">GİRİŞ</span>
+            <span id="p-curr-slide-title" style="font-size: 0.9rem; font-weight: 700; text-align: center; padding: 10px;">GİRİŞ</span>
           </div>
         </div>
         
@@ -1532,18 +1681,18 @@
           <div class="p-slide-thumbnail next-thumb" id="p-next-slide-thumb">
             <div class="p-slide-thumbnail-bg">
               <span id="p-next-slide-badge" class="slide-badge" style="font-size: 0.5rem; padding: 2px 6px; background: rgba(255,255,255,0.1); color: white;">SIRADAKİ</span>
-              <span id="p-next-slide-num" style="font-weight: 700;">2 / 11</span>
+              <span id="p-next-slide-num" style="font-weight: 700;">2 / 12</span>
             </div>
-            <span id="p-next-slide-title" style="font-size: 1rem; font-weight: 700; text-align: center; padding: 10px; opacity: 0.6;">PROBLEM & ÇÖZÜM</span>
+            <span id="p-next-slide-title" style="font-size: 0.9rem; font-weight: 700; text-align: center; padding: 10px; opacity: 0.6;">PROBLEM & ÇÖZÜM</span>
           </div>
         </div>
       </div>
       
       <!-- Mini Help -->
-      <div class="visual-card" style="padding: 15px 20px;">
-        <h4 style="font-family: var(--font-title); font-size: 0.95rem; margin-bottom: 8px;">Klavye Kısayolları</h4>
-        <div class="shortcuts-grid" style="font-size: 0.75rem;">
-          <div><span class="shortcut-key">➔</span> / <span class="shortcut-key">Boşluk</span></div><div>Sonraki Slayt</div>
+      <div class="visual-card" style="padding: 12px 18px;">
+        <h4 style="font-family: var(--font-title); font-size: 0.85rem; margin-bottom: 6px;">Klavye Kısayolları</h4>
+        <div class="shortcuts-grid" style="font-size: 0.7rem;">
+          <div><span class="shortcut-key">➔</span> / <span class="shortcut-key">Space</span></div><div>Sonraki Slayt</div>
           <div><span class="shortcut-key">⬅</span></div><div>Önceki Slayt</div>
           <div><span class="shortcut-key">P</span></div><div>Sunucu Modu Aç/Kapat</div>
           <div><span class="shortcut-key">L</span></div><div>Tema Aç/Kapat</div>
@@ -1555,10 +1704,10 @@
     <div class="presenter-right">
       <div class="p-notes-header">
         <span>🎙️ Konuşmacı Metni (Speaker Notes)</span>
-        <span id="p-notes-slide-indicator" style="font-size: 1.1rem; color: var(--text-muted);">Slayt 1</span>
+        <span id="p-notes-slide-indicator" style="font-size: 1rem; color: var(--text-muted);">Slayt 1</span>
       </div>
       <div class="p-notes-body" id="p-notes-content">
-        <!-- JS dinamik olarak o anki slaytın speaker-notes içeriğini buraya basar -->
+        <!-- JS dynamically renders active speaker-notes -->
       </div>
     </div>
 
@@ -1566,7 +1715,7 @@
 
   <!-- FLOATING SHORTCUT HELPER -->
   <div class="keyboard-shortcuts-floating" id="shortcuts-help-card">
-    <h4 style="font-family: var(--font-title); font-size: 0.9rem; margin-bottom: 10px; border-bottom: 1px solid var(--bg-card-border); padding-bottom: 5px;">Hızlı Kısayollar</h4>
+    <h4 style="font-family: var(--font-title); font-size: 0.85rem; margin-bottom: 8px; border-bottom: 1px solid var(--bg-card-border); padding-bottom: 4px;">Hızlı Kısayollar</h4>
     <div class="shortcuts-grid">
       <div><span class="shortcut-key">➔</span> / <span class="shortcut-key">Space</span></div><div>Sonraki Slayt</div>
       <div><span class="shortcut-key">⬅</span> / <span class="shortcut-key">Backspc</span></div><div>Önceki Slayt</div>
@@ -1596,10 +1745,10 @@
       const btnNext = document.getElementById("btn-next");
       const btnThemeToggle = document.getElementById("btn-theme-toggle");
       const btnPresenterToggle = document.getElementById("btn-presenter-mode");
+      const btnExitPresenter = document.getElementById("btn-exit-presenter");
       const btnFullscreen = document.getElementById("btn-fullscreen");
       const btnHelpToggle = document.getElementById("btn-help-toggle");
       const shortcutsHelpCard = document.getElementById("shortcuts-help-card");
-      const btnExitPresenter = document.getElementById("btn-exit-presenter");
       
       // Sunucu Modu Elemanları
       const pNotesContent = document.getElementById("p-notes-content");
@@ -1638,6 +1787,17 @@
         
         currentIdx = index;
         updateUI();
+        
+        // Metre grafiklerin tetiklenmesi (Slayt 11 ve 4 için akıcı dolma animasyonu)
+        const activeSlide = slides[currentIdx];
+        const meters = activeSlide.querySelectorAll(".metric-meter-fill");
+        meters.forEach(meter => {
+          const targetWidth = meter.style.width;
+          meter.style.width = "0%";
+          setTimeout(() => {
+            meter.style.width = targetWidth;
+          }, 50);
+        });
       }
 
       // 2. ARAYÜZ GÜNCELLEME
@@ -1656,7 +1816,7 @@
       // 3. SUNUCU MODU VERİLERİNİ GÜNCELLE
       function updatePresenterData() {
         const currSlide = slides[currentIdx];
-        const currTitle = currSlide.querySelector(".slide-title").textContent;
+        const currTitle = currSlide.querySelector(".slide-title") ? currSlide.querySelector(".slide-title").textContent : "BAŞLIKSIZ";
         const currBadge = currSlide.querySelector(".slide-badge").textContent;
         
         // Konuşmacı notlarını çek
@@ -1672,7 +1832,7 @@
         // Sıradaki slayt önizlemesi
         if (currentIdx + 1 < totalSlides) {
           const nextSlide = slides[currentIdx + 1];
-          const nextTitle = nextSlide.querySelector(".slide-title").textContent;
+          const nextTitle = nextSlide.querySelector(".slide-title") ? nextSlide.querySelector(".slide-title").textContent : "BAŞLIKSIZ";
           const nextBadge = nextSlide.querySelector(".slide-badge").textContent;
           
           pNextSlideTitle.textContent = nextTitle;
@@ -1784,7 +1944,8 @@
       document.addEventListener("keydown", (e) => {
         switch (e.key) {
           case "ArrowRight":
-          case " ": // Spacebar
+          case "Boşluk":
+          case " ":
           case "PageDown":
             e.preventDefault();
             nextSlide();
@@ -1808,7 +1969,6 @@
             toggleFullscreen();
             break;
           case "Escape":
-            // Esc varsayılan olarak fullscreenden çıkartır, yardımı da gizleyelim
             shortcutsHelpCard.style.display = "none";
             break;
         }
