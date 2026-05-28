@@ -8,11 +8,11 @@ const MODELS = [
   { name: 'ResNet Pro (model_0)', type: 'Deep MLP (ResNet)', mae: 936591, r2: 0.4924, resp: 82, params: '318K', trainTime: 120, accuracy: 0.4924 },
   { name: 'MLP Pro Plus Max (model_1)', type: 'Deep MLP', mae: 802674, r2: 0.5415, resp: 72, params: '314K', trainTime: 95, accuracy: 0.5415, best: true },
   { name: 'MLP Pro Plus (model_2)', type: 'Deep MLP', mae: 879489, r2: 0.5440, resp: 65, params: '312K', trainTime: 85, accuracy: 0.5440 },
-  { name: 'MLP Pro (model_3)', type: 'MLP', mae: null, r2: null, resp: 58, params: '100K', trainTime: 50, accuracy: 0.43 },
-  { name: 'MLP Plus (model_4)', type: 'MLP', mae: null, r2: null, resp: 52, params: '90K', trainTime: 42, accuracy: 0.40 },
-  { name: 'MLP Lite (model_5)', type: 'MLP', mae: null, r2: null, resp: 45, params: '70K', trainTime: 35, accuracy: 0.36 },
-  { name: 'Mini MLP (model_6)', type: 'MLP', mae: null, r2: null, resp: 38, params: '5K', trainTime: 20, accuracy: 0.18 },
-  { name: 'Tiny MLP (model_7)', type: 'MLP', mae: null, r2: null, resp: 33, params: '2K', trainTime: 12, accuracy: 0.05 },
+  { name: 'MLP Pro (model_3)', type: 'MLP', mae: 943059, r2: 0.4938, resp: 58, params: '100K', trainTime: 50, accuracy: 0.4938 },
+  { name: 'MLP Plus (model_4)', type: 'MLP', mae: 1104506, r2: 0.3398, resp: 52, params: '90K', trainTime: 42, accuracy: 0.3398 },
+  { name: 'MLP Lite (model_5)', type: 'MLP', mae: 1053857, r2: 0.4223, resp: 45, params: '70K', trainTime: 35, accuracy: 0.4223 },
+  { name: 'Mini MLP (model_6)', type: 'MLP', mae: 1264643, r2: 0.2108, resp: 38, params: '5K', trainTime: 20, accuracy: 0.2108 },
+  { name: 'Tiny MLP (model_7)', type: 'MLP', mae: 1162655, r2: 0.2987, resp: 33, params: '2K', trainTime: 12, accuracy: 0.2987 },
   { name: 'Stub MLP (model_8)', type: 'MLP', mae: 1357356, r2: -0.0930, resp: 28, params: '<1K', trainTime: 8, accuracy: -0.0930 }
 ]
 
@@ -34,7 +34,7 @@ const RADAR_DATA = [
 const BAR_METRICS = ['MAE', 'R²', 'Hız', 'Doğruluk']
 const BAR_DATA = [
   { name: 'MLP Pro Plus Max (model_1)', color: '#2563eb', values: [1.0, 1.0, 0.40, 1.0] },
-  { name: 'MLP Pro (model_3)', color: '#10b981', values: [0.55, 0.82, 0.65, 0.72] },
+  { name: 'MLP Pro (model_3)', color: '#10b981', values: [0.85, 0.91, 0.65, 0.91] },
   { name: 'Stub MLP (model_8)', color: '#f59e0b', values: [0.0, 0.0, 1.0, 0.0] },
 ]
 
@@ -347,7 +347,7 @@ export default function ModelComparison() {
 
                 {/* Pareto Frontier Line */}
                 <path
-                  d="M 60 169 L 99 112 L 177 60 L 231 39"
+                  d="M 60 171 L 79 90 L 126 65 L 177 50 L 204 40"
                   fill="none"
                   stroke="var(--hr-blue)"
                   strokeWidth="1.5"
@@ -355,17 +355,17 @@ export default function ModelComparison() {
                   opacity="0.6"
                 />
 
-                {/* All 9 points — cx/cy computed from resp & R² */}
+                {/* All 9 points — cx from resp, cy from R² using cy=28+(0.6-r2)*205.7 */}
                 {[
-                  { cx: 60,  cy: 169, fill: '#f97316', label: 'model_8', ly: 161 },
-                  { cx: 79,  cy: 139, fill: '#f97316', label: 'model_7', ly: 131 },
-                  { cx: 99,  cy: 112, fill: '#f97316', label: 'model_6', ly: 104 },
-                  { cx: 126, cy: 75,  fill: '#fbbf24', label: 'model_5', ly: 67  },
-                  { cx: 153, cy: 66,  fill: '#fbbf24', label: 'model_4', ly: 58  },
-                  { cx: 177, cy: 60,  fill: '#fbbf24', label: 'model_3', ly: 52  },
-                  { cx: 204, cy: 36,  fill: '#06b6d4', label: 'model_2', ly: 28  },
-                  { cx: 231, cy: 39,  fill: '#06b6d4', label: 'model_1', ly: 32  },
-                  { cx: 270, cy: 47,  fill: '#06b6d4', label: 'model_0', ly: 39  },
+                  { cx: 60,  cy: 171, fill: '#f97316', label: 'model_8', ly: 163 },
+                  { cx: 79,  cy: 90,  fill: '#f97316', label: 'model_7', ly: 82  },
+                  { cx: 99,  cy: 108, fill: '#f97316', label: 'model_6', ly: 100 },
+                  { cx: 126, cy: 65,  fill: '#fbbf24', label: 'model_5', ly: 57  },
+                  { cx: 153, cy: 82,  fill: '#fbbf24', label: 'model_4', ly: 74  },
+                  { cx: 177, cy: 50,  fill: '#fbbf24', label: 'model_3', ly: 42  },
+                  { cx: 204, cy: 40,  fill: '#06b6d4', label: 'model_2', ly: 32  },
+                  { cx: 231, cy: 40,  fill: '#06b6d4', label: 'model_1', ly: 32  },
+                  { cx: 270, cy: 50,  fill: '#06b6d4', label: 'model_0', ly: 42  },
                 ].map((pt, i) => (
                   <g key={pt.label}>
                     <circle cx={pt.cx} cy={pt.cy} r="5" fill={pt.fill} className="sc-dot" style={{ transitionDelay: `${i * 60}ms` }} />
