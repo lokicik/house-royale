@@ -8,6 +8,19 @@ Proje, **Trakya Üniversitesi Bilgisayar Mühendisliği Bölümü — Yapay Sini
 
 ---
 
+## Proje Künyesi
+
+Proje Künyesi için bkz. [house_royale_proje_kunyesi.docx](house_royale_proje_kunyesi.docx).
+
+## Proje Raporu
+
+Proje Raporu için bkz. [House_Royale_Proje_Raporu.docx](House_Royale_Proje_Raporu.docx).
+
+## Proje Sunumu
+
+Proje Sunumu için bkz. [House_Royale_Proje_Sunumu.pdf](House_Royale_Proje_Sunumu.pdf).
+
+
 ## Takım
 
 | Üye | Birincil Odak Alanı |
@@ -105,14 +118,6 @@ Her alt-proje bağımsız şekilde geliştirilir ve kendi bağımlılıklarına 
 - Frontend'i geliştirmek için → [frontend/README.md](frontend/README.md)
 
 ---
-
-## Proje Künyesi
-
-Proje Künyesi için bkz. [house_royale_proje_kunyesi.docx](house_royale_proje_kunyesi.docx).
-
-## Proje Raporu
-
-Proje Raporu için bkz. [House_Royale_Proje_Raporu.docx](House_Royale_Proje_Raporu.docx).
 
 ## Lisans
 
