@@ -108,7 +108,11 @@ Her alt-proje bağımsız şekilde geliştirilir ve kendi bağımlılıklarına 
 
 ## Proje Künyesi
 
-Resmi proje künyesi için bkz. [house_royale_proje_kunyesi.docx](house_royale_proje_kunyesi.docx).
+Proje Künyesi için bkz. [house_royale_proje_kunyesi.docx](house_royale_proje_kunyesi.docx).
+
+## Proje Raporu
+
+Proje Raporu için bkz. [House_Royale_Proje_Raporu.docx](House_Royale_Proje_Raporu.docx).
 
 ## Lisans
 
