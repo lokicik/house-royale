@@ -15,19 +15,19 @@ type verifyRequest struct {
 func VerifyToken(c *gin.Context) {
 	var req verifyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id_token required"})
+		writeError(c, http.StatusBadRequest, errCodeIDTokenRequired, "id_token required")
 		return
 	}
 
 	client, err := firebasepkg.GetAuth(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "auth service unavailable"})
+		writeError(c, http.StatusInternalServerError, errCodeAuthUnavailable, "auth service unavailable")
 		return
 	}
 
 	token, err := client.VerifyIDToken(c.Request.Context(), req.IDToken)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		writeError(c, http.StatusUnauthorized, errCodeInvalidToken, "invalid token")
 		return
 	}
 

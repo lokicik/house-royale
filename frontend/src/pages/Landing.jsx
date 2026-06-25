@@ -1,8 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import LocaleToggle from '../components/LocaleToggle'
 import { Icon } from '../components/icons'
 import ThemeToggle from '../components/ThemeToggle'
+import { useLocale } from '../contexts/localeContextValue'
 import './Landing.css'
+
+void React
 
 const socialProofPhotos = [
   '/assets/landing-player-photo.jpg',
@@ -11,48 +15,9 @@ const socialProofPhotos = [
   '/assets/landing-player-photo-4.jpg',
 ]
 
-const compareRows = [
-  { name: 'Sen', pct: 92, you: true, price: '3.68M' },
-  { name: 'model_0', pct: 84, price: '3.45M' },
-  { name: 'model_1', pct: 78, price: '3.82M' },
-  { name: 'model_2', pct: 71, price: '3.71M' },
-  { name: 'model_3', pct: 63, price: '3.59M' },
-]
-
-const featureCards = [
-  {
-    icon: 'home',
-    title: 'Gerçek İlanlar',
-    desc: 'Türkiye genelinden seçilen gerçek emlak ilanlarıyla oyna. Fotoğraf, konum ve özellikler aynı ekranda.',
-  },
-  {
-    icon: 'brain',
-    title: 'AI Modelleri',
-    desc: 'model_0, model_1 ve diğer modellerle yarış. Hangi tahmin hattı daha iyi, tur sonunda hemen gör.',
-  },
-  {
-    icon: 'trophy',
-    title: 'Çok Oyunculu Turlar',
-    desc: 'Arkadaşlarınla aynı lobide yarış, gerçek fiyata en yakın tahmini kimin yaptığını anında izle.',
-  },
-]
-
-const steps = [
-  { num: 1, title: 'Evi İncele', desc: 'Gerçek ilan detaylarını, fotoğrafları ve mahalle sinyallerini gör.' },
-  { num: 2, title: 'Tahminini Gir', desc: 'Evin gerçek satış fiyatına en yakın tahmini üret.' },
-  { num: 3, title: 'Modeller Oynasın', desc: 'Aynı turda model_0, model_1 ve diğer modeller de tahmin yapsın.' },
-  { num: 4, title: 'En Yakın Kazansın', desc: 'Gerçek fiyata en çok yaklaşan oyuncu tur puanlarını toplasın.' },
-]
-
-const stats = [
-  { icon: 'users', value: '1.250+', label: 'Aktif Oyuncu' },
-  { icon: 'play', value: '15.840+', label: 'Oynanan Tur' },
-  { icon: 'brain', value: '6', label: 'Aktif Model' },
-  { icon: 'trophy', value: '892', label: 'Bugünkü Maç' },
-]
-
 export default function Landing() {
   const navigate = useNavigate()
+  const { t } = useLocale()
   const goLogin = () => navigate('/login')
   const [barsVisible, setBarsVisible] = useState(false)
   const navRef = useRef(null)
@@ -60,6 +25,10 @@ export default function Landing() {
   const featuresRef = useRef(null)
   const howRef = useRef(null)
   const statsRef = useRef(null)
+  const compareRows = t('landing.compareRows')
+  const featureCards = t('landing.featureCards')
+  const steps = t('landing.steps')
+  const stats = t('landing.stats')
 
   const scrollToSection = sectionKey => {
     const sections = {
@@ -122,14 +91,15 @@ export default function Landing() {
           </Link>
 
           <nav className="landing-nav-links" aria-label="Landing navigation">
-            <button type="button" className="landing-nav-link" onClick={() => scrollToSection('how')}>Nasıl Oynanır</button>
-            <button type="button" className="landing-nav-link" onClick={() => scrollToSection('features')}>Özellikler</button>
-            <button type="button" className="landing-nav-link" onClick={() => scrollToSection('stats')}>İstatistikler</button>
+            <button type="button" className="landing-nav-link" onClick={() => scrollToSection('how')}>{t('landing.nav.how')}</button>
+            <button type="button" className="landing-nav-link" onClick={() => scrollToSection('features')}>{t('landing.nav.features')}</button>
+            <button type="button" className="landing-nav-link" onClick={() => scrollToSection('stats')}>{t('landing.nav.stats')}</button>
           </nav>
 
           <div className="landing-nav-actions">
+            <LocaleToggle />
             <ThemeToggle className="landing-theme-toggle" />
-            <button className="landing-btn landing-btn-primary" onClick={goLogin}>Oyuna Başla</button>
+            <button className="landing-btn landing-btn-primary" onClick={goLogin}>{t('landing.actions.start')}</button>
           </div>
         </div>
       </header>
@@ -138,24 +108,21 @@ export default function Landing() {
         <section className="landing-hero">
           <div className="landing-container landing-hero-grid">
             <div className="landing-hero-copy">
-              <span className="landing-kicker">Gerçek emlak tahmin oyunu</span>
+              <span className="landing-kicker">{t('landing.kicker')}</span>
               <h1>
-                Ev fiyatını tahmin et.
-                <span className="accent">AI'ı geç.</span>
+                {t('landing.hero.title')}
+                <span className="accent">{t('landing.hero.accent')}</span>
               </h1>
-              <p className="lead">
-                Gelişmiş yapay zeka modellerine ve diğer oyunculara karşı yarış.
-                Gerçek ilanlardan oluşan turlarda en yakın tahmini yap, liderlik tablosunda yüksel.
-              </p>
+              <p className="lead">{t('landing.hero.lead')}</p>
 
               <div className="landing-hero-actions">
                 <button className="landing-btn landing-btn-primary landing-btn-lg" onClick={goLogin}>
                   <Icon name="play" size={16} />
-                  Hemen Oyna
+                  {t('landing.actions.playNow')}
                 </button>
                 <button className="landing-btn landing-btn-outline landing-btn-lg" onClick={goLogin}>
                   <Icon name="users" size={16} />
-                  Lobiye Katıl
+                  {t('landing.actions.joinLobby')}
                 </button>
               </div>
 
@@ -168,7 +135,7 @@ export default function Landing() {
                   ))}
                 </div>
                 <div className="landing-social-text">
-                  <strong>1.250+ oyuncu</strong> şu an aktif olarak oynuyor
+                  <strong>{t('landing.socialProof.strong')}</strong> {t('landing.socialProof.text')}
                 </div>
               </div>
             </div>
@@ -176,15 +143,15 @@ export default function Landing() {
             <div className="landing-hero-visual" data-fade>
               <div className="landing-hero-halo" />
               <div className="landing-hero-image-wrap">
-                <img src="/assets/landing-page-house-img.png" alt="Modern ev" />
+                <img src="/assets/landing-page-house-img.png" alt={t('landing.heroImageAlt')} />
                 <div className="landing-price-badge">
-                  <span className="label">Gerçek Fiyat</span>
+                  <span className="label">{t('landing.priceLabel')}</span>
                   <span className="value">₺3.750.000</span>
                 </div>
               </div>
 
               <div className="landing-compare-card" ref={compareRef}>
-                <h4>Kim daha yakın tahmin eder?</h4>
+                <h4>{t('landing.compareTitle')}</h4>
                 {compareRows.map((row, index) => (
                   <div key={row.name} className="landing-bar-row">
                     <span className={`name${row.you ? ' you' : ''}`}>{row.name}</span>
@@ -229,7 +196,7 @@ export default function Landing() {
 
         <section className="landing-how">
           <div className="landing-container">
-            <h2 className="landing-section-title">Nasıl Çalışır</h2>
+            <h2 className="landing-section-title">{t('landing.sectionTitle')}</h2>
             <div className="landing-section-line" aria-hidden="true" />
             <div className="landing-steps">
               {steps.map((step, index) => (
@@ -287,19 +254,20 @@ export default function Landing() {
             </Link>
 
             <nav className="landing-footer-nav" aria-label="Footer navigation">
-              <button type="button" className="landing-footer-link-btn" onClick={() => scrollToSection('how')}>Nasıl Oynanır</button>
-              <button type="button" className="landing-footer-link-btn" onClick={() => scrollToSection('features')}>Özellikler</button>
-              <button type="button" className="landing-footer-link-btn" onClick={() => scrollToSection('stats')}>İstatistikler</button>
-              <button type="button" className="landing-footer-link-btn" onClick={goLogin}>Giriş Yap</button>
+              <button type="button" className="landing-footer-link-btn" onClick={() => scrollToSection('how')}>{t('landing.nav.how')}</button>
+              <button type="button" className="landing-footer-link-btn" onClick={() => scrollToSection('features')}>{t('landing.nav.features')}</button>
+              <button type="button" className="landing-footer-link-btn" onClick={() => scrollToSection('stats')}>{t('landing.nav.stats')}</button>
+              <button type="button" className="landing-footer-link-btn" onClick={goLogin}>{t('landing.actions.signIn')}</button>
             </nav>
           </div>
 
           <div className="landing-footer-bar">
-            <span>© 2026 House Royale. Tüm hakları saklıdır.</span>
+            <LocaleToggle />
+            <span>{t('common.footer.copyright')}</span>
             <div className="legal">
-              <Link to="/privacy">Gizlilik</Link>
-              <Link to="/terms">Şartlar</Link>
-              <Link to="/cookies">Çerezler</Link>
+              <Link to="/privacy">{t('common.footer.privacy')}</Link>
+              <Link to="/terms">{t('common.footer.terms')}</Link>
+              <Link to="/cookies">{t('common.footer.cookies')}</Link>
             </div>
           </div>
         </div>

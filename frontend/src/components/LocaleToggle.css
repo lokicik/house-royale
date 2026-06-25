@@ -1,0 +1,33 @@
+.locale-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--hr-border);
+  background: var(--hr-panel);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+.locale-toggle-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: transparent;
+  color: var(--hr-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.locale-toggle-btn:hover:not(:disabled) {
+  color: var(--hr-text);
+  transform: translateY(-1px);
+}
+
+.locale-toggle-btn.active {
+  background: var(--hr-blue);
+  color: #fff;
+}

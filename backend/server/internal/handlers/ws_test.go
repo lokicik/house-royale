@@ -243,7 +243,7 @@ func assertAccessErrorResponse(t *testing.T, rec *httptest.ResponseRecorder, wan
 		t.Fatalf("expected status %d, got %d", wantStatus, rec.Code)
 	}
 
-	var payload accessErrorResponse
+	var payload errorResponse
 	if err := json.Unmarshal(rec.Body.Bytes(), &payload); err != nil {
 		t.Fatalf("unmarshal access error response: %v", err)
 	}

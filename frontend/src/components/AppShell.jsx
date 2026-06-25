@@ -1,14 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/authContextValue'
+import { useLocale } from '../contexts/localeContextValue'
+import LocaleToggle from './LocaleToggle'
 import ThemeToggle from './ThemeToggle'
 import './AppShell.css'
-
-const TABS = [
-  { to: '/lobby', label: 'Lobi' },
-  { to: '/leaderboard', label: 'Liderlik' },
-  { to: '/model-comparison', label: 'Modeller' },
-]
 
 function initials(name) {
   if (!name) return '?'
@@ -18,6 +14,7 @@ function initials(name) {
 
 export default function AppShell({ children }) {
   const { user, logout } = useAuth()
+  const { t } = useLocale()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
@@ -25,6 +22,13 @@ export default function AppShell({ children }) {
   const navRef = useRef(null)
   const [pill, setPill] = useState({ left: 0, width: 0, opacity: 0 })
   const [pillReady, setPillReady] = useState(false)
+
+  const tabs = [
+    { to: '/lobby', label: t('common.tabs.lobby') },
+    { to: '/leaderboard', label: t('common.tabs.leaderboard') },
+    { to: '/model-comparison', label: t('common.tabs.modelComparison') },
+  ]
+  const displayName = user?.displayName || user?.email?.split('@')[0] || t('common.guest')
 
   useLayoutEffect(() => {
     const nav = navRef.current
@@ -46,11 +50,9 @@ export default function AppShell({ children }) {
     }
   }, [pathname, pillReady])
 
-  const displayName = user?.displayName || user?.email?.split('@')[0] || 'Misafir'
-
   useEffect(() => {
-    function onClick(e) {
-      if (!menuRef.current?.contains(e.target)) setOpen(false)
+    function onClick(event) {
+      if (!menuRef.current?.contains(event.target)) setOpen(false)
     }
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
@@ -74,34 +76,31 @@ export default function AppShell({ children }) {
               className={`hr-tab-pill${pillReady ? ' ready' : ''}`}
               style={{ left: pill.left, width: pill.width, opacity: pill.opacity }}
             />
-            {TABS.map(t => {
-              const active = t.to === '/'
-                ? false
-                : pathname === t.to || pathname.startsWith(t.to + '/')
+            {tabs.map(tab => {
+              const active = pathname === tab.to || pathname.startsWith(`${tab.to}/`)
               return (
-                <Link key={t.to} to={t.to} className={`hr-tab${active ? ' active' : ''}`}>
-                  {t.label}
+                <Link key={tab.to} to={tab.to} className={`hr-tab${active ? ' active' : ''}`}>
+                  {tab.label}
                 </Link>
               )
             })}
           </nav>
 
+          <LocaleToggle />
           <ThemeToggle className="hr-theme-toggle" />
 
           <div className="hr-user" ref={menuRef}>
-            <button className="hr-user-btn" onClick={() => setOpen(o => !o)}>
+            <button className="hr-user-btn" onClick={() => setOpen(prev => !prev)}>
               <span className="hr-avatar">{initials(displayName)}</span>
-              <span className="hr-user-name">
-                {displayName}
-              </span>
+              <span className="hr-user-name">{displayName}</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </button>
             {open && (
               <div className="hr-menu">
-                <button onClick={() => { setOpen(false); navigate('/profile') }}>Profilim</button>
-                <button className="danger" onClick={handleLogout}>Çıkış Yap</button>
+                <button onClick={() => { setOpen(false); navigate('/profile') }}>{t('common.userMenu.profile')}</button>
+                <button className="danger" onClick={handleLogout}>{t('common.userMenu.logout')}</button>
               </div>
             )}
           </div>
@@ -117,17 +116,17 @@ export default function AppShell({ children }) {
               <img src="/house-royale-logo.png" alt="House Royale" className="hr-logo-img hr-logo-img--footer" />
             </Link>
             <nav className="hr-footer-nav">
-              <Link to="/lobby">Lobi</Link>
-              <Link to="/leaderboard">Liderlik</Link>
-              <Link to="/model-comparison">Modeller</Link>
+              <Link to="/lobby">{t('common.tabs.lobby')}</Link>
+              <Link to="/leaderboard">{t('common.tabs.leaderboard')}</Link>
+              <Link to="/model-comparison">{t('common.tabs.modelComparison')}</Link>
             </nav>
           </div>
           <div className="hr-footer-bar">
-            <span>© 2026 House Royale. Tüm hakları saklıdır.</span>
+            <span>{t('common.footer.copyright')}</span>
             <div className="legal">
-              <Link to="/privacy">Gizlilik</Link>
-              <Link to="/terms">Şartlar</Link>
-              <Link to="/cookies">Çerezler</Link>
+              <Link to="/privacy">{t('common.footer.privacy')}</Link>
+              <Link to="/terms">{t('common.footer.terms')}</Link>
+              <Link to="/cookies">{t('common.footer.cookies')}</Link>
             </div>
           </div>
         </div>

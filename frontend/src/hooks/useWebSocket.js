@@ -9,6 +9,7 @@ export function useWebSocket(url, onMessage, options = {}) {
   const [connected, setConnected] = useState(false)
   const [connectionState, setConnectionState] = useState('idle')
   const [connectionError, setConnectionError] = useState(null)
+  const [connectionErrorCode, setConnectionErrorCode] = useState(null)
   const [terminalState, setTerminalState] = useState(null)
 
   const wsRef = useRef(null)
@@ -49,6 +50,7 @@ export function useWebSocket(url, onMessage, options = {}) {
     setConnected(false)
     setConnectionState('terminal')
     setConnectionError(null)
+    setConnectionErrorCode(null)
     setTerminalState(state)
   }, [])
 
@@ -66,6 +68,7 @@ export function useWebSocket(url, onMessage, options = {}) {
       setConnectionState(reconnect ? 'reconnecting' : 'idle')
       if (!reconnect) {
         setConnectionError(null)
+        setConnectionErrorCode(null)
         setTerminalState(null)
       }
     }
@@ -84,7 +87,8 @@ export function useWebSocket(url, onMessage, options = {}) {
       retryCountRef.current += 1
       if (mountedRef.current) {
         setConnectionState('reconnecting')
-        setConnectionError('Baglanti kurulamadi. Tekrar deneniyor...')
+        setConnectionError(null)
+        setConnectionErrorCode('connection_failed_retrying')
       }
       retryTimerRef.current = setTimeout(() => {
         if (mountedRef.current) connect()
@@ -116,6 +120,7 @@ export function useWebSocket(url, onMessage, options = {}) {
       intentionalCloseRef.current = false
       setTerminalState(null)
       setConnectionError(null)
+      setConnectionErrorCode(null)
       setConnectionState(retryCountRef.current > 0 ? 'reconnecting' : 'connecting')
 
       const ws = new WebSocket(url)
@@ -126,6 +131,7 @@ export function useWebSocket(url, onMessage, options = {}) {
         retryCountRef.current = 0
         setTerminalState(null)
         setConnectionError(null)
+        setConnectionErrorCode(null)
         setConnected(true)
         setConnectionState('connected')
       }
@@ -186,5 +192,5 @@ export function useWebSocket(url, onMessage, options = {}) {
     }
   }, [])
 
-  return { connected, connectionState, connectionError, terminalState, send, disconnect }
+  return { connected, connectionState, connectionError, connectionErrorCode, terminalState, send, disconnect }
 }

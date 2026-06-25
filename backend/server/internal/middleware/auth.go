@@ -13,6 +13,18 @@ import (
 
 const PlayerIDKey = "playerID"
 
+type errorResponse struct {
+	Error     string `json:"error"`
+	ErrorCode string `json:"error_code"`
+}
+
+func abortWithError(c *gin.Context, status int, code, message string) {
+	c.AbortWithStatusJSON(status, errorResponse{
+		Error:     message,
+		ErrorCode: code,
+	})
+}
+
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if os.Getenv("APP_ENV") != "production" {
@@ -48,19 +60,19 @@ func Auth() gin.HandlerFunc {
 			idToken = t
 		}
 		if idToken == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing authorization"})
+			abortWithError(c, http.StatusUnauthorized, "missing_authorization", "missing authorization")
 			return
 		}
 
 		client, err := firebasepkg.GetAuth(c.Request.Context())
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "auth service unavailable"})
+			abortWithError(c, http.StatusInternalServerError, "auth_service_unavailable", "auth service unavailable")
 			return
 		}
 
 		token, err := client.VerifyIDToken(c.Request.Context(), idToken)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			abortWithError(c, http.StatusUnauthorized, "unauthorized", "unauthorized")
 			return
 		}
 

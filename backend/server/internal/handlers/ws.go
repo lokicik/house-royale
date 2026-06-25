@@ -114,7 +114,7 @@ func (h *WSHandler) readPump(c *hub.Client) {
 
 		var msg game.Message
 		if err := json.Unmarshal(raw, &msg); err != nil {
-			h.sendError(c, "invalid message format")
+			h.sendError(c, "invalid_message_format", "invalid message format")
 			continue
 		}
 
@@ -137,7 +137,7 @@ func (h *WSHandler) readPump(c *hub.Client) {
 			c.SetCloseReason("left")
 			return
 		default:
-			h.sendError(c, "unknown message type")
+			h.sendError(c, "unknown_message_type", "unknown message type")
 		}
 	}
 }
@@ -186,16 +186,16 @@ func (h *WSHandler) handleDisconnect(c *hub.Client) {
 func (h *WSHandler) handleJoin(c *hub.Client, msg game.Message) {
 	var p game.JoinPayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
-		h.sendError(c, "invalid JOIN payload")
+		h.sendError(c, "invalid_join_payload", "invalid JOIN payload")
 		return
 	}
 	lobby, ok := h.Store.Get(c.LobbyID)
 	if !ok {
-		h.sendError(c, "lobby not found")
+		h.sendError(c, errCodeLobbyNotFound, "lobby not found")
 		return
 	}
 	if lobby.IsBlocked(c.PlayerID) {
-		h.sendError(c, "you were removed from this lobby")
+		h.sendError(c, errCodeRemovedFromLobby, "you were removed from this lobby")
 		c.SetCloseReason("kicked")
 		return
 	}
@@ -223,19 +223,19 @@ func (h *WSHandler) handleJoin(c *hub.Client, msg game.Message) {
 func (h *WSHandler) handleReady(c *hub.Client) {
 	lobby, ok := h.Store.Get(c.LobbyID)
 	if !ok {
-		h.sendError(c, "lobby not found")
+		h.sendError(c, errCodeLobbyNotFound, "lobby not found")
 		return
 	}
 	if c.PlayerID != lobby.HostID {
-		h.sendError(c, "only the host can start the game")
+		h.sendError(c, "only_host_can_start_game", "only the host can start the game")
 		return
 	}
 	if lobby.CurrentStatus() != game.StatusWaiting {
-		h.sendError(c, "game already started")
+		h.sendError(c, errCodeGameInProgress, "game already started")
 		return
 	}
 	if lobby.PlayerCount() == 0 {
-		h.sendError(c, "at least one player must join before starting")
+		h.sendError(c, "at_least_one_player_required", "at least one player must join before starting")
 		return
 	}
 	if h.Sessions.Has(c.LobbyID) {
@@ -304,7 +304,7 @@ func (h *WSHandler) handleReady(c *hub.Client) {
 func (h *WSHandler) handleSubmitGuess(c *hub.Client, msg game.Message) {
 	var p game.GuessPayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
-		h.sendError(c, "invalid SUBMIT_GUESS payload")
+		h.sendError(c, "invalid_submit_guess_payload", "invalid SUBMIT_GUESS payload")
 		return
 	}
 	if session, ok := h.Sessions.Get(c.LobbyID); ok {
@@ -320,7 +320,7 @@ func (h *WSHandler) handleSubmitGuess(c *hub.Client, msg game.Message) {
 func (h *WSHandler) handleUpdateSettings(c *hub.Client, msg game.Message) {
 	var p game.UpdateSettingsPayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
-		h.sendError(c, "invalid UPDATE_SETTINGS payload")
+		h.sendError(c, "invalid_update_settings_payload", "invalid UPDATE_SETTINGS payload")
 		return
 	}
 	lobby, ok := h.Store.Get(c.LobbyID)
@@ -328,11 +328,11 @@ func (h *WSHandler) handleUpdateSettings(c *hub.Client, msg game.Message) {
 		return
 	}
 	if c.PlayerID != lobby.HostID {
-		h.sendError(c, "only the host can change settings")
+		h.sendError(c, "only_host_can_change_settings", "only the host can change settings")
 		return
 	}
 	if err := lobby.ApplyUpdate(p.RoundCount, p.RoundDurationSec, p.AIModels); err != nil {
-		h.sendError(c, err.Error())
+		h.sendError(c, "invalid_update_settings_payload", err.Error())
 		return
 	}
 
@@ -368,31 +368,31 @@ func (h *WSHandler) handleNextRoundVote(c *hub.Client) {
 func (h *WSHandler) handleKickPlayer(c *hub.Client, msg game.Message) {
 	var p game.KickPlayerPayload
 	if err := json.Unmarshal(msg.Payload, &p); err != nil {
-		h.sendError(c, "invalid KICK_PLAYER payload")
+		h.sendError(c, "invalid_kick_player_payload", "invalid KICK_PLAYER payload")
 		return
 	}
 
 	lobby, ok := h.Store.Get(c.LobbyID)
 	if !ok {
-		h.sendError(c, "lobby not found")
+		h.sendError(c, errCodeLobbyNotFound, "lobby not found")
 		return
 	}
 	if c.PlayerID != lobby.HostID {
-		h.sendError(c, "only the host can kick players")
+		h.sendError(c, "only_host_can_kick_players", "only the host can kick players")
 		return
 	}
 	if lobby.CurrentStatus() != game.StatusWaiting {
-		h.sendError(c, "players can only be kicked before the game starts")
+		h.sendError(c, "kick_only_before_start", "players can only be kicked before the game starts")
 		return
 	}
 	if p.PlayerID == "" || p.PlayerID == c.PlayerID {
-		h.sendError(c, "the host cannot kick this player")
+		h.sendError(c, "host_cannot_kick_player", "the host cannot kick this player")
 		return
 	}
 
 	target, ok := lobby.GetPlayer(p.PlayerID)
 	if !ok {
-		h.sendError(c, "player not found")
+		h.sendError(c, "player_not_found", "player not found")
 		return
 	}
 
@@ -409,7 +409,7 @@ func (h *WSHandler) handleKickPlayer(c *hub.Client, msg game.Message) {
 	h.sendToPlayer(c.LobbyID, p.PlayerID, game.MsgPlayerKicked, game.PlayerKickedPayload{
 		PlayerID: p.PlayerID,
 		Reason:   "kicked",
-		Message:  "Host seni odadan çıkardı.",
+		Message:  "You were removed from the room by the host.",
 	})
 	h.broadcastPlayerLeft(c.LobbyID, p.PlayerID, target.Nickname, true, "kicked")
 	h.broadcastActivity(c.LobbyID, "kicked", c.PlayerID, hostNickname)
@@ -422,16 +422,16 @@ func (h *WSHandler) handleKickPlayer(c *hub.Client, msg game.Message) {
 func (h *WSHandler) handleCloseRoom(c *hub.Client) {
 	lobby, ok := h.Store.Get(c.LobbyID)
 	if !ok {
-		h.sendError(c, "lobby not found")
+		h.sendError(c, errCodeLobbyNotFound, "lobby not found")
 		return
 	}
 	if c.PlayerID != lobby.HostID {
-		h.sendError(c, "only the host can close the room")
+		h.sendError(c, "only_host_can_close_room", "only the host can close the room")
 		return
 	}
 	status := lobby.CurrentStatus()
 	if status != game.StatusWaiting && status != game.StatusFinished {
-		h.sendError(c, "the room can only be closed while waiting or after the game ends")
+		h.sendError(c, "room_close_invalid_state", "the room can only be closed while waiting or after the game ends")
 		return
 	}
 
@@ -474,8 +474,8 @@ func (h *WSHandler) writePump(c *hub.Client) {
 	}
 }
 
-func (h *WSHandler) sendError(c *hub.Client, msg string) {
-	h.sendToClient(c, game.MsgError, game.ErrorPayload{Message: msg})
+func (h *WSHandler) sendError(c *hub.Client, code, msg string) {
+	h.sendToClient(c, game.MsgError, game.ErrorPayload{Code: code, Message: msg})
 }
 
 func (h *WSHandler) sendLobbyState(c *hub.Client, lobby *game.Lobby) {

@@ -23,7 +23,7 @@ func (h *LeagueHandler) GetMine(c *gin.Context) {
 	playerIDVal, _ := c.Get(middleware.PlayerIDKey)
 	playerID, _ := playerIDVal.(string)
 	if playerID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		writeError(c, http.StatusUnauthorized, errCodeUnauthorized, "unauthorized")
 		return
 	}
 	if h.Store == nil {
@@ -35,7 +35,7 @@ func (h *LeagueHandler) GetMine(c *gin.Context) {
 	}
 	u, err := h.Store.Get(c.Request.Context(), playerID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		writeError(c, http.StatusInternalServerError, errCodeBadRequest, err.Error())
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{

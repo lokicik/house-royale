@@ -89,7 +89,7 @@ func (h *LobbyHandler) Create(c *gin.Context) {
 	playerIDVal, _ := c.Get(middleware.PlayerIDKey)
 	playerID, _ := playerIDVal.(string)
 	if playerID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		writeError(c, http.StatusUnauthorized, errCodeUnauthorized, "unauthorized")
 		return
 	}
 
@@ -97,7 +97,7 @@ func (h *LobbyHandler) Create(c *gin.Context) {
 		Nickname string `json:"nickname"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		writeError(c, http.StatusBadRequest, errCodeInvalidPayload, err.Error())
 		return
 	}
 
@@ -122,7 +122,7 @@ func (h *LobbyHandler) List(c *gin.Context) {
 	playerIDVal, _ := c.Get(middleware.PlayerIDKey)
 	playerID, _ := playerIDVal.(string)
 	if playerID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		writeError(c, http.StatusUnauthorized, errCodeUnauthorized, "unauthorized")
 		return
 	}
 	lobbies := h.Store.ListAccessible(playerID)
@@ -159,7 +159,7 @@ func (h *LobbyHandler) Get(c *gin.Context) {
 	playerIDVal, _ := c.Get(middleware.PlayerIDKey)
 	playerID, _ := playerIDVal.(string)
 	if playerID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		writeError(c, http.StatusUnauthorized, errCodeUnauthorized, "unauthorized")
 		return
 	}
 

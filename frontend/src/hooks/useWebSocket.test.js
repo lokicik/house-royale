@@ -78,6 +78,7 @@ describe('useWebSocket', () => {
 
     expect(resolveTerminalState).toHaveBeenCalledTimes(1)
     expect(result.current.connectionState).toBe('reconnecting')
+    expect(result.current.connectionErrorCode).toBe('connection_failed_retrying')
 
     await act(async () => {
       vi.advanceTimersByTime(1000)
@@ -106,6 +107,7 @@ describe('useWebSocket', () => {
     })
 
     expect(result.current.connectionState).toBe('terminal')
+    expect(result.current.connectionErrorCode).toBe(null)
 
     expect(result.current.terminalState).toEqual({
       terminal: true,
@@ -133,6 +135,7 @@ describe('useWebSocket', () => {
     })
 
     expect(result.current.connectionState).toBe('idle')
+    expect(result.current.connectionErrorCode).toBe(null)
 
     await act(async () => {
       vi.advanceTimersByTime(5000)

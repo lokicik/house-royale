@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { ThemeContext } from './themeContextValue'
 
 const STORAGE_KEY = 'house-royale-theme'
+
+void React
 const THEMES = new Set(['light', 'dark', 'system'])
 
 function getStoredTheme() {

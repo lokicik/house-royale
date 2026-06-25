@@ -1,3 +1,7 @@
+import React from 'react'
+
+void React
+
 const base = (size = 18) => ({
   width: size,
   height: size,

@@ -2,6 +2,7 @@ import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { LocaleProvider } from '../contexts/LocaleContext'
 import LobbyRoom from './LobbyRoom'
 
 void React
@@ -48,6 +49,7 @@ function LobbyLocationProbe() {
 
 describe('LobbyRoom terminal redirects', () => {
   beforeEach(() => {
+    window.localStorage.setItem('house-royale-locale', 'tr')
     mockProbeLobbyAccess.mockReset()
     mockWsUrl.mockClear()
     mockUseAuth.mockReturnValue({
@@ -66,22 +68,25 @@ describe('LobbyRoom terminal redirects', () => {
       connected: false,
       connectionState: 'terminal',
       connectionError: null,
+      connectionErrorCode: null,
       terminalState: {
         terminal: true,
         errorCode: 'removed_from_lobby',
-        message: 'Host seni odadan cikardi.',
+        message: 'Host seni odadan çıkardı.',
       },
       send: vi.fn(),
       disconnect,
     })
 
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/lobby/ROOM42', state: { nickname: 'Lokman' } }]}>
-        <Routes>
-          <Route path="/lobby/:id" element={<LobbyRoom />} />
-          <Route path="/lobby" element={<LobbyLocationProbe />} />
-        </Routes>
-      </MemoryRouter>,
+      <LocaleProvider>
+        <MemoryRouter initialEntries={[{ pathname: '/lobby/ROOM42', state: { nickname: 'Lokman' } }]}>
+          <Routes>
+            <Route path="/lobby/:id" element={<LobbyRoom />} />
+            <Route path="/lobby" element={<LobbyLocationProbe />} />
+          </Routes>
+        </MemoryRouter>
+      </LocaleProvider>,
     )
 
     await waitFor(() => {
