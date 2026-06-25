@@ -30,3 +30,6 @@ ehthumbs.db
 .agent
 .claude
 /presentation
+.multicode
+.mcp.json
+deliverables/

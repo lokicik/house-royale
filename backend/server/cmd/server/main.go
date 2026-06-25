@@ -36,8 +36,14 @@ func main() {
 	store := handlers.NewLobbyStore()
 	sessions := handlers.NewSessionStore()
 	lifecycle := handlers.NewLobbyLifecycle(store, sessions, h)
-	predictor := mlclient.New(cfg.MLInfraURL)
-	log.Printf("ml-infra client targeting %s", cfg.MLInfraURL)
+	var predictor mlclient.Predictor
+	if cfg.UseMock {
+		predictor = mlclient.NewMockPredictor()
+		log.Printf("using in-process mock ML predictor (python ml-infra disabled)")
+	} else {
+		predictor = mlclient.New(cfg.MLInfraURL)
+		log.Printf("ml-infra client targeting %s", cfg.MLInfraURL)
+	}
 
 	var lb leaderboard.Storer
 	var hs history.Storer

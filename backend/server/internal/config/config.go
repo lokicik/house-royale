@@ -8,6 +8,7 @@ import (
 type Config struct {
 	Port              string
 	MLInfraURL        string
+	UseMock           bool
 	AppEnv            string
 	FirebaseProjectID string
 	CORSOrigins       []string
@@ -25,6 +26,10 @@ func Load() *Config {
 	if mlURL == "" {
 		mlURL = "http://localhost:8000"
 	}
+	useMock := true
+	if v := os.Getenv("USE_MOCK_PREDICTOR"); v == "false" || v == "0" {
+		useMock = false
+	}
 	appEnv := os.Getenv("APP_ENV")
 	if appEnv == "" {
 		appEnv = "development"
@@ -40,6 +45,7 @@ func Load() *Config {
 	return &Config{
 		Port:              port,
 		MLInfraURL:        mlURL,
+		UseMock:           useMock,
 		AppEnv:            appEnv,
 		FirebaseProjectID: os.Getenv("FIREBASE_PROJECT_ID"),
 		CORSOrigins:       corsOrigins,
